@@ -39,7 +39,10 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-add_executable(Eastwood main.cpp)
+add_executable(Eastwood main.cpp
+        DoubleRatchet.cpp
+        DoubleRatchet.h
+        x3dh.h)
 target_include_directories(Eastwood PRIVATE 
     ${CRYPTOPP_INCLUDE_DIR}
     ${SODIUM_INCLUDE_DIR}
