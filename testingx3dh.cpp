@@ -13,7 +13,7 @@ std::string bin2hex(const unsigned char* bin, size_t len) {
     return oss.str();
 }
 
-void x3dh(
+unsigned char* x3dh(
     const unsigned char* identity_key_public,
     const unsigned char* identity_key_private,
     const unsigned char* ephemeral_key_public,
@@ -81,7 +81,7 @@ void x3dh(
     memcpy(ikm + 2 * KEY_LEN, dh3, KEY_LEN);
     memcpy(ikm + 3 * KEY_LEN, dh4, KEY_LEN);
     
-    unsigned char shared_secret[KEY_LEN];
+    unsigned char* shared_secret = new unsigned char[KEY_LEN];
     crypto_generichash(shared_secret, KEY_LEN, ikm, sizeof(ikm), nullptr, 0);
     
     std::cout << (is_initiator ? "INITIATOR" : "RESPONDER") << " SHARED SECRETS:" << std::endl;
@@ -91,6 +91,7 @@ void x3dh(
     std::cout << "DH4: " << bin2hex(dh4, KEY_LEN) << std::endl;
     
     std::cout << "\nFinal X3DH Shared Secret (Root Key): " << bin2hex(shared_secret, KEY_LEN) << std::endl;
+    return shared_secret;
 }
 
 int main(int argc, char *argv[]) {
