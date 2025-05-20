@@ -69,21 +69,6 @@ void x3dh(
     std::cout << "\nFinal X3DH Shared Secret (Root Key): " << bin2hex(shared_secret, KEY_LEN) << std::endl;
 }
 
-std::pair<std::string, std::string> generateKeyPair() {
-    unsigned char public_key[crypto_box_PUBLICKEYBYTES];
-    unsigned char secret_key[crypto_box_SECRETKEYBYTES];
-    
-    crypto_box_keypair(public_key, secret_key);
-    
-    std::string pk_hex = bin2hex(public_key, crypto_box_PUBLICKEYBYTES);
-    std::string sk_hex = bin2hex(secret_key, crypto_box_SECRETKEYBYTES);
-    
-    std::cout << "Curve25519 Public Key: " << pk_hex << std::endl;
-    std::cout << "Curve25519 Secret Key: " << sk_hex << std::endl;
-    
-    return {pk_hex, sk_hex};
-}
-
 int main(int argc, char *argv[]) {
     if (sodium_init() < 0) {
         std::cerr << "Failed to initialize libsodium" << std::endl;
