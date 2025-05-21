@@ -34,6 +34,8 @@ unsigned char* x3dh_initiator(
             throw std::runtime_error("Signature verification failed");
         }
         std::cout << "Signature verification successful" << std::endl;
+    } else {
+        throw std::runtime_error("No signature attached to x3dh key pair from server");
     }
     
     constexpr size_t KEY_LEN = crypto_scalarmult_BYTES;
