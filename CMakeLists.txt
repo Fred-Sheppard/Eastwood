@@ -23,7 +23,24 @@ find_library(CRYPTOPP_LIBRARY
     NO_DEFAULT_PATH
 )
 
-# Define sources
+# Find libsodium
+find_path(SODIUM_INCLUDE_DIR sodium.h
+    PATHS /opt/homebrew/include
+          /usr/local/include
+          /usr/include
+)
+find_library(SODIUM_LIBRARY
+    NAMES sodium libsodium
+    PATHS /opt/homebrew/lib
+          /usr/local/lib
+          /usr/lib
+)
+
+if(NOT SODIUM_INCLUDE_DIR OR NOT SODIUM_LIBRARY)
+    message(FATAL_ERROR "libsodium not found. Please install it using your package manager.")
+endif()
+
+# Define frontend sources
 set(FRONTEND_SOURCES
     frontend/windows/login/login.cpp
     frontend/windows/login/login.h
@@ -34,17 +51,39 @@ set(FRONTEND_SOURCES
     frontend/utils/messagebox.h
 )
 
-add_executable(Eastwood
+# Define cryptography sources and headers
+set(CRYPTO_SOURCES
+    cryptography/DoubleRatchet.cpp
+    cryptography/x3dh.cpp
+    cryptography/CommunicationSession.cpp
+)
+
+set(CRYPTO_HEADERS
+    cryptography/DoubleRatchet.h
+    cryptography/x3dh.h
+    cryptography/CommunicationSession.h
+)
+
+# Create executable
+add_executable(Eastwood 
     main.cpp
     ${FRONTEND_SOURCES}
+    ${CRYPTO_SOURCES}
+    ${CRYPTO_HEADERS}
 )
 
 # Include directories and link libraries
-target_include_directories(Eastwood PRIVATE ${CRYPTOPP_INCLUDE_DIR})
-target_link_libraries(Eastwood PRIVATE
-    Qt::Core
-    Qt::Gui
-    Qt::Widgets
-    Qt::UiTools
+target_include_directories(Eastwood PRIVATE 
+    ${CRYPTOPP_INCLUDE_DIR}
+    ${SODIUM_INCLUDE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(Eastwood PRIVATE 
+    Qt6::Core
+    Qt6::Gui
+    Qt6::Widgets
+    Qt6::UiTools
     ${CRYPTOPP_LIBRARY}
+    ${SODIUM_LIBRARY}
 )

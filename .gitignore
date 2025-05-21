@@ -36,6 +36,10 @@ qrc_*.cpp
 ui_*.h
 *.qmlc
 *.jsc
+Makefile*
+*build-*
+/build
+/.vscode
 *.qm
 *.prl
 *_plugin_import.cpp
