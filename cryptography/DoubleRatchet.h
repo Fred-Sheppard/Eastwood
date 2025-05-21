@@ -9,6 +9,11 @@
 
 std::string bin2hex(const unsigned char* bin, size_t len);
 
+struct Chain{
+    unsigned char chain_key[crypto_kdf_KEYBYTES];
+    int index;
+};
+
 class DoubleRatchet {
 public:
     DoubleRatchet(const unsigned char* x3dh_root_key,
@@ -25,10 +30,19 @@ public:
     void print_state() const;
 
 private:
+    // Performs a Diffie-Hellman ratchet step and updates the root key and chain key
+    void dh_ratchet(const unsigned char* remote_public_key, bool is_sending);
+    
+    // Derive a new set of keys (root key and chain key) from DH output
+    void kdf_ratchet(const unsigned char* shared_secret, unsigned char* chain_key, bool is_sending);
+    
+    // Derive a message key from a chain key and updates the chain key
+    unsigned char* derive_message_key(unsigned char* chain_key);
+
     unsigned char root_key[crypto_kdf_KEYBYTES];
 
-    unsigned char send_key[crypto_kdf_KEYBYTES];
-    unsigned char recv_key[crypto_kdf_KEYBYTES];
+    Chain send_chain;
+    Chain recv_chain;
 
     unsigned char local_dh_public[crypto_kx_PUBLICKEYBYTES];
     unsigned char local_dh_private[crypto_kx_SECRETKEYBYTES];
