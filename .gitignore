@@ -1,40 +1,76 @@
 # Build directories
+/build
 build/
+*build-*/
 cmake-build-*/
 
-# IDE files
+# IDE and editor files
 .idea/
 .vscode/
 *.swp
 *.swo
+*.autosave
 
-# Virtual environment
+# Virtual environments
 venv/
 
-# Compiled files
+# Compiled object and binary files
 *.o
 *.obj
-*.exe
-*.dll
+*.slo
+*.lo
+*.a
+*.la
+*.lai
 *.so
+*.so.*
+*.dll
 *.dylib
+*.exe
 
 # Qt specific
 *.moc
 moc_*.cpp
+moc_*.h
 qrc_*.cpp
 ui_*.h
+*.qmlc
+*.jsc
 *.qm
+*.prl
+*_plugin_import.cpp
+object_script.*.Release
+object_script.*.Debug
 
 # CMake files
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 Makefile
+Makefile*
+CMakeLists.txt.user*
+compile_commands.json
+
+# QtCreator specific
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+/.qmake.cache
+/.qmake.stash
+*.qmlproject.user
+*.qmlproject.user.*
+*creator.user*
+
+# Qt unit tests
+target_wrapper.*
 
 # macOS specific
 .DS_Store
 .AppleDouble
 .LSOverride
 
+# Project-specific
 scripts/
+debug/
+saves/
