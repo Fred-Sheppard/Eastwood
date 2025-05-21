@@ -2,6 +2,13 @@
 #include <cstring>
 #include <sodium.h>
 #include <stdexcept>
+#include <iostream>
+#include <iomanip>
+
+// Context strings for key derivation - must be exactly 8 bytes
+const char* const ROOT_CTX = "DRROOT01";
+const char* const CHAIN_CTX = "DRCHAIN1";
+const char* const MSG_CTX = "DRMSG001";
 
 DoubleRatchet::DoubleRatchet(const unsigned char* x3dh_root_key,
               const unsigned char* remote_public_signed_prekey,
@@ -15,6 +22,11 @@ DoubleRatchet::DoubleRatchet(const unsigned char* x3dh_root_key,
     memcpy(local_dh_private, local_private_ephemeral, crypto_box_PUBLICKEYBYTES);
     memcpy(root_key, x3dh_root_key, crypto_box_PUBLICKEYBYTES);
     memcpy(remote_dh_public, remote_public_signed_prekey, crypto_box_PUBLICKEYBYTES);
+    
+    std::cout << "DoubleRatchet initialized with root key: ";
+    for (int i = 0; i < crypto_kdf_KEYBYTES; i++)
+        std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)root_key[i];
+    std::cout << std::endl;
 }
 
 unsigned char* DoubleRatchet::message_send() {
@@ -36,43 +48,35 @@ unsigned char* DoubleRatchet::message_send() {
     // Hash combined keys to get new master key
     crypto_generichash(master_key, crypto_kdf_KEYBYTES, combined, sizeof combined, NULL, 0);
 
-    // Context string must be exactly 8 bytes
-    const char *ctx = "DRATCHT1";
-
-    // Derive new root_key and send_key
-    if (crypto_kdf_derive_from_key(root_key, crypto_kdf_KEYBYTES, 1, ctx, master_key) != 0) {
+    // Derive new root_key using ROOT context
+    if (crypto_kdf_derive_from_key(root_key, crypto_kdf_KEYBYTES, 1, ROOT_CTX, master_key) != 0) {
         throw std::runtime_error("Failed to derive new root key");
     }
 
-    if (crypto_kdf_derive_from_key(send_key, crypto_kdf_KEYBYTES, 2, ctx, master_key) != 0) {
+    // Derive send chain key using CHAIN context
+    if (crypto_kdf_derive_from_key(send_key, crypto_kdf_KEYBYTES, 2, CHAIN_CTX, master_key) != 0) {
         throw std::runtime_error("Failed to derive send chain key");
     }
 
-    unsigned char kdf_output[64];  // 64 bytes output
-
-    crypto_generichash(kdf_output, sizeof kdf_output,
-                       send_key, crypto_kdf_KEYBYTES,
-                       NULL, 0);
-
+    // Derive message key from chain key
     unsigned char* message_key = new unsigned char[crypto_kdf_KEYBYTES];
-    memcpy(message_key, kdf_output, crypto_kdf_KEYBYTES);
+    if (crypto_kdf_derive_from_key(message_key, crypto_kdf_KEYBYTES, 1, MSG_CTX, send_key) != 0) {
+        throw std::runtime_error("Failed to derive message key");
+    }
 
-    unsigned char new_send_chain_key[crypto_kdf_KEYBYTES];
-    memcpy(new_send_chain_key, kdf_output + crypto_kdf_KEYBYTES, crypto_kdf_KEYBYTES);
+    // Update chain key 
+    if (crypto_kdf_derive_from_key(send_key, crypto_kdf_KEYBYTES, 2, CHAIN_CTX, send_key) != 0) {
+        throw std::runtime_error("Failed to update chain key");
+    }
 
-    memcpy(send_key, new_send_chain_key, crypto_kdf_KEYBYTES);
     return message_key;
-
-    //encrypt file and send new public key with payload
-
-    //TODO: potentially make message key smart pointer, potential memory leak
 }
 
 unsigned char* DoubleRatchet::message_receive(const unsigned char* new_remote_public_key) {
     // Update remote public key from parameter
     memcpy(remote_dh_public, new_remote_public_key, crypto_kx_PUBLICKEYBYTES);
 
-    //compute shared secret
+    // Compute shared secret
     unsigned char shared_secret[crypto_scalarmult_BYTES];
     if (crypto_scalarmult(shared_secret, local_dh_private, remote_dh_public) != 0) {
         throw std::runtime_error("Error in crypto_scalarmult");
@@ -88,31 +92,27 @@ unsigned char* DoubleRatchet::message_receive(const unsigned char* new_remote_pu
     // Hash combined keys to get new master key
     crypto_generichash(master_key, crypto_kdf_KEYBYTES, combined, sizeof combined, NULL, 0);
 
-    // Context string must be exactly 8 bytes
-    const char *ctx = "DRATCHT1";
-
-    // Derive new root_key and recv_key
-    if (crypto_kdf_derive_from_key(root_key, crypto_kdf_KEYBYTES, 1, ctx, master_key) != 0) {
+    // Derive new root_key using ROOT context
+    if (crypto_kdf_derive_from_key(root_key, crypto_kdf_KEYBYTES, 1, ROOT_CTX, master_key) != 0) {
         throw std::runtime_error("Failed to derive new root key");
     }
 
-    if (crypto_kdf_derive_from_key(recv_key, crypto_kdf_KEYBYTES, 2, ctx, master_key) != 0) {
+    // Derive recv chain key using CHAIN context (same context as send chain)
+    if (crypto_kdf_derive_from_key(recv_key, crypto_kdf_KEYBYTES, 2, CHAIN_CTX, master_key) != 0) {
         throw std::runtime_error("Failed to derive recv chain key");
     }
 
-    unsigned char kdf_output[64];  // 64 bytes output
-
-    crypto_generichash(kdf_output, sizeof kdf_output,
-                       recv_key, crypto_kdf_KEYBYTES,
-                       NULL, 0);
-
+    // Derive message key from chain key
     unsigned char* message_key = new unsigned char[crypto_kdf_KEYBYTES];
-    memcpy(message_key, kdf_output, crypto_kdf_KEYBYTES);
+    if (crypto_kdf_derive_from_key(message_key, crypto_kdf_KEYBYTES, 1, MSG_CTX, recv_key) != 0) {
+        throw std::runtime_error("Failed to derive message key");
+    }
 
-    unsigned char new_recv_chain_key[crypto_kdf_KEYBYTES];
-    memcpy(new_recv_chain_key, kdf_output + crypto_kdf_KEYBYTES, crypto_kdf_KEYBYTES);
+    // Update chain key
+    if (crypto_kdf_derive_from_key(recv_key, crypto_kdf_KEYBYTES, 2, CHAIN_CTX, recv_key) != 0) {
+        throw std::runtime_error("Failed to update chain key");
+    }
 
-    memcpy(recv_key, new_recv_chain_key, crypto_kdf_KEYBYTES);
     return message_key;
 }
 
@@ -121,6 +121,18 @@ const unsigned char* DoubleRatchet::get_public_key() const {
 }
 
 void DoubleRatchet::print_state() const {
-    // This will require bin2hex implementation or including iostream
-    // For now, we'll just have an empty implementation
+    std::cout << "Root key: ";
+    for (int i = 0; i < crypto_kdf_KEYBYTES; i++)
+        std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)root_key[i];
+    std::cout << std::endl;
+    
+    std::cout << "Send key: ";
+    for (int i = 0; i < crypto_kdf_KEYBYTES; i++)
+        std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)send_key[i];
+    std::cout << std::endl;
+    
+    std::cout << "Recv key: ";
+    for (int i = 0; i < crypto_kdf_KEYBYTES; i++)
+        std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)recv_key[i];
+    std::cout << std::endl;
 }
