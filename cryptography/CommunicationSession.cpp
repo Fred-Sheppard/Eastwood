@@ -12,6 +12,7 @@ static void print_key(const char* name, const unsigned char* key, size_t len) {
 }
 
 SendingCommunicationSession::SendingCommunicationSession(
+    const unsigned char* identity_key_public,
     const unsigned char* identity_key_private,
     const unsigned char* ephemeral_key_public,
     const unsigned char* ephemeral_key_private,
@@ -21,27 +22,22 @@ SendingCommunicationSession::SendingCommunicationSession(
     const unsigned char* recipient_signed_prekey_signature,
     const unsigned char* recipient_ed25519_identity_key_public) {
     
-    unsigned char identity_key_public[crypto_box_PUBLICKEYBYTES];
-    crypto_scalarmult_base(identity_key_public, identity_key_private);
-    
     std::cout << "\n===== INITIATOR KEYS BEFORE X3DH =====" << std::endl;
     print_key("My Identity Public Key", identity_key_public, crypto_box_PUBLICKEYBYTES);
     print_key("My Ephemeral Public Key", ephemeral_key_public, crypto_box_PUBLICKEYBYTES);
     print_key("Recipient Identity Public Key", recipient_identity_key_public, crypto_box_PUBLICKEYBYTES);
     print_key("Recipient Signed Prekey Public", recipient_signed_prekey_public, crypto_box_PUBLICKEYBYTES);
     
-    shared_secret = x3dh(
-        recipient_identity_key_public,  
-        identity_key_private,           
-        ephemeral_key_public,           
-        ephemeral_key_private,          
-        recipient_signed_prekey_public, 
-        nullptr,                        
-        recipient_onetime_prekey_public, 
-        nullptr,                        
-        recipient_signed_prekey_signature, 
-        recipient_ed25519_identity_key_public, 
-        true                            
+    shared_secret = x3dh_initiator(
+        identity_key_public,
+        identity_key_private,
+        ephemeral_key_public,
+        ephemeral_key_private,
+        recipient_identity_key_public,
+        recipient_signed_prekey_public,
+        recipient_onetime_prekey_public,
+        recipient_signed_prekey_signature,
+        recipient_ed25519_identity_key_public // ed converted curve for verification
     );
     
     ratchet = std::make_unique<DoubleRatchet>(
@@ -67,20 +63,12 @@ DoubleRatchet* SendingCommunicationSession::getRatchet() {
 ReceivingCommunicationSession::ReceivingCommunicationSession(
     const unsigned char* initiator_identity_key_public,
     const unsigned char* initiator_ephemeral_key_public,
+    const unsigned char* identity_key_public,
     const unsigned char* identity_key_private,
+    const unsigned char* signed_prekey_public,
     const unsigned char* signed_prekey_private,
+    const unsigned char* onetime_prekey_public,
     const unsigned char* onetime_prekey_private) {
-    
-    unsigned char identity_key_public[crypto_box_PUBLICKEYBYTES];
-    unsigned char signed_prekey_public[crypto_box_PUBLICKEYBYTES];
-    unsigned char onetime_prekey_public[crypto_box_PUBLICKEYBYTES];
-    
-    crypto_scalarmult_base(identity_key_public, identity_key_private);
-    crypto_scalarmult_base(signed_prekey_public, signed_prekey_private);
-    
-    if (onetime_prekey_private) {
-        crypto_scalarmult_base(onetime_prekey_public, onetime_prekey_private);
-    }
     
     std::cout << "\n===== RESPONDER KEYS BEFORE X3DH =====" << std::endl;
     print_key("Initiator Identity Public Key", initiator_identity_key_public, crypto_box_PUBLICKEYBYTES);
@@ -88,18 +76,15 @@ ReceivingCommunicationSession::ReceivingCommunicationSession(
     print_key("My Identity Public Key", identity_key_public, crypto_box_PUBLICKEYBYTES);
     print_key("My Signed Prekey Public", signed_prekey_public, crypto_box_PUBLICKEYBYTES);
     
-    shared_secret = x3dh(
-        initiator_identity_key_public, 
-        identity_key_private,          
-        initiator_ephemeral_key_public, 
-        nullptr,                       
-        signed_prekey_public,          
-        signed_prekey_private,         
-        onetime_prekey_private ? onetime_prekey_public : nullptr, 
-        onetime_prekey_private,        
-        nullptr,                       
-        nullptr,                       
-        false                          
+    shared_secret = x3dh_responder(
+        initiator_identity_key_public,
+        initiator_ephemeral_key_public,
+        identity_key_public,
+        identity_key_private,
+        signed_prekey_public,
+        signed_prekey_private,
+        onetime_prekey_public,
+        onetime_prekey_private
     );
     
     ratchet = std::make_unique<DoubleRatchet>(

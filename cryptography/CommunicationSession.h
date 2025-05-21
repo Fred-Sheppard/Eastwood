@@ -16,6 +16,7 @@ private:
 
 public:
     SendingCommunicationSession(
+        const unsigned char* identity_key_public,
         const unsigned char* identity_key_private,
         const unsigned char* ephemeral_key_public,
         const unsigned char* ephemeral_key_private,
@@ -41,8 +42,11 @@ public:
     ReceivingCommunicationSession(
         const unsigned char* initiator_identity_key_public,
         const unsigned char* initiator_ephemeral_key_public,
+        const unsigned char* identity_key_public,
         const unsigned char* identity_key_private,
+        const unsigned char* signed_prekey_public,
         const unsigned char* signed_prekey_private,
+        const unsigned char* onetime_prekey_public,
         const unsigned char* onetime_prekey_private);
     
     ~ReceivingCommunicationSession();

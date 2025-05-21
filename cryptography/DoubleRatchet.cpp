@@ -62,7 +62,10 @@ unsigned char* DoubleRatchet::message_send() {
 
     memcpy(send_key, new_send_chain_key, crypto_kdf_KEYBYTES);
     return message_key;
+
     //encrypt file and send new public key with payload
+
+    //TODO: potentially make message key smart pointer, potential memory leak
 }
 
 unsigned char* DoubleRatchet::message_receive(const unsigned char* new_remote_public_key) {
