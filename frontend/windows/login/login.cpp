@@ -27,7 +27,7 @@ void Login::onLoginButtonClicked()
 {
     // Maximum length as per NIST SP 800-63B (allowing up to 64 characters)
     const int MAX_PASSPHRASE_LENGTH = 64;
-    const int MIN_PASSPHRASE_LENGTH = 8;
+    const int MIN_PASSPHRASE_LENGTH = 20;
     
     QString username = ui->usernameEdit->text();
     QString passphrase = ui->passphraseEdit->text();
@@ -43,7 +43,7 @@ void Login::onLoginButtonClicked()
     }
 
     if (passphrase.length() < MIN_PASSPHRASE_LENGTH) {
-        StyledMessageBox::warning(this, "Error", "Passphrase must be at least 8 characters long");
+        StyledMessageBox::warning(this, "Error", "Passphrase must be at least 20 characters long");
         return;
     }
 

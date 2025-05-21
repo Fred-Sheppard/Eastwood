@@ -26,7 +26,7 @@ void Register::onRegisterButtonClicked()
 {
     // passphrase requirements as per NIST SP 800-63B guidelines
     const int MAX_PASSPHRASE_LENGTH = 64;
-    const int MIN_PASSPHRASE_LENGTH = 8; 
+    const int MIN_PASSPHRASE_LENGTH = 20; 
     const int MAX_INPUT_LENGTH = 64;
 
     QString fullName = ui->fullNameEdit->text().left(MAX_INPUT_LENGTH);
@@ -55,7 +55,7 @@ void Register::onRegisterButtonClicked()
     }
 
     if (passphrase.length() < MIN_PASSPHRASE_LENGTH) {
-        StyledMessageBox::warning(this, "Error", "Passphrase must be at least 8 characters long");
+        StyledMessageBox::warning(this, "Error", "Passphrase must be at least 20 characters long");
         return;
     }
 
