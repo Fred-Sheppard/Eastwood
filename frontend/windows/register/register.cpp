@@ -24,24 +24,20 @@ void Register::setupConnections()
 
 void Register::onRegisterButtonClicked()
 {
-    // for preventing buffer overflow attacks
-    const int MAX_INPUT_LENGTH = 255;
-    
+    // Password requirements as per NIST SP 800-63B guidelines
+    const int MAX_PASSWORD_LENGTH = 64;
+    const int MIN_PASSWORD_LENGTH = 8; 
+    const int MAX_INPUT_LENGTH = 64;
+
     QString fullName = ui->fullNameEdit->text().left(MAX_INPUT_LENGTH);
     QString username = ui->usernameEdit->text().left(MAX_INPUT_LENGTH);
-    QString password = ui->passwordEdit->text().left(MAX_INPUT_LENGTH);
-    QString confirmPassword = ui->confirmPasswordEdit->text().left(MAX_INPUT_LENGTH);
+    QString password = ui->passwordEdit->text().left(MAX_PASSWORD_LENGTH);
+    QString confirmPassword = ui->confirmPasswordEdit->text().left(MAX_PASSWORD_LENGTH);
     
     ui->fullNameEdit->setText(fullName);
     ui->usernameEdit->setText(username);
     ui->passwordEdit->setText(password);
     ui->confirmPasswordEdit->setText(confirmPassword);
-    
-    // Sanitize inputs - manually remove potentially dangerous characters
-    for (QChar c : QString(";'\"")) {
-        fullName.remove(c);
-        username.remove(c);
-    }
     
     if (fullName.isEmpty() || username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
         StyledMessageBox::warning(this, "Error", "Please fill in all fields");
@@ -58,46 +54,13 @@ void Register::onRegisterButtonClicked()
         return;
     }
 
-
-    if (password.length() < 20) {
-        StyledMessageBox::warning(this, "Error", "Password must be at least 20 characters long");
+    if (password.length() < MIN_PASSWORD_LENGTH) {
+        StyledMessageBox::warning(this, "Error", "Password must be at least 8 characters long");
         return;
     }
 
-    bool hasUppercase = false;
-    for (QChar c : password) {
-        if (c.isUpper()) {
-            hasUppercase = true;
-            break;
-        }
-    }
-
-    if (!hasUppercase) {
-        StyledMessageBox::warning(this, "Error", "Password must contain at least one uppercase letter");
-        return;
-    }
-
-    bool hasLowercase = false;
-    for (QChar c : password) {
-        if (c.isLower()) {
-            hasLowercase = true;
-            break;
-        }
-    }
-    if (!hasLowercase) {
-        StyledMessageBox::warning(this, "Error", "Password must contain at least one lowercase letter");
-        return;
-    }
-
-    bool hasSpecial = false;
-    for (QChar c : password) {
-        if (!c.isLetterOrNumber()) {
-            hasSpecial = true;
-            break;
-        }
-    }
-    if (!hasSpecial) {
-        StyledMessageBox::warning(this, "Error", "Password must contain at least one special character");
+    if (password.length() > MAX_PASSWORD_LENGTH) {
+        StyledMessageBox::warning(this, "Error", "Password cannot be longer than 64 characters");
         return;
     }
 
@@ -115,8 +78,12 @@ void Register::onLoginButtonClicked()
     if (m_loginWindow) {
         m_loginWindow->show();
     }
-    // Close the register window
-    this->close();
 
-    
+    // TODO: do on backend for NIST SP 800-63B standard
+    // 1. Blocklist commonly used passwords
+    // 2. Passwords from known breaches
+    // 3. Context-specific words (username, app name, etc.)
+    // Do NOT implement complexity requirements (uppercase, numbers, special chars)
+
+    this->close();
 } 

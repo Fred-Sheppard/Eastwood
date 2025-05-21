@@ -209,7 +209,7 @@ QLineEdit:focus {
       <string notr="true">color: #636e72; font-size: 10px; margin-left: 5px; margin-top: 1px;</string>
      </property>
      <property name="text">
-      <string>Password must be 20 characters with one uppercase, lowercase and special character</string>
+      <string>Password must be 8 characters with one uppercase, lowercase and special character</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
