@@ -24,22 +24,22 @@ void Register::setupConnections()
 
 void Register::onRegisterButtonClicked()
 {
-    // Password requirements as per NIST SP 800-63B guidelines
-    const int MAX_PASSWORD_LENGTH = 64;
-    const int MIN_PASSWORD_LENGTH = 8; 
+    // passphrase requirements as per NIST SP 800-63B guidelines
+    const int MAX_PASSPHRASE_LENGTH = 64;
+    const int MIN_PASSPHRASE_LENGTH = 8; 
     const int MAX_INPUT_LENGTH = 64;
 
     QString fullName = ui->fullNameEdit->text().left(MAX_INPUT_LENGTH);
     QString username = ui->usernameEdit->text().left(MAX_INPUT_LENGTH);
-    QString password = ui->passwordEdit->text().left(MAX_PASSWORD_LENGTH);
-    QString confirmPassword = ui->confirmPasswordEdit->text().left(MAX_PASSWORD_LENGTH);
+    QString passphrase = ui->passphraseEdit->text().left(MAX_PASSPHRASE_LENGTH);
+    QString confirmPassphrase = ui->confirmPassphraseEdit->text().left(MAX_PASSPHRASE_LENGTH);
     
     ui->fullNameEdit->setText(fullName);
     ui->usernameEdit->setText(username);
-    ui->passwordEdit->setText(password);
-    ui->confirmPasswordEdit->setText(confirmPassword);
+    ui->passphraseEdit->setText(passphrase);
+    ui->confirmPassphraseEdit->setText(confirmPassphrase);
     
-    if (fullName.isEmpty() || username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+    if (fullName.isEmpty() || username.isEmpty() || passphrase.isEmpty() || confirmPassphrase.isEmpty()) {
         StyledMessageBox::warning(this, "Error", "Please fill in all fields");
         return;
     }
@@ -54,19 +54,19 @@ void Register::onRegisterButtonClicked()
         return;
     }
 
-    if (password.length() < MIN_PASSWORD_LENGTH) {
-        StyledMessageBox::warning(this, "Error", "Password must be at least 8 characters long");
+    if (passphrase.length() < MIN_PASSPHRASE_LENGTH) {
+        StyledMessageBox::warning(this, "Error", "Passphrase must be at least 8 characters long");
         return;
     }
 
-    if (password.length() > MAX_PASSWORD_LENGTH) {
-        StyledMessageBox::warning(this, "Error", "Password cannot be longer than 64 characters");
+    if (passphrase.length() > MAX_PASSPHRASE_LENGTH) {
+        StyledMessageBox::warning(this, "Error", "Passphrase cannot be longer than 64 characters");
         return;
     }
 
-    // frontend password logic
-    if (password != confirmPassword) {
-        StyledMessageBox::warning(this, "Error", "Passwords do not match");
+    // frontend passphrase logic
+    if (passphrase != confirmPassphrase) {
+        StyledMessageBox::warning(this, "Error", "Passphrases do not match");
         return;
     }
 
@@ -80,8 +80,8 @@ void Register::onLoginButtonClicked()
     }
 
     // TODO: do on backend for NIST SP 800-63B standard
-    // 1. Blocklist commonly used passwords
-    // 2. Passwords from known breaches
+    // 1. Blocklist commonly used passphrases
+    // 2. Passphrases from known breaches
     // 3. Context-specific words (username, app name, etc.)
     // Do NOT implement complexity requirements (uppercase, numbers, special chars)
 

@@ -25,15 +25,15 @@ void Login::setupConnections()
 
 void Login::onLoginButtonClicked()
 {
-    // Maximum length as per NIST SP 800-63B 
-    const int MAX_PASSWORD_LENGTH = 64;
-    const int MIN_PASSWORD_LENGTH = 8;
+    // Maximum length as per NIST SP 800-63B (allowing up to 64 characters)
+    const int MAX_PASSPHRASE_LENGTH = 64;
+    const int MIN_PASSPHRASE_LENGTH = 8;
     
     QString username = ui->usernameEdit->text();
-    QString password = ui->passwordEdit->text();
+    QString passphrase = ui->passphraseEdit->text();
     
-    if (username.isEmpty() || password.isEmpty()) {
-        StyledMessageBox::warning(this, "Error", "Please enter both username and password");
+    if (username.isEmpty() || passphrase.isEmpty()) {
+        StyledMessageBox::warning(this, "Error", "Please enter both username and passphrase");
         return;
     }
 
@@ -42,13 +42,13 @@ void Login::onLoginButtonClicked()
         return;
     }
 
-    if (password.length() < MIN_PASSWORD_LENGTH) {
-        StyledMessageBox::warning(this, "Error", "Password must be at least 8 characters long");
+    if (passphrase.length() < MIN_PASSPHRASE_LENGTH) {
+        StyledMessageBox::warning(this, "Error", "Passphrase must be at least 8 characters long");
         return;
     }
 
-    if (password.length() > MAX_PASSWORD_LENGTH) {
-        StyledMessageBox::warning(this, "Error", "Password cannot be longer than 64 characters");
+    if (passphrase.length() > MAX_PASSPHRASE_LENGTH) {
+        StyledMessageBox::warning(this, "Error", "Passphrase cannot be longer than 64 characters");
         return;
     }
 

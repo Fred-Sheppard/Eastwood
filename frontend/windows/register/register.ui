@@ -146,7 +146,7 @@ QLineEdit:focus {
     </widget>
    </item>
    <item>
-    <widget class="QLineEdit" name="passwordEdit">
+    <widget class="QLineEdit" name="passphraseEdit">
      <property name="minimumSize">
       <size>
        <width>0</width>
@@ -170,12 +170,12 @@ QLineEdit:focus {
       <enum>QLineEdit::EchoMode::Password</enum>
      </property>
      <property name="placeholderText">
-      <string>Password</string>
+      <string>Passphrase</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QLineEdit" name="confirmPasswordEdit">
+    <widget class="QLineEdit" name="confirmPassphraseEdit">
      <property name="minimumSize">
       <size>
        <width>0</width>
@@ -199,17 +199,17 @@ QLineEdit:focus {
       <enum>QLineEdit::EchoMode::Password</enum>
      </property>
      <property name="placeholderText">
-      <string>Confirm Password</string>
+      <string>Confirm Passphrase</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QLabel" name="passwordRequirementsLabel">
+    <widget class="QLabel" name="passphraseRequirementsLabel">
      <property name="styleSheet">
       <string notr="true">color: #636e72; font-size: 10px; margin-left: 5px; margin-top: 1px;</string>
      </property>
      <property name="text">
-      <string>Password must be 8 characters with one uppercase, lowercase and special character</string>
+      <string>Passphrase must be 8 characters with one uppercase, lowercase and special character</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -259,12 +259,12 @@ QPushButton:pressed {
     </widget>
    </item>
    <item>
-    <widget class="QLabel" name="passwordWarningLabel">
+    <widget class="QLabel" name="passphraseWarningLabel">
      <property name="styleSheet">
       <string notr="true">color:rgb(198, 36, 18); font-size: 10px; margin-left: 5px; margin-top: 3px; font-weight: bold; letter-spacing: 0.3px;</string>
      </property>
      <property name="text">
-      <string>Ensure you remember your password
+      <string>Ensure you remember your passphrase
 It cannot be recovered</string>
      </property>
      <property name="wordWrap">
