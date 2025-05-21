@@ -3,6 +3,11 @@
 //
 
 #ifndef X3DH_H
+#define X3DH_H
+
+#include <sodium.h>
+
+static constexpr size_t KEY_LEN = crypto_scalarmult_BYTES;
 
 unsigned char* x3dh(
     const unsigned char* identity_key_public,
@@ -16,6 +21,5 @@ unsigned char* x3dh(
     const unsigned char* signed_prekey_signature,
     const unsigned char* ed25519_identity_key_public,
     bool is_initiator);
-#define X3DH_H
 
 #endif //X3DH_H

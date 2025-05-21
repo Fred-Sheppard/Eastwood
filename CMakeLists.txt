@@ -39,14 +39,32 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-add_executable(Eastwood main.cpp
-        DoubleRatchet.cpp
-        DoubleRatchet.h
-        x3dh.h)
+# Source files in cryptography directory
+set(CRYPTO_SOURCES
+    cryptography/DoubleRatchet.cpp
+    cryptography/x3dh.cpp
+    cryptography/CommunicationSession.cpp
+)
+
+# Header files in cryptography directory
+set(CRYPTO_HEADERS
+    cryptography/DoubleRatchet.h
+    cryptography/x3dh.h
+    cryptography/CommunicationSession.h
+)
+
+add_executable(Eastwood 
+    main.cpp
+    ${CRYPTO_SOURCES}
+    ${CRYPTO_HEADERS}
+)
+
 target_include_directories(Eastwood PRIVATE 
     ${CRYPTOPP_INCLUDE_DIR}
     ${SODIUM_INCLUDE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
 )
+
 target_link_libraries(Eastwood PRIVATE 
     Qt6::Widgets
     ${CRYPTOPP_LIBRARY}
