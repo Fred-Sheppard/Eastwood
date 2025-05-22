@@ -21,5 +21,8 @@ bool generate_encryption_key(unsigned char* key);
 std::string encrypt_file_auto_key(const std::string& input_path, const std::string& output_dir);
 bool decrypt_file_with_hex_key(const std::string& encrypted_path, const std::string& output_dir, 
                               const std::string& hex_key);
+std::string encrypt_message_given_key(const std::string& message, const std::string& key);
+std::string decrypt_message_given_key(const std::string& encrypted_data, const std::string& key);
+
 
 #endif // XCHACHA20_POLY1305_H 
