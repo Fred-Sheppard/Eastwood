@@ -61,7 +61,7 @@ set(CRYPTO_HEADERS
         src/key_exchange/XChaCha20-Poly1305.h
         src/key_exchange/utils/ConversionUtils.h
         src/key_exchange/XChaCha20-Poly1305.h
-        src/key_exchange/utils/ConversionUtils.h
+        src/utils/ConversionUtils.h
         src/libraries/BaseClient.h
         src/libraries/HTTPSClient.h
         src/libraries/BaseClient.cpp
