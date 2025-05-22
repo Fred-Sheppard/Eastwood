@@ -31,32 +31,32 @@ endif()
 
 # Define frontend sources
 set(FRONTEND_SOURCES
-        frontend/windows/login/login.cpp
-        frontend/windows/login/login.h
-        frontend/windows/login/login.ui
-        frontend/windows/register/register.cpp
-        frontend/windows/register/register.h
-        frontend/windows/register/register.ui
-        frontend/utils/messagebox.h
+        src/ui/windows/login/login.cpp
+        src/ui/windows/login/login.h
+        src/ui/windows/login/login.ui
+        src/ui/windows/register/register.cpp
+        src/ui/windows/register/register.h
+        src/ui/windows/register/register.ui
+        src/ui/utils/messagebox.h
 )
 
 # Define cryptography sources and headers
 set(CRYPTO_SOURCES
-        cryptography/DoubleRatchet.cpp
-        cryptography/x3dh.cpp
-        cryptography/CommunicationSession.cpp
+        src/key_exchange/DoubleRatchet.cpp
+        src/key_exchange/x3dh.cpp
+        src/key_exchange/CommunicationSession.cpp
 )
 
 set(CRYPTO_HEADERS
-        cryptography/DoubleRatchet.h
-        cryptography/x3dh.h
-        cryptography/CommunicationSession.h
-        cryptography/utils.h
+        src/key_exchange/DoubleRatchet.h
+        src/key_exchange/x3dh.h
+        src/key_exchange/CommunicationSession.h
+        src/key_exchange/utils.h
 )
 
 # Create executable
 add_executable(Eastwood
-        main.cpp
+        src/main.cpp
     ${FRONTEND_SOURCES}
     ${CRYPTO_SOURCES}
     ${CRYPTO_HEADERS}
