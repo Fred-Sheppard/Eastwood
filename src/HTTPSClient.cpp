@@ -133,6 +133,108 @@ std::string HTTPSClient::get(const std::string &host, const std::string &path) {
     return response;
 }
 
+std::string HTTPSClient::post(const std::string& host, const std::string& path, const std::string& body) {
+    int sock_fd = create_socket(host.c_str(), defaultPort(true).c_str());
+    if (sock_fd < 0) {
+        SSL_CTX_Deleter(ctx);
+        return "Socket connection failed";
+    }
+
+    SSL* ssl = SSL_new(ctx.get());
+    SSL_set_fd(ssl, sock_fd);
+    SSL_set_tlsext_host_name(ssl, host.c_str());
+    SSL_set1_host(ssl, host.c_str());
+
+    if (SSL_connect(ssl) <= 0) {
+        SSL_free(ssl);
+        SSL_CTX_Deleter(ctx);
+        close(sock_fd);
+        return "TLS handshake failed";
+    }
+
+    if (SSL_get_verify_result(ssl) != X509_V_OK) {
+        SSL_free(ssl);
+        SSL_CTX_Deleter(ctx);
+        close(sock_fd);
+        return "Certificate verification failed";
+    }
+
+    std::string request =
+        "POST " + path + " HTTP/1.1\r\n" +
+        "Host: " + host + "\r\n" +
+        "Content-Type: application/json\r\n" +
+        "Content-Length: " + std::to_string(body.size()) + "\r\n" +
+        "Connection: close\r\n\r\n" +
+        body;
+
+    SSL_write(ssl, request.c_str(), request.length());
+
+    char buf[4096];
+    std::string response;
+    int bytes;
+    while ((bytes = SSL_read(ssl, buf, sizeof(buf))) > 0) {
+        response.append(buf, bytes);
+    }
+
+    SSL_shutdown(ssl);
+    SSL_free(ssl);
+    SSL_CTX_Deleter(ctx);
+    close(sock_fd);
+
+    return response;
+}
+
+std::string HTTPSClient::post(const std::string& host, const std::string& path, const std::string& body, const std::string& port) {
+    int sock_fd = create_socket(host.c_str(), port.c_str());
+    if (sock_fd < 0) {
+        SSL_CTX_Deleter(ctx);
+        return "Socket connection failed";
+    }
+
+    SSL* ssl = SSL_new(ctx.get());
+    SSL_set_fd(ssl, sock_fd);
+    SSL_set_tlsext_host_name(ssl, host.c_str());
+    SSL_set1_host(ssl, host.c_str());
+
+    if (SSL_connect(ssl) <= 0) {
+        SSL_free(ssl);
+        SSL_CTX_Deleter(ctx);
+        close(sock_fd);
+        return "TLS handshake failed";
+    }
+
+    if (SSL_get_verify_result(ssl) != X509_V_OK) {
+        SSL_free(ssl);
+        SSL_CTX_Deleter(ctx);
+        close(sock_fd);
+        return "Certificate verification failed";
+    }
+
+    std::string request =
+        "POST " + path + " HTTP/1.1\r\n" +
+        "Host: " + host + "\r\n" +
+        "Content-Type: application/json\r\n" +
+        "Content-Length: " + std::to_string(body.size()) + "\r\n" +
+        "Connection: close\r\n\r\n" +
+        body;
+
+    SSL_write(ssl, request.c_str(), request.length());
+
+    char buf[4096];
+    std::string response;
+    int bytes;
+    while ((bytes = SSL_read(ssl, buf, sizeof(buf))) > 0) {
+        response.append(buf, bytes);
+    }
+
+    SSL_shutdown(ssl);
+    SSL_free(ssl);
+    SSL_CTX_Deleter(ctx);
+    close(sock_fd);
+
+    return response;
+}
+
 
 HTTPSClient::~HTTPSClient() {
     SSL_CTX_Deleter(ctx);

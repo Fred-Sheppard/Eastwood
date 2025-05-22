@@ -22,7 +22,8 @@ namespace webwood {
 
         std::string get(const std::string& host, const std::string& path) override;
         std::string get(const std::string& host, const std::string& path, std::string& port);
-
+        std::string post(const std::string& host, const std::string& path, const std::string& body);
+        std::string post(const std::string& host, const std::string& path, const std::string& body, const std::string& port);
     private:
         std::string certPath;
         struct SSL_CTX_Deleter {
@@ -36,8 +37,6 @@ namespace webwood {
         std::unique_ptr<SSL_CTX, SSL_CTX_Deleter> ctx;
 
         static void init();
-        std::string performRequest(const std::string& host, const std::string& path, int socket);
-
         static std::string defaultPort(bool https = true) {
             return https ? "443" : "80";
         }

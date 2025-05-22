@@ -8,6 +8,7 @@ int BaseClient::create_socket(const char* hostname, const char* port) {
     int sock_fd = -1;
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP; // implemented -> no testing done yet
     if (getaddrinfo(hostname, port, &hints, &res) != 0) {
         perror("getaddrinfo failed");
         return -1;
