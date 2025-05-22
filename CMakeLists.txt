@@ -52,8 +52,8 @@ set(CRYPTO_HEADERS
         src/key_exchange/x3dh.h
         src/key_exchange/DeviceCommunicationSession.h
         src/key_exchange/utils.h
-        include/BaseClient.h
-        include/HTTPSClient.h
+        src/libraries/BaseClient.h
+        src/libraries/HTTPSClient.h
         src/libraries/BaseClient.cpp
         src/libraries/HTTPSClient.cpp
 )
@@ -78,4 +78,6 @@ target_link_libraries(Eastwood PRIVATE
     Qt6::Widgets
     Qt6::UiTools
     ${SODIUM_LIBRARY}
+    OpenSSL::SSL
+    OpenSSL::Crypto
 )

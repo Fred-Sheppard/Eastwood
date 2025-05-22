@@ -1,6 +1,6 @@
 #include <QApplication>
 #include "ui/windows/login/login.h"
-#include "../include/HTTPSClient.h"
+#include "./libraries/HTTPSClient.h"
 
 int main(int argc, char *argv[]) {
     webwood::HTTPSClient httpclient;

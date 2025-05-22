@@ -1,7 +1,7 @@
 //
 // Created by niall on 21/05/25.
 //
-#include "../../include/BaseClient.h"
+#include "./BaseClient.h"
 
 int BaseClient::create_socket(const char* hostname, const char* port) {
     addrinfo *res, hints={0}, *p;
