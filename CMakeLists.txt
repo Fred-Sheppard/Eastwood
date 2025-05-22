@@ -11,7 +11,6 @@ set(CMAKE_AUTOUIC ON)
 
 # Find Qt
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets UiTools)
-set(CMAKE_PREFIX_PATH "/usr/lib/x86_64-linux-gnu/cmake/Qt5")
 find_package(OpenSSL REQUIRED)
 # Find libsodium
 find_path(SODIUM_INCLUDE_DIR sodium.h
