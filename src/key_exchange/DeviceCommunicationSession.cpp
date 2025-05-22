@@ -55,7 +55,7 @@ DeviceSendingCommunicationSession::DeviceSendingCommunicationSession(
     // request contains;
     // recipients public signed prekey, recipients public onetime prekey
     // initiator (my) public device key, initiatior (my) public ephemeral key
-
+    
     ratchet = std::make_unique<DoubleRatchet>(
         shared_secret,
         recipient_signed_prekey_public,
