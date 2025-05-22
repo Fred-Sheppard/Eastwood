@@ -20,11 +20,11 @@ std::string encrypt_filename(const std::string& filename, const unsigned char* k
         cipher.data(), &cipher_len,
         reinterpret_cast<const unsigned char*>(base_filename.data()), base_filename.size(),
         nullptr, 0, nullptr, nonce, key);
-    
+
     std::vector<unsigned char> result(sizeof(nonce) + cipher_len);
     std::copy_n(nonce, sizeof(nonce), result.begin());
     std::copy_n(cipher.data(), cipher_len, result.begin() + sizeof(nonce));
-    
+
     std::string encrypted_name;
     for (unsigned char byte : result) {
         char hex[3];
@@ -49,7 +49,7 @@ std::string decrypt_filename(const std::string& encrypted_name, const unsigned c
     
     unsigned char nonce[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
     std::copy_n(binary_data.begin(), sizeof(nonce), nonce);
-    
+
     std::vector<unsigned char> cipher(binary_data.begin() + sizeof(nonce), binary_data.end());
     if (cipher.size() < crypto_aead_chacha20poly1305_IETF_ABYTES) {
         std::cerr << "Error: Cipher data too small. Got " << cipher.size() 
@@ -281,7 +281,7 @@ unsigned char* decrypt_message_given_key(const unsigned char* encrypted_data, si
 
     const unsigned char* ciphertext = encrypted_data + sizeof(nonce);
     size_t ciphertext_len = encrypted_len - sizeof(nonce);
-    
+
     if (ciphertext_len < crypto_aead_chacha20poly1305_IETF_ABYTES) {
         return nullptr;
     }
