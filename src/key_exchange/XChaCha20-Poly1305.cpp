@@ -5,7 +5,7 @@
 #include <string>
 #include <filesystem>
 #include "XChaCha20-Poly1305.h"
-#include "utils/ConversionUtils.h"
+#include "../utils/ConversionUtils.h"
 
 std::string encrypt_filename(const std::string& filename, const unsigned char* key) {
     std::string base_filename = std::filesystem::path(filename).filename().string();
