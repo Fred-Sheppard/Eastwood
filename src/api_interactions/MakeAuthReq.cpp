@@ -3,30 +3,31 @@
 #include <iostream>
 #include "../libraries/HTTPSClient.h"
 
-bool make_auth_request(std::string api_url, std::string public_key, std::string private_key, std::string session_key) {
+bool make_auth_request(const std::string& api_url, const unsigned char* public_key, const unsigned char* private_key, const unsigned char* session_key) {
     
-    unsigned char private_key[crypto_sign_SECRETKEYBYTES];
-    unsigned char public_key[crypto_sign_PUBLICKEYBYTES];
-    unsigned char session_key[crypto_aead_xchacha20poly1305_ietf_KEYBYTES];
-
+    // Generate nonce
     unsigned char nonce[32];
     randombytes_buf(nonce, sizeof nonce);
 
+    // Create nonce signed with private key
     unsigned char signature[crypto_sign_BYTES];
     crypto_sign_detached(signature, nullptr, nonce, sizeof(nonce), private_key);
 
-    json headers = {
-            {"public_key", to_hex(public_key, sizeof(public_key))},
-            {"signature", to_hex(signature, sizeof(signature))},
-            {"session_key", to_hex(session_key, sizeof(session_key))}
-        };
+
+    nlohmann::json payload = {
+        {"public_key", std::string(reinterpret_cast<const char*>(public_key), crypto_sign_PUBLICKEYBYTES)},
+        {"signature", std::string(reinterpret_cast<const char*>(signature), crypto_sign_BYTES)},
+        {"session_key", std::string(reinterpret_cast<const char*>(session_key), crypto_aead_xchacha20poly1305_ietf_KEYBYTES)}
+    };
 
     std::string request_body = payload.dump();
 
     std::map<std::string, std::string> headers = {
-            {"Content-Type", "application/json"}
+        {"Content-Type", "application/json"}
     };
 
     webwood::HTTPSClient httpsclient;
-    std::string res = httpsclient.post(api_url, request_body, headers);
+    std::string response = httpsclient.post(api_url, request_body);
+
+    return !response.empty() && response.find("error") == std::string::npos;
 }
