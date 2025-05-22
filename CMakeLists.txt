@@ -45,6 +45,8 @@ set(CRYPTO_SOURCES
         src/key_exchange/DoubleRatchet.cpp
         src/key_exchange/x3dh.cpp
         src/key_exchange/DeviceCommunicationSession.cpp
+        src/key_exchange/CommunicationSession.cpp
+        src/key_exchange/XChaCha20-Poly1305.cpp
 )
 
 set(CRYPTO_HEADERS
@@ -52,6 +54,7 @@ set(CRYPTO_HEADERS
         src/key_exchange/x3dh.h
         src/key_exchange/DeviceCommunicationSession.h
         src/key_exchange/utils.h
+        src/key_exchange/XChaCha20-Poly1305.h
 )
 
 # Create executable
