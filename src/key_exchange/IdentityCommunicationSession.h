@@ -38,9 +38,9 @@ public:
 private:
     keyBundle myBundle;
     unsigned char* identity_session_id;
-    std::vector<DeviceCommunicationSession* > device_sessions;
+    std::map<unsigned char*, DeviceCommunicationSession*> device_sessions;
 
-    DeviceCommunicationSession* createSessionFromKeyBundle(keyBundle);
+    void createSessionFromKeyBundle(keyBundle);
     void updateSessionsFromKeyBundles(std::vector<keyBundle>);
 };
 
