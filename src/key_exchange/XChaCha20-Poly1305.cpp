@@ -5,32 +5,7 @@
 #include <string>
 #include <filesystem>
 #include "XChaCha20-Poly1305.h"
-
-bool hex_to_bin(const std::string& hex, unsigned char* bin, size_t bin_size) {
-    if (hex.length() != bin_size * 2) return false;
-    
-    for (size_t i = 0; i < bin_size; i++) {
-        std::string byte = hex.substr(i * 2, 2);
-        try {
-            bin[i] = static_cast<unsigned char>(std::stoi(byte, nullptr, 16));
-        } catch (const std::exception&) {
-            return false;
-        }
-    }
-    return true;
-}
-
-std::string bin_to_hex(const unsigned char* bin, size_t bin_size) {
-    std::string result;
-    char hex[3];
-    
-    for (size_t i = 0; i < bin_size; i++) {
-        snprintf(hex, sizeof(hex), "%02x", bin[i]);
-        result += hex;
-    }
-    
-    return result;
-}
+#include "utils/ConversionUtils.h"
 
 std::string encrypt_filename(const std::string& filename, const unsigned char* key) {
     std::string base_filename = std::filesystem::path(filename).filename().string();
@@ -61,62 +36,44 @@ std::string encrypt_filename(const std::string& filename, const unsigned char* k
 }
 
 std::string decrypt_filename(const std::string& encrypted_name, const unsigned char* key) {
-    std::vector<unsigned char> binary_data;
-    
-    try {
-        for (size_t i = 0; i < encrypted_name.length(); i += 2) {
-            if (i + 1 >= encrypted_name.length()) {
-                std::cerr << "Error: Odd number of hex characters in filename" << std::endl;
-                return "";
-            }
-            std::string byte_string = encrypted_name.substr(i, 2);
-            try {
-                unsigned char byte = static_cast<unsigned char>(std::stoi(byte_string, nullptr, 16));
-                binary_data.push_back(byte);
-            } catch (const std::exception& e) {
-                std::cerr << "Error converting hex to binary at position " << i << ": " << e.what() << std::endl;
-                std::cerr << "Hex string: '" << byte_string << "'" << std::endl;
-                return "";
-            }
-        }
-        
-        if (binary_data.size() < crypto_aead_chacha20poly1305_IETF_NPUBBYTES) {
-            std::cerr << "Error: Binary data too small. Got " << binary_data.size() 
-                      << " bytes, expected at least " << crypto_aead_chacha20poly1305_IETF_NPUBBYTES << " bytes" << std::endl;
-            return "";
-        }
-        
-        unsigned char nonce[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
-        std::copy(binary_data.begin(), binary_data.begin() + sizeof(nonce), nonce);
-        
-        std::vector<unsigned char> cipher(binary_data.begin() + sizeof(nonce), binary_data.end());
-        if (cipher.size() < crypto_aead_chacha20poly1305_IETF_ABYTES) {
-            std::cerr << "Error: Cipher data too small. Got " << cipher.size() 
-                      << " bytes, expected at least " << crypto_aead_chacha20poly1305_IETF_ABYTES << " bytes" << std::endl;
-            return "";
-        }
-        
-        std::vector<unsigned char> plain(cipher.size() - crypto_aead_chacha20poly1305_IETF_ABYTES);
-        
-        unsigned long long plain_len;
-        int result = crypto_aead_chacha20poly1305_ietf_decrypt(
-                plain.data(), &plain_len,
-                NULL,
-                cipher.data(), cipher.size(),
-                NULL, 0,
-                nonce, key);
-                
-        if (result != 0) {
-            std::cerr << "Decryption failed with error code: " << result << std::endl;
-            std::cerr << "Nonce size: " << sizeof(nonce) << ", Cipher size: " << cipher.size() << std::endl;
-            return "";
-        }
-        
-        return std::string(reinterpret_cast<char*>(plain.data()), plain_len);
-    } catch (const std::exception& e) {
-        std::cerr << "Unexpected error in decrypt_filename: " << e.what() << std::endl;
+    std::vector<unsigned char> binary_data = hex_string_to_binary(encrypted_name);
+    if (binary_data.empty()) {
         return "";
     }
+    
+    if (binary_data.size() < crypto_aead_chacha20poly1305_IETF_NPUBBYTES) {
+        std::cerr << "Error: Binary data too small. Got " << binary_data.size() 
+                  << " bytes, expected at least " << crypto_aead_chacha20poly1305_IETF_NPUBBYTES << " bytes" << std::endl;
+        return "";
+    }
+    
+    unsigned char nonce[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
+    std::copy(binary_data.begin(), binary_data.begin() + sizeof(nonce), nonce);
+    
+    std::vector<unsigned char> cipher(binary_data.begin() + sizeof(nonce), binary_data.end());
+    if (cipher.size() < crypto_aead_chacha20poly1305_IETF_ABYTES) {
+        std::cerr << "Error: Cipher data too small. Got " << cipher.size() 
+                  << " bytes, expected at least " << crypto_aead_chacha20poly1305_IETF_ABYTES << " bytes" << std::endl;
+        return "";
+    }
+    
+    std::vector<unsigned char> plain(cipher.size() - crypto_aead_chacha20poly1305_IETF_ABYTES);
+    
+    unsigned long long plain_len;
+    int result = crypto_aead_chacha20poly1305_ietf_decrypt(
+            plain.data(), &plain_len,
+            NULL,
+            cipher.data(), cipher.size(),
+            NULL, 0,
+            nonce, key);
+            
+    if (result != 0) {
+        std::cerr << "Decryption failed with error code: " << result << std::endl;
+        std::cerr << "Nonce size: " << sizeof(nonce) << ", Cipher size: " << cipher.size() << std::endl;
+        return "";
+    }
+    
+    return std::string(reinterpret_cast<char*>(plain.data()), plain_len);
 }
 
 bool encrypt_file_and_name(const std::string& input_path, const std::string& output_dir, 
