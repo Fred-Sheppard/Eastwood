@@ -14,6 +14,7 @@ void post_register_user(
 
 
 void post_register_device(
+    unsigned char pk_id[crypto_sign_PUBLICKEYBYTES],
     unsigned char pk_device[crypto_sign_PUBLICKEYBYTES],
     unsigned char pk_signature[crypto_sign_BYTES]
 );
