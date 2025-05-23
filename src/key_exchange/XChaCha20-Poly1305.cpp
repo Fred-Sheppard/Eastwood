@@ -249,7 +249,7 @@ bool decrypt_file_with_hex_key(const std::string& encrypted_path, const std::str
 }
 
 // Takes in binary key and message directly
-std::string encrypt_message_given_key(unsigned char* message, size_t message_len, const unsigned char* key) {
+unsigned char* encrypt_message_given_key(unsigned char* message, size_t message_len, const unsigned char* key) {
     unsigned char nonce[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
     randombytes_buf(nonce, sizeof nonce);
 
@@ -265,13 +265,13 @@ std::string encrypt_message_given_key(unsigned char* message, size_t message_len
     std::copy(nonce, nonce + sizeof(nonce), result.begin());
     std::copy(ciphertext.data(), ciphertext.data() + ciphertext_len, result.begin() + sizeof(nonce));
 
-    return bin_to_hex(result.data(), result.size());
+    return result.data();
 }
 
 // Takes in binary key and encrypted data directly
-std::string decrypt_message_given_key(const unsigned char* encrypted_data, size_t encrypted_len, const unsigned char* key) {
+unsigned char* decrypt_message_given_key(const unsigned char* encrypted_data, size_t encrypted_len, const unsigned char* key) {
     if (encrypted_len < crypto_aead_chacha20poly1305_IETF_NPUBBYTES) {
-        return "";
+        return *"";
     }
 
     unsigned char nonce[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
@@ -281,7 +281,7 @@ std::string decrypt_message_given_key(const unsigned char* encrypted_data, size_
     size_t ciphertext_len = encrypted_len - sizeof(nonce);
     
     if (ciphertext_len < crypto_aead_chacha20poly1305_IETF_ABYTES) {
-        return "";
+        return nullptr;
     }
 
     std::vector<unsigned char> plaintext(ciphertext_len - crypto_aead_chacha20poly1305_IETF_ABYTES);
@@ -293,8 +293,8 @@ std::string decrypt_message_given_key(const unsigned char* encrypted_data, size_
             ciphertext, ciphertext_len,
             NULL, 0,
             nonce, key) != 0) {
-        return "";
+        return nullptr;
     }
 
-    return std::string(reinterpret_cast<char*>(plaintext.data()), plaintext_len);
+    return plaintext.data();
 }
