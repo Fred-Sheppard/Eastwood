@@ -57,6 +57,8 @@ set(CRYPTO_SOURCES
         src/key_exchange/DeviceCommunicationSession.cpp
         src/key_exchange/XChaCha20-Poly1305.cpp
         src/key_exchange/utils/ConversionUtils.cpp
+        src/api_interactions/MakeAuthReq.cpp
+        src/api_interactions/MakeUnathReq.cpp
 )
 
 set(CRYPTO_HEADERS
@@ -76,6 +78,8 @@ set(CRYPTO_HEADERS
         src/libraries/HTTPSClient.cpp
         src/endpoints/endpoints.cpp
         src/endpoints/endpoints.h
+        src/api_interactions/MakeAuthReq.h
+        src/api_interactions/MakeUnathReq.h
 )
 
 # Create executable
