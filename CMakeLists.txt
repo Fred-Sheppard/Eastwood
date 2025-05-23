@@ -47,6 +47,10 @@ set(CRYPTO_SOURCES
         src/key_exchange/DeviceCommunicationSession.cpp
         src/key_exchange/XChaCha20-Poly1305.cpp
         src/key_exchange/utils/ConversionUtils.cpp
+        src/auth/register_user/register_user.cpp
+        src/auth/register_user/register_user.h
+        src/keys/kek_manager.cpp
+        src/keys/kek_manager.h
 )
 
 set(CRYPTO_HEADERS
@@ -54,6 +58,10 @@ set(CRYPTO_HEADERS
         src/key_exchange/x3dh.h
         src/key_exchange/DeviceCommunicationSession.h
         src/key_exchange/utils.h
+        src/auth/register_user/register_user.cpp
+        src/auth/register_user/register_user.h
+        src/auth/register_device/register_device.cpp
+        src/auth/register_device/register_device.h
         src/algorithms/algorithms.cpp
         src/algorithms/algorithms.h
         src/algorithms/algorithms.cpp
