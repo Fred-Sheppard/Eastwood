@@ -22,8 +22,8 @@ std::string encrypt_filename(const std::string& filename, const unsigned char* k
         nullptr, 0, nullptr, nonce, key);
     
     std::vector<unsigned char> result(sizeof(nonce) + cipher_len);
-    std::copy(nonce, nonce + sizeof(nonce), result.begin());
-    std::copy(cipher.data(), cipher.data() + cipher_len, result.begin() + sizeof(nonce));
+    std::copy_n(nonce, sizeof(nonce), result.begin());
+    std::copy_n(cipher.data(), cipher_len, result.begin() + sizeof(nonce));
     
     std::string encrypted_name;
     for (unsigned char byte : result) {
@@ -48,7 +48,7 @@ std::string decrypt_filename(const std::string& encrypted_name, const unsigned c
     }
     
     unsigned char nonce[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
-    std::copy(binary_data.begin(), binary_data.begin() + sizeof(nonce), nonce);
+    std::copy_n(binary_data.begin(), sizeof(nonce), nonce);
     
     std::vector<unsigned char> cipher(binary_data.begin() + sizeof(nonce), binary_data.end());
     if (cipher.size() < crypto_aead_chacha20poly1305_IETF_ABYTES) {
@@ -98,7 +98,7 @@ bool encrypt_file_and_name(const std::string& input_path, const std::string& out
 
     output_file.write(reinterpret_cast<char*>(nonce), sizeof nonce);
 
-    const size_t CHUNK_SIZE = 4096;
+    constexpr size_t CHUNK_SIZE = 4096;
     std::vector<unsigned char> buffer(CHUNK_SIZE);
     std::vector<unsigned char> cipher_buffer(CHUNK_SIZE + crypto_aead_chacha20poly1305_IETF_ABYTES);
 
@@ -160,7 +160,7 @@ bool decrypt_file_and_name(const std::string& encrypted_path, const std::string&
         return false;
     }
 
-    const size_t MAX_CHUNK_SIZE = 4096 + crypto_aead_chacha20poly1305_IETF_ABYTES;
+    constexpr size_t MAX_CHUNK_SIZE = 4096 + crypto_aead_chacha20poly1305_IETF_ABYTES;
     std::vector<unsigned char> cipher_buffer(MAX_CHUNK_SIZE);
     std::vector<unsigned char> plain_buffer(MAX_CHUNK_SIZE);
 
@@ -251,7 +251,7 @@ bool decrypt_file_with_hex_key(const std::string& encrypted_path, const std::str
 }
 
 // Takes in binary key and message directly
-unsigned char* encrypt_message_given_key(unsigned char* message, size_t message_len, const unsigned char* key) {
+unsigned char* encrypt_message_given_key(const unsigned char* message, const size_t message_len, const unsigned char* key) {
     unsigned char nonce[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
     randombytes_buf(nonce, sizeof nonce);
 
@@ -264,8 +264,8 @@ unsigned char* encrypt_message_given_key(unsigned char* message, size_t message_
         nullptr, 0, nullptr, nonce, key);
 
     std::vector<unsigned char> result(sizeof(nonce) + ciphertext_len);
-    std::copy(nonce, nonce + sizeof(nonce), result.begin());
-    std::copy(ciphertext.data(), ciphertext.data() + ciphertext_len, result.begin() + sizeof(nonce));
+    std::copy_n(nonce, sizeof(nonce), result.begin());
+    std::copy_n(ciphertext.data(), ciphertext_len, result.begin() + sizeof(nonce));
 
     return result.data();
 }
@@ -277,7 +277,7 @@ unsigned char* decrypt_message_given_key(const unsigned char* encrypted_data, si
     }
 
     unsigned char nonce[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
-    std::copy(encrypted_data, encrypted_data + sizeof(nonce), nonce);
+    std::copy_n(encrypted_data, sizeof(nonce), nonce);
 
     const unsigned char* ciphertext = encrypted_data + sizeof(nonce);
     size_t ciphertext_len = encrypted_len - sizeof(nonce);
