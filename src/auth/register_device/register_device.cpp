@@ -5,15 +5,8 @@
 
 #include "src/algorithms/algorithms.h"
 #include "src/algorithms/constants.h"
+#include "src/endpoints/endpoints.h"
 #include "src/keys/kek_manager.h"
-
-// TODO: Move this
-void post_register_device(
-    unsigned char pk_device[crypto_sign_PUBLICKEYBYTES],
-    unsigned char pk_signature[crypto_sign_BYTES]
-) {
-    // TODO:  send_authorised_request("POST", "/registerDevice", pk_device);
-};
 
 void load_private_key(unsigned char key_out[crypto_sign_SECRETKEYBYTES], const char *keyName) {
     const unsigned char *kek = KEKManager::get_kek();
@@ -36,6 +29,8 @@ int register_device(unsigned char pk_new_device[crypto_sign_PUBLICKEYBYTES]) {
     unsigned char pk_signature[crypto_sign_BYTES];
     crypto_sign_detached(pk_new_device, nullptr, nonce, NONCE_LEN, sk_identity);
 
-    post_register_device(pk_new_device, pk_signature);
+    unsigned char pk_id[crypto_sign_PUBLICKEYBYTES];
+
+    post_register_device(pk_id, pk_new_device, pk_signature);
     return 0;
 }
