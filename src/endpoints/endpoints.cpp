@@ -12,20 +12,23 @@ void post_register_user(
     unsigned char nonce_signature[crypto_sign_BYTES]
 ) {
     json body = {
-        {"pk_identity", bin2hex(pk_identity, crypto_sign_PUBLICKEYBYTES)},
-        {"registration_nonce", bin2hex(registration_nonce, crypto_sign_BYTES)},
-        {"nonce_signature", bin2hex(nonce_signature, crypto_sign_BYTES)}
+        {"username", username},
+        {"identity_public", bin2base64(pk_identity, crypto_sign_PUBLICKEYBYTES)},
+        {"nonce", bin2base64(registration_nonce, NONCE_LEN)},
+        {"nonce_signature", bin2base64(nonce_signature, crypto_sign_BYTES)}
     };
-    // TODO:  make_unauthorised_request_post("/registerUser", body.dump());
+    // TODO:  post("/registerUser", body.dump());
 };
 
 void post_register_device(
+    unsigned char pk_id[crypto_sign_PUBLICKEYBYTES],
     unsigned char pk_device[crypto_sign_PUBLICKEYBYTES],
     unsigned char pk_signature[crypto_sign_BYTES]
 ) {
     json body = {
-        {"pk_device", bin2hex(pk_device, crypto_sign_PUBLICKEYBYTES)},
-        {"pk_signature", bin2hex(pk_signature, crypto_sign_BYTES)}
+        {"identity_public", bin2base64(pk_id, crypto_sign_PUBLICKEYBYTES)},
+        {"device_public", bin2base64(pk_device, crypto_sign_PUBLICKEYBYTES)},
+        {"signature", bin2base64(pk_signature, crypto_sign_BYTES)}
     };
-    // TODO:  make_auth_request_post("/registerDevice", body.dump());
+    // TODO:  post("/registerDevice", body.dump());
 };
