@@ -1,8 +1,8 @@
 #include <sodium.h>
 #include <iostream>
 #include <map>
-#include "src/libraries/HTTPSClient.h"
-#include "src/algorithms/algorithms.h"
+#include "../libraries/HTTPSClient.h"
+#include "../algorithms/algorithms.h"
 
 std::string post(const std::string& data, const std::string& endpoint = "/") {
 
@@ -27,7 +27,6 @@ std::string post(const std::string& data, const std::string& endpoint = "/") {
     unsigned char nonce[NONCE_LEN];
     randombytes_buf(nonce, sizeof nonce);
 
-    // Create nonce signed with private key
     // Create nonce signed with private key
     unsigned char signature[crypto_sign_BYTES];
     crypto_sign_detached(signature, nullptr, nonce, sizeof(nonce), private_key);
