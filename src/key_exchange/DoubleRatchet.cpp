@@ -135,18 +135,12 @@ DeviceMessage DoubleRatchet::message_send(unsigned char* message) {
     device_message.ciphertext = new unsigned char[ciphertext_vec.size()];
     memcpy(device_message.ciphertext, ciphertext_vec.data(), ciphertext_vec.size());
     device_message.length = ciphertext_vec.size();
-    
-    // Store the plaintext for reference
-    device_message.plaintext = new unsigned char[strlen(reinterpret_cast<const char*>(message))];
-    memcpy(device_message.plaintext, message, strlen(reinterpret_cast<const char*>(message)));
 
     delete[] message_key;
     return device_message;
 }
 
-DeviceMessage DoubleRatchet::message_receive(const DeviceMessage& encrypted_message) {
-    DeviceMessage decrypted_message;
-    
+std::vector<unsigned char> DoubleRatchet::message_receive(const DeviceMessage& encrypted_message) {
     // check if we already have this message in our skipped keys cache
     SkippedMessageKey skipped_key_id = {
         {0}, 
@@ -168,16 +162,8 @@ DeviceMessage DoubleRatchet::message_receive(const DeviceMessage& encrypted_mess
         
         // Decrypt the message
         std::vector<unsigned char> plaintext_vec = decrypt_message_given_key(encrypted_message.ciphertext, encrypted_message.length, message_key);
-        decrypted_message.length = plaintext_vec.size();
-        decrypted_message.plaintext = new unsigned char[plaintext_vec.size()];
-        memcpy(decrypted_message.plaintext, plaintext_vec.data(), plaintext_vec.size());
-        decrypted_message.ciphertext = new unsigned char[encrypted_message.length];
-        memcpy(decrypted_message.ciphertext, encrypted_message.ciphertext, encrypted_message.length);
-        decrypted_message.header = new MessageHeader();
-        memcpy(decrypted_message.header, encrypted_message.header, sizeof(MessageHeader));
-        
         delete[] message_key;
-        return decrypted_message;
+        return plaintext_vec;
     }
     
     // check if ratchet public key has changed (DH ratchet step)
@@ -277,16 +263,8 @@ DeviceMessage DoubleRatchet::message_receive(const DeviceMessage& encrypted_mess
 
     // Decrypt the message
     std::vector<unsigned char> plaintext_vec = decrypt_message_given_key(encrypted_message.ciphertext, encrypted_message.length, message_key);
-    decrypted_message.length = plaintext_vec.size();
-    decrypted_message.plaintext = new unsigned char[plaintext_vec.size()];
-    memcpy(decrypted_message.plaintext, plaintext_vec.data(), plaintext_vec.size());
-    decrypted_message.ciphertext = new unsigned char[encrypted_message.length];
-    memcpy(decrypted_message.ciphertext, encrypted_message.ciphertext, encrypted_message.length);
-    decrypted_message.header = new MessageHeader();
-    memcpy(decrypted_message.header, encrypted_message.header, sizeof(MessageHeader));
-    
     delete[] message_key;
-    return decrypted_message;
+    return plaintext_vec;
 }
 
 const unsigned char* DoubleRatchet::get_public_key() const {

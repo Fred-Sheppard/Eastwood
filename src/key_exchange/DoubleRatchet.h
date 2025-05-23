@@ -8,6 +8,7 @@
 #include <string>
 #include <map>
 #include <unordered_map>
+#include <vector>
 
 struct Chain {
     unsigned char chain_key[crypto_kdf_KEYBYTES];
@@ -42,12 +43,11 @@ struct SkippedMessageKey {
 // Common message class for device communication
 class DeviceMessage {
 public:
-    DeviceMessage() : header(nullptr), ciphertext(nullptr), plaintext(nullptr), length(0) {}
+    DeviceMessage() : header(nullptr), ciphertext(nullptr), length(0) {}
     
     ~DeviceMessage() {
         if (header) delete header;
         if (ciphertext) delete[] ciphertext;
-        if (plaintext) delete[] plaintext;
     }
     
     // Copy constructor
@@ -68,23 +68,14 @@ public:
             ciphertext = nullptr;
         }
         
-        if (other.plaintext) {
-            plaintext = new unsigned char[other.length];
-            memcpy(plaintext, other.plaintext, other.length);
-        } else {
-            plaintext = nullptr;
-        }
-        
         length = other.length;
     }
     
     // Move constructor
     DeviceMessage(DeviceMessage&& other) noexcept 
-        : header(other.header), ciphertext(other.ciphertext), 
-          plaintext(other.plaintext), length(other.length) {
+        : header(other.header), ciphertext(other.ciphertext), length(other.length) {
         other.header = nullptr;
         other.ciphertext = nullptr;
-        other.plaintext = nullptr;
         other.length = 0;
     }
     
@@ -93,7 +84,6 @@ public:
         if (this != &other) {
             if (header) delete header;
             if (ciphertext) delete[] ciphertext;
-            if (plaintext) delete[] plaintext;
             
             if (other.header) {
                 header = new MessageHeader();
@@ -111,13 +101,6 @@ public:
                 ciphertext = nullptr;
             }
             
-            if (other.plaintext) {
-                plaintext = new unsigned char[other.length];
-                memcpy(plaintext, other.plaintext, other.length);
-            } else {
-                plaintext = nullptr;
-            }
-            
             length = other.length;
         }
         return *this;
@@ -128,16 +111,13 @@ public:
         if (this != &other) {
             if (header) delete header;
             if (ciphertext) delete[] ciphertext;
-            if (plaintext) delete[] plaintext;
             
             header = other.header;
             ciphertext = other.ciphertext;
-            plaintext = other.plaintext;
             length = other.length;
             
             other.header = nullptr;
             other.ciphertext = nullptr;
-            other.plaintext = nullptr;
             other.length = 0;
         }
         return *this;
@@ -145,7 +125,6 @@ public:
     
     MessageHeader* header;
     unsigned char* ciphertext;
-    unsigned char* plaintext;
     size_t length;
 };
 
@@ -161,8 +140,8 @@ public:
     // Creates a message key and header for sending
     DeviceMessage message_send(unsigned char* message);
 
-    // Processes a received message with header and returns the message key
-    DeviceMessage message_receive(const DeviceMessage& encrypted_message);
+    // Processes a received message with header and returns the decrypted plaintext
+    std::vector<unsigned char> message_receive(const DeviceMessage& encrypted_message);
 
     const unsigned char* get_public_key() const;
 

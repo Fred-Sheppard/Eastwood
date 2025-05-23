@@ -314,11 +314,10 @@ void test_message_encryption_decryption() {
         std::cout << "  Message Index: " << encrypted_message.header->message_index << std::endl;
         
         // Bob decrypts the message
-        DeviceMessage decrypted_message = bob_ratchet.message_receive(encrypted_message);
-        std::cout << "Bob decrypted message: " << (char*)decrypted_message.plaintext << std::endl;
-        
+        std::vector<unsigned char> bob_plaintext = bob_ratchet.message_receive(encrypted_message);
+        std::cout << "Bob decrypted message: " << std::string(bob_plaintext.begin(), bob_plaintext.end()) << std::endl;
         // Verify the message was decrypted correctly
-        if (strcmp((char*)decrypted_message.plaintext, alice_message) == 0) {
+        if (std::string(bob_plaintext.begin(), bob_plaintext.end()) == alice_message) {
             std::cout << "✅ Message decryption successful!" << std::endl;
         } else {
             std::cout << "❌ Message decryption failed!" << std::endl;
@@ -337,11 +336,10 @@ void test_message_encryption_decryption() {
         std::cout << "  Message Index: " << bob_encrypted.header->message_index << std::endl;
         
         // Alice decrypts the message
-        DeviceMessage alice_decrypted = alice_ratchet.message_receive(bob_encrypted);
-        std::cout << "Alice decrypted message: " << (char*)alice_decrypted.plaintext << std::endl;
-        
+        std::vector<unsigned char> alice_plaintext = alice_ratchet.message_receive(bob_encrypted);
+        std::cout << "Alice decrypted message: " << std::string(alice_plaintext.begin(), alice_plaintext.end()) << std::endl;
         // Verify the message was decrypted correctly
-        if (strcmp((char*)alice_decrypted.plaintext, bob_message) == 0) {
+        if (std::string(alice_plaintext.begin(), alice_plaintext.end()) == bob_message) {
             std::cout << "✅ Message decryption successful!" << std::endl;
         } else {
             std::cout << "❌ Message decryption failed!" << std::endl;
