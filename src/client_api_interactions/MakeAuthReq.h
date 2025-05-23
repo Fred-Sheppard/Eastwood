@@ -3,7 +3,7 @@
 
 #include <string>
 
-std::string post(const std::string& data, const std::string& endpoint = "/");
-std::string get(const std::string& endpoint = "/");
+std::string post_auth(const std::string& data, const std::string& endpoint = "/");
+std::string get_auth(const std::string& endpoint = "/");
 
 #endif // MAKE_AUTH_REQ_H

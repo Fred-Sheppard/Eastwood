@@ -4,7 +4,7 @@
 #include "../libraries/HTTPSClient.h"
 #include "../algorithms/algorithms.h"
 
-std::string post(const std::string& data, const std::string& endpoint = "/") {
+std::string post_auth(const std::string& data, const std::string& endpoint = "/") {
 
     unsigned char public_key[crypto_sign_PUBLICKEYBYTES];
     unsigned char private_key[crypto_sign_SECRETKEYBYTES];
@@ -65,7 +65,7 @@ std::string post(const std::string& data, const std::string& endpoint = "/") {
     return response;
 }
 
-std::string get(const std::string& endpoint = "/") {
+std::string get_auth(const std::string& endpoint = "/") {
 
     // db.get_public_key();
     // db.get_private_key();
