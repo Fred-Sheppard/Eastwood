@@ -30,7 +30,7 @@ private:
     size_t size;
 
 public:
-    SecureMemory(size_t sz) : size(sz) {
+    explicit SecureMemory(size_t sz) : size(sz) {
         ptr = malloc(size);
         if (!ptr) throw std::bad_alloc();
 
@@ -80,8 +80,8 @@ public:
     }
 
     void *get() { return ptr; }
-    const void *get() const { return ptr; }
-    size_t get_size() const { return size; }
+    [[nodiscard]] const void *get() const { return ptr; }
+    [[nodiscard]] size_t get_size() const { return size; }
 };
 
 // RAII wrapper for KEK
@@ -114,7 +114,7 @@ public:
         is_loaded = true;
     }
 
-    const unsigned char *get() const {
+    [[nodiscard]] const unsigned char *get() const {
         if (!is_loaded) {
             throw std::runtime_error("KEK not loaded");
         }
@@ -135,13 +135,11 @@ public:
 
 // Singleton KEK manager
 class KEKManager {
-private:
     static std::unique_ptr<KEKWrapper> kek_wrapper;
     static bool is_initialized;
 
-    KEKManager() = delete; // Prevent instantiation
-
 public:
+    KEKManager() = delete; // Prevent instantiation
     static void initialize() {
         if (!is_initialized) {
             kek_wrapper = std::make_unique<KEKWrapper>();
