@@ -2,7 +2,7 @@
 #include <iostream>
 #include "src/libraries/HTTPSClient.h"
 
-std::string post_unauthenticated(const std::string& data, const std::string& endpoint = "/") {
+std::string post_unauth(const std::string& data, const std::string& endpoint = "/") {
 
     const char* env_api_host = std::getenv("API_HOST");
     if (env_api_host == nullptr) {
@@ -19,7 +19,7 @@ std::string post_unauthenticated(const std::string& data, const std::string& end
     return response;
 }
 
-std::string get_unauthenticated(const std::string& endpoint = "/") {
+std::string get_unauth(const std::string& endpoint = "/") {
 
     const char* env_api_host = std::getenv("API_HOST");
     if (env_api_host == nullptr) {
