@@ -3,19 +3,10 @@
 #include <string>
 #include <sodium.h>
 #include "src/algorithms/algorithms.h"
+#include "src/endpoints/endpoints.h"
 
 #include "../../algorithms/constants.h"
 
-
-// TODO: Move this
-void post_register_user(
-    const std::string &username,
-    unsigned char pk_identity[crypto_sign_PUBLICKEYBYTES],
-    unsigned char registration_nonce[NONCE_LEN],
-    unsigned char nonce_signature[crypto_sign_BYTES]
-) {
-    // TODO:  send_unauthorised_request("POST", "/registerUser", username, pk_identity, registration_nonce, nonce_signature);
-};
 
 int register_user(const std::string &username, const std::string &master_password) {
     if (sodium_init() < 0) {

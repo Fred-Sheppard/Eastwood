@@ -12,6 +12,15 @@ set(CMAKE_AUTOUIC ON)
 # Find Qt
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets UiTools)
 find_package(OpenSSL REQUIRED)
+
+# Add nlohmann_json
+include(FetchContent)
+FetchContent_Declare(
+    json
+    URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+)
+FetchContent_MakeAvailable(json)
+
 # Find libsodium
 find_path(SODIUM_INCLUDE_DIR sodium.h
     PATHS /opt/homebrew/include
@@ -72,6 +81,8 @@ set(CRYPTO_HEADERS
         src/libraries/HTTPSClient.h
         src/libraries/BaseClient.cpp
         src/libraries/HTTPSClient.cpp
+        src/endpoints/endpoints.cpp
+        src/endpoints/endpoints.h
 )
 
 # Create executable
@@ -96,4 +107,5 @@ target_link_libraries(Eastwood PRIVATE
     ${SODIUM_LIBRARY}
     OpenSSL::SSL
     OpenSSL::Crypto
+    nlohmann_json::nlohmann_json
 )
