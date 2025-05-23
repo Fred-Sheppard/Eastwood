@@ -19,7 +19,7 @@ std::string encrypt_filename(const std::string& filename, const unsigned char* k
     crypto_aead_chacha20poly1305_ietf_encrypt(
         cipher.data(), &cipher_len,
         reinterpret_cast<const unsigned char*>(base_filename.data()), base_filename.size(),
-        NULL, 0, NULL, nonce, key);
+        nullptr, 0, nullptr, nonce, key);
     
     std::vector<unsigned char> result(sizeof(nonce) + cipher_len);
     std::copy(nonce, nonce + sizeof(nonce), result.begin());
@@ -62,9 +62,9 @@ std::string decrypt_filename(const std::string& encrypted_name, const unsigned c
     unsigned long long plain_len;
     int result = crypto_aead_chacha20poly1305_ietf_decrypt(
             plain.data(), &plain_len,
-            NULL,
+            nullptr,
             cipher.data(), cipher.size(),
-            NULL, 0,
+            nullptr, 0,
             nonce, key);
             
     if (result != 0) {
@@ -73,7 +73,7 @@ std::string decrypt_filename(const std::string& encrypted_name, const unsigned c
         return "";
     }
     
-    return std::string(reinterpret_cast<char*>(plain.data()), plain_len);
+    return {reinterpret_cast<char*>(plain.data()), plain_len};
 }
 
 bool encrypt_file_and_name(const std::string& input_path, const std::string& output_dir, 
@@ -116,10 +116,11 @@ bool encrypt_file_and_name(const std::string& input_path, const std::string& out
         crypto_aead_chacha20poly1305_ietf_encrypt(
             cipher_buffer.data(), &cipher_len,
             buffer.data(), bytes_read,
-            NULL, 0, NULL, nonce, key);
+            nullptr, 0, nullptr, nonce, key);
 
-        uint32_t chunk_size = static_cast<uint32_t>(cipher_len);
+        auto chunk_size = static_cast<uint32_t>(cipher_len);
         output_file.write(reinterpret_cast<char*>(&chunk_size), sizeof(chunk_size));
+        // TODO: Fix this
         output_file.write(reinterpret_cast<char*>(cipher_buffer.data()), cipher_len);
         
         sodium_increment(nonce, sizeof nonce);
@@ -182,14 +183,15 @@ bool decrypt_file_and_name(const std::string& encrypted_path, const std::string&
         unsigned long long plain_len;
         if (crypto_aead_chacha20poly1305_ietf_decrypt(
                 plain_buffer.data(), &plain_len,
-                NULL,
+                nullptr,
                 cipher_buffer.data(), chunk_size,
-                NULL, 0,
+                nullptr, 0,
                 nonce, key) != 0) {
             std::cerr << "Error: Decryption failed. The file may be corrupted or tampered with." << std::endl;
             return false;
         }
 
+        // TODO
         output_file.write(reinterpret_cast<char*>(plain_buffer.data()), plain_len);
         
         sodium_increment(nonce, sizeof nonce);
@@ -259,7 +261,7 @@ unsigned char* encrypt_message_given_key(unsigned char* message, size_t message_
     crypto_aead_chacha20poly1305_ietf_encrypt(
         ciphertext.data(), &ciphertext_len,
         message, message_len,
-        NULL, 0, NULL, nonce, key);
+        nullptr, 0, nullptr, nonce, key);
 
     std::vector<unsigned char> result(sizeof(nonce) + ciphertext_len);
     std::copy(nonce, nonce + sizeof(nonce), result.begin());
@@ -271,7 +273,7 @@ unsigned char* encrypt_message_given_key(unsigned char* message, size_t message_
 // Takes in binary key and encrypted data directly
 unsigned char* decrypt_message_given_key(const unsigned char* encrypted_data, size_t encrypted_len, const unsigned char* key) {
     if (encrypted_len < crypto_aead_chacha20poly1305_IETF_NPUBBYTES) {
-        return *"";
+        return nullptr;
     }
 
     unsigned char nonce[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
@@ -289,9 +291,9 @@ unsigned char* decrypt_message_given_key(const unsigned char* encrypted_data, si
 
     if (crypto_aead_chacha20poly1305_ietf_decrypt(
             plaintext.data(), &plaintext_len,
-            NULL,
+            nullptr,
             ciphertext, ciphertext_len,
-            NULL, 0,
+            nullptr, 0,
             nonce, key) != 0) {
         return nullptr;
     }
