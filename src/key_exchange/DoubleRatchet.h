@@ -9,8 +9,6 @@
 #include <map>
 #include <unordered_map>
 
-std::string bin2hex(const unsigned char* bin, size_t len);
-
 struct Chain {
     unsigned char chain_key[crypto_kdf_KEYBYTES];
     int index;

@@ -1,4 +1,5 @@
 #include "DoubleRatchet.h"
+#include "utils.h"
 #include <cstring>
 #include <sodium.h>
 #include <stdexcept>
@@ -112,14 +113,11 @@ Message DoubleRatchet::message_send(unsigned char* message) {
         dh_ratchet(nullptr, true);
     }
 
-    MessageHeader header{};
-    Message messageStruct{};
+    auto* header = new MessageHeader{};
     // Populate header with current state
-    memcpy(header.dh_public, local_dh_public, crypto_kx_PUBLICKEYBYTES);
-    header.prev_chain_length = prev_send_chain_length;
-    header.message_index = send_chain.index;
-
-    memcpy(messageStruct.header, &header, sizeof header);
+    memcpy(header->dh_public, local_dh_public, crypto_kx_PUBLICKEYBYTES);
+    header->prev_chain_length = prev_send_chain_length;
+    header->message_index = send_chain.index;
 
     // Derive message key for the current message
     unsigned char* message_key = derive_message_key(send_chain.chain_key);
@@ -127,9 +125,17 @@ Message DoubleRatchet::message_send(unsigned char* message) {
     // Increment the message index for the next message
     send_chain.index++;
 
-    unsigned char* ciphertext = encrypt_message_given_key(message, sizeof(message), message_key);
-    memcpy(messageStruct.message, &ciphertext, sizeof ciphertext);
-    
+    // Encrypt the message
+    // NOTE: The caller must provide the correct message length. Here, we assume null-terminated string for demo.
+    size_t message_len = strlen(reinterpret_cast<const char*>(message));
+    unsigned char* ciphertext = encrypt_message_given_key(message, message_len, message_key);
+
+    auto* msg = new unsigned char*;
+    *msg = ciphertext;
+
+    Message messageStruct{};
+    messageStruct.header = header;
+    messageStruct.message = ciphertext;
     return messageStruct;
 }
 
