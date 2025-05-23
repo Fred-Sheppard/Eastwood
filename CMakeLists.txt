@@ -57,7 +57,9 @@ set(CRYPTO_SOURCES
         src/key_exchange/DeviceCommunicationSession.cpp
         src/key_exchange/IdentityCommunicationSession.cpp
         src/key_exchange/XChaCha20-Poly1305.cpp
-        src/utils/ConversionUtils.cpp
+        src/utils/ConversionUtils.cpp p
+    src/api_interactions/MakeAuthReq.cpp
+    src/api_interactions/MakeUnathReq.cpp
         src/client_api_interactions/MakeAuthReq.cpp
         src/client_api_interactions/MakeUnauthReq.cpp
         src/libraries/BaseClient.cpp
@@ -129,12 +131,12 @@ add_executable(device_communication_session_serialization_test
 
 # Include directories and link libraries for tests
 foreach(test_target IN ITEMS identity_communication_session_test device_communication_session_serialization_test)
-    target_include_directories(${test_target} PRIVATE 
+    target_include_directories(${test_target} PRIVATE
         ${SODIUM_INCLUDE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/external/cereal/include
     )
-    target_link_libraries(${test_target} PRIVATE 
+    target_link_libraries(${test_target} PRIVATE
         ${SODIUM_LIBRARY}
         OpenSSL::SSL
         OpenSSL::Crypto
