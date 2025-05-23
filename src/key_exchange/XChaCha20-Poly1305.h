@@ -1,4 +1,5 @@
-#pragma once
+#ifndef XCHACHA20_POLY1305_H
+#define XCHACHA20_POLY1305_H
 
 #include <string>
 
