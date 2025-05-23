@@ -39,6 +39,116 @@ struct SkippedMessageKey {
     }
 };
 
+// Common message class for device communication
+class DeviceMessage {
+public:
+    DeviceMessage() : header(nullptr), ciphertext(nullptr), plaintext(nullptr), length(0) {}
+    
+    ~DeviceMessage() {
+        if (header) delete header;
+        if (ciphertext) delete[] ciphertext;
+        if (plaintext) delete[] plaintext;
+    }
+    
+    // Copy constructor
+    DeviceMessage(const DeviceMessage& other) {
+        if (other.header) {
+            header = new MessageHeader();
+            memcpy(header->dh_public, other.header->dh_public, crypto_kx_PUBLICKEYBYTES);
+            header->prev_chain_length = other.header->prev_chain_length;
+            header->message_index = other.header->message_index;
+        } else {
+            header = nullptr;
+        }
+        
+        if (other.ciphertext) {
+            ciphertext = new unsigned char[other.length];
+            memcpy(ciphertext, other.ciphertext, other.length);
+        } else {
+            ciphertext = nullptr;
+        }
+        
+        if (other.plaintext) {
+            plaintext = new unsigned char[other.length];
+            memcpy(plaintext, other.plaintext, other.length);
+        } else {
+            plaintext = nullptr;
+        }
+        
+        length = other.length;
+    }
+    
+    // Move constructor
+    DeviceMessage(DeviceMessage&& other) noexcept 
+        : header(other.header), ciphertext(other.ciphertext), 
+          plaintext(other.plaintext), length(other.length) {
+        other.header = nullptr;
+        other.ciphertext = nullptr;
+        other.plaintext = nullptr;
+        other.length = 0;
+    }
+    
+    // Assignment operator
+    DeviceMessage& operator=(const DeviceMessage& other) {
+        if (this != &other) {
+            if (header) delete header;
+            if (ciphertext) delete[] ciphertext;
+            if (plaintext) delete[] plaintext;
+            
+            if (other.header) {
+                header = new MessageHeader();
+                memcpy(header->dh_public, other.header->dh_public, crypto_kx_PUBLICKEYBYTES);
+                header->prev_chain_length = other.header->prev_chain_length;
+                header->message_index = other.header->message_index;
+            } else {
+                header = nullptr;
+            }
+            
+            if (other.ciphertext) {
+                ciphertext = new unsigned char[other.length];
+                memcpy(ciphertext, other.ciphertext, other.length);
+            } else {
+                ciphertext = nullptr;
+            }
+            
+            if (other.plaintext) {
+                plaintext = new unsigned char[other.length];
+                memcpy(plaintext, other.plaintext, other.length);
+            } else {
+                plaintext = nullptr;
+            }
+            
+            length = other.length;
+        }
+        return *this;
+    }
+    
+    // Move assignment operator
+    DeviceMessage& operator=(DeviceMessage&& other) noexcept {
+        if (this != &other) {
+            if (header) delete header;
+            if (ciphertext) delete[] ciphertext;
+            if (plaintext) delete[] plaintext;
+            
+            header = other.header;
+            ciphertext = other.ciphertext;
+            plaintext = other.plaintext;
+            length = other.length;
+            
+            other.header = nullptr;
+            other.ciphertext = nullptr;
+            other.plaintext = nullptr;
+            other.length = 0;
+        }
+        return *this;
+    }
+    
+    MessageHeader* header;
+    unsigned char* ciphertext;
+    unsigned char* plaintext;
+    size_t length;
+};
+
 class DoubleRatchet {
 public:
     DoubleRatchet(const unsigned char* x3dh_root_key,
@@ -49,10 +159,10 @@ public:
     ~DoubleRatchet();
 
     // Creates a message key and header for sending
-    Message message_send(unsigned char* message);
+    DeviceMessage message_send(unsigned char* message);
 
     // Processes a received message with header and returns the message key
-    unsigned char* message_receive(Message message);
+    DeviceMessage message_receive(const DeviceMessage& encrypted_message);
 
     const unsigned char* get_public_key() const;
 
