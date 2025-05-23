@@ -79,6 +79,8 @@ set(CRYPTO_HEADERS
         src/endpoints/endpoints.h
         src/client_api_interactions/MakeAuthReq.h
         src/client_api_interactions/MakeUnauthReq.h
+        src/client_api_interactions/MakeAuthReq.h
+        src/client_api_interactions/MakeUnauthReq.h
 )
 
 # Create main executable
