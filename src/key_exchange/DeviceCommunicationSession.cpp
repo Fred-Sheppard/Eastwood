@@ -34,6 +34,7 @@ DeviceSendingCommunicationSession::DeviceSendingCommunicationSession(
     const unsigned char* recipient_ed25519_device_key_public
 ) : DeviceCommunicationSession() {
 
+    remote_device_key = std::vector<uint8_t>(recipient_device_key_public, recipient_device_key_public + crypto_box_PUBLICKEYBYTES);
     size_t out_len;
     unsigned char* session_id_ptr = concat_ordered(device_key_public, crypto_box_PUBLICKEYBYTES, 
                                                  recipient_device_key_public, crypto_box_PUBLICKEYBYTES, 
@@ -83,6 +84,8 @@ DeviceReceivingCommunicationSession::DeviceReceivingCommunicationSession(
     const unsigned char* signed_prekey_private,
     const unsigned char* onetime_prekey_private
 ) : DeviceCommunicationSession() {
+    remote_device_key = std::vector<uint8_t>(initiator_device_key_public, initiator_device_key_public + crypto_box_PUBLICKEYBYTES);
+
     size_t out_len;
     unsigned char* session_id_ptr = concat_ordered(device_key_public, crypto_box_PUBLICKEYBYTES, 
                                                  initiator_device_key_public, crypto_box_PUBLICKEYBYTES, 

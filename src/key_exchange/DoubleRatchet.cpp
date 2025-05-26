@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <sstream>
 #include "XChaCha20-Poly1305.h"
+#include "src/endpoints/endpoints.h"
 
 // Context strings for key derivation - must be exactly 8 bytes
 const char* const ROOT_CTX = "DRROOT01";
@@ -115,7 +116,7 @@ std::vector<unsigned char> DoubleRatchet::derive_message_key(unsigned char* chai
     return message_key;
 }
 
-DeviceMessage DoubleRatchet::message_send(const unsigned char* message) {
+DeviceMessage DoubleRatchet::message_send(const unsigned char* message, std::vector<uint8_t> device_id) {
     if (send_chain.index == 0) {
         dh_ratchet(nullptr, true);
     }
@@ -136,7 +137,7 @@ DeviceMessage DoubleRatchet::message_send(const unsigned char* message) {
     device_message.ciphertext = encrypt_message_given_key(message, msg_len, message_key.data());
     device_message.length = device_message.ciphertext.size();
 
-    return device_message;
+    post_ratchet_message(device_message, device_id);
 }
 
 std::vector<unsigned char> DoubleRatchet::message_receive(const DeviceMessage& encrypted_message) {

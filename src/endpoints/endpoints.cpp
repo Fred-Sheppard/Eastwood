@@ -1,5 +1,6 @@
 #include "endpoints.h"
 #include <nlohmann/json.hpp>
+#include "src/key_exchange/utils/ConversionUtils.h"
 
 #include "src/key_exchange/utils.h"
 
@@ -11,6 +12,8 @@ void post_register_user(
     unsigned char registration_nonce[NONCE_LEN],
     unsigned char nonce_signature[crypto_sign_BYTES]
 ) {
+
+    //todo change to hex
     json body = {
         {"username", username},
         {"identity_public", bin2base64(pk_identity, crypto_sign_PUBLICKEYBYTES)},
@@ -25,6 +28,8 @@ void post_register_device(
     unsigned char pk_device[crypto_sign_PUBLICKEYBYTES],
     unsigned char pk_signature[crypto_sign_BYTES]
 ) {
+
+    //todo: change to hex
     json body = {
         {"identity_public", bin2base64(pk_id, crypto_sign_PUBLICKEYBYTES)},
         {"device_public", bin2base64(pk_device, crypto_sign_PUBLICKEYBYTES)},
@@ -32,3 +37,27 @@ void post_register_device(
     };
     // TODO:  post("/registerDevice", body.dump());
 };
+
+Message* get_messages() {
+    // TODO: GET /getMessages/device
+
+    //TODO: get vector of messages and parse individually and send on through identity
+    json response = json::parse(""); // Replace with actual API response
+    
+    Message* msg = new Message();
+    msg->header = new MessageHeader();
+    
+    std::vector<uint8_t> device_session_id = hex_string_to_binary(response["device_session_id"]);
+    std::vector<uint8_t> dh_public = hex_string_to_binary(response["dh_public"]);
+    std::vector<uint8_t> ciphertext = hex_string_to_binary(response["ciphertext"]);
+    
+    std::copy(device_session_id.begin(), device_session_id.end(), msg->header->device_session_id.begin());
+    std::copy(dh_public.begin(), dh_public.end(), msg->header->dh_public.begin());
+    msg->header->prev_chain_length = response["prev_chain_length"];
+    msg->header->message_index = response["message_index"];
+    std::copy(ciphertext.begin(), ciphertext.end(), msg->message.begin());
+    
+    return msg;
+
+    // todo: route through identity session?
+}

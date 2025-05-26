@@ -46,6 +46,7 @@ protected:
     std::vector<uint8_t> device_session_id;
     std::unique_ptr<DoubleRatchet> ratchet;
     std::vector<uint8_t> shared_secret;
+    std::vector<uint8_t> remote_device_key;
 };
 
 class DeviceSendingCommunicationSession: public DeviceCommunicationSession {
