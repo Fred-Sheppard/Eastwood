@@ -125,9 +125,16 @@ private:
     int prev_send_chain_length; // Length of previous sending chain
 
     // Cache of message keys for skipped/out-of-order messages
-    std::map<SkippedMessageKey, std::vector<unsigned char>> skipped_message_keys;
+    std::vector<std::pair<SkippedMessageKey, std::vector<unsigned char>>> skipped_message_keys;
     // Maximum number of skipped message keys to keep in memory
     static constexpr int MAX_SKIPPED_MESSAGE_KEYS = 100;
 };
+
+namespace cereal {
+    template <class Archive>
+    void serialize(Archive& ar, std::pair<SkippedMessageKey, std::vector<unsigned char>>& p) {
+        ar(p.first, p.second);
+    }
+}
 
 #endif //DOUBLERATCHET_H

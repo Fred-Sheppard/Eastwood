@@ -111,10 +111,12 @@ target_link_libraries(Eastwood PRIVATE
 add_executable(identity_communication_session_test
     test/identity_communication_session_test.cpp
     ${CRYPTO_SOURCES}
+    src/endpoints/endpoints.cpp
 )
 add_executable(device_communication_session_serialization_test
     test/device_communication_session_serialization_test.cpp
     ${CRYPTO_SOURCES}
+    src/endpoints/endpoints.cpp
 )
 
 # Include directories and link libraries for tests
@@ -128,6 +130,7 @@ foreach(test_target IN ITEMS identity_communication_session_test device_communic
         ${SODIUM_LIBRARY}
         OpenSSL::SSL
         OpenSSL::Crypto
+        nlohmann_json::nlohmann_json
     )
 endforeach()
 

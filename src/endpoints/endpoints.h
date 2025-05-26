@@ -25,6 +25,6 @@ void post_ratchet_message(
     std::vector<uint8_t> device_id
     );
 
-Message* get_messages()
+Message* get_messages();
 
 #endif //ENDPOINTS_H

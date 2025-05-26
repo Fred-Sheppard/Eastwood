@@ -6,6 +6,8 @@
 #define IDENTITYCOMMUNICATIONSESSION_H
 #include <vector>
 #include "DeviceCommunicationSession.h"
+#include <map>
+#include <string>
 
 struct keyBundle {
     bool isSending;
@@ -36,12 +38,15 @@ public:
     // device session id of two device ids in alphabetical order hashed
     ~IdentityCommunicationSession();
 
-    void send_msg(const std::vector<unsigned char>& message) const;
-    void recv_msg(Message msg) const;
+    void add_device_session(const std::string& device_id, DeviceCommunicationSession* session);
+    void remove_device_session(const std::string& device_id);
+    void send_msg(const std::string& device_id, std::vector<unsigned char> message);
+    void recv_msg(const DeviceMessage &msg);
+
 private:
     keyBundle myBundle;
     unsigned char* identity_session_id;
-    std::map<unsigned char*, DeviceCommunicationSession*> device_sessions;
+    std::map<std::string, DeviceCommunicationSession*> device_sessions;
 
     void createSessionFromKeyBundle(const keyBundle &);
     void updateSessionsFromKeyBundles(const std::vector<keyBundle> &);

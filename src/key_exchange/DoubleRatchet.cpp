@@ -137,15 +137,20 @@ DeviceMessage DoubleRatchet::message_send(const unsigned char* message, std::vec
     device_message.ciphertext = encrypt_message_given_key(message, msg_len, message_key.data());
     device_message.length = device_message.ciphertext.size();
 
-    post_ratchet_message(device_message, device_id);
+    // Convert DeviceMessage to Message for the API call
+    Message api_message;
+    api_message.header = device_message.header;
+    api_message.message = device_message.ciphertext;
+    post_ratchet_message(&api_message, device_id);
+
+    return device_message;
 }
 
 std::vector<unsigned char> DoubleRatchet::message_receive(const DeviceMessage& encrypted_message) {
-    SkippedMessageKey skipped_key_id = {
-        encrypted_message.header->dh_public,
-        encrypted_message.header->message_index
-    };
-    auto it = skipped_message_keys.find(skipped_key_id);
+    // Find skipped key in vector
+    auto it = std::find_if(skipped_message_keys.begin(), skipped_message_keys.end(), [&](const auto& pair) {
+        return pair.first.dh_public == encrypted_message.header->dh_public && pair.first.message_index == encrypted_message.header->message_index;
+    });
     if (it != skipped_message_keys.end()) {
         std::vector<unsigned char> plaintext = decrypt_message_given_key(
             encrypted_message.ciphertext.data(), 
@@ -159,93 +164,55 @@ std::vector<unsigned char> DoubleRatchet::message_receive(const DeviceMessage& e
     bool new_ratchet = encrypted_message.header->dh_public != std::vector<unsigned char>(remote_dh_public.begin(), remote_dh_public.end());
     if (new_ratchet) {
         std::cout << "New DH ratchet key detected" << std::endl;
-        
-        // skip any messages from the current receiving chain that we haven't received yet
         if (recv_chain.index > 0) {
             std::cout << "Caching skipped message keys from current chain (" << recv_chain.index 
                       << " to " << (encrypted_message.header->prev_chain_length - 1) << ")" << std::endl;
-            
-            // skip current receive chain
             for (int i = recv_chain.index; i < encrypted_message.header->prev_chain_length; i++) {
                 std::vector<unsigned char> skipped_key = derive_message_key(recv_chain.chain_key);
-                
-                SkippedMessageKey key_id = {{0}, i};
-                memcpy(key_id.dh_public.data(), remote_dh_public.data(), crypto_kx_PUBLICKEYBYTES);
-                
-                skipped_message_keys[key_id] = std::move(skipped_key);
-                
+                SkippedMessageKey key_id = {remote_dh_public, i};
+                skipped_message_keys.push_back({key_id, std::move(skipped_key)});
                 std::cout << "  Cached key for message " << i << " in previous chain: " 
                           << bin2hex(skipped_key.data(), crypto_kdf_KEYBYTES) << std::endl;
-                
-                // enforce maximum cache size by removing oldest keys if needed
                 if (skipped_message_keys.size() > MAX_SKIPPED_MESSAGE_KEYS) {
                     skipped_message_keys.erase(skipped_message_keys.begin());
                     std::cout << "  Removed oldest key from cache due to size limit" << std::endl;
                 }
             }
         }
-        
-        // perform DH ratchet with the new key
         dh_ratchet(encrypted_message.header->dh_public.data(), false);
-        
-        // reset receive chain index
         recv_chain.index = 0;
     }
-    
-    // skip any messages in the current chain that we haven't processed yet
     if (encrypted_message.header->message_index > recv_chain.index) {
         std::cout << "Skipping ahead in receive chain from " << recv_chain.index 
                   << " to " << encrypted_message.header->message_index << std::endl;
-        
-        // Store the original chain key so we can restore it after caching skipped keys
         unsigned char original_chain_key[crypto_kdf_KEYBYTES];
         memcpy(original_chain_key, recv_chain.chain_key, crypto_kdf_KEYBYTES);
-        
-        // Cache skipped message keys
         for (int i = recv_chain.index; i < encrypted_message.header->message_index; i++) {
             std::vector<unsigned char> skipped_key = derive_message_key(recv_chain.chain_key);
-            
-            SkippedMessageKey key_id = {{0}, i};
-            memcpy(key_id.dh_public.data(), encrypted_message.header->dh_public.data(), crypto_kx_PUBLICKEYBYTES);
-            
-            skipped_message_keys[key_id] = std::move(skipped_key);
-            
+            SkippedMessageKey key_id = {encrypted_message.header->dh_public, i};
+            skipped_message_keys.push_back({key_id, std::move(skipped_key)});
             std::cout << "  Cached key for skipped message " << i << ": " 
                       << bin2hex(skipped_key.data(), crypto_kdf_KEYBYTES) << std::endl;
-            
-            // enforce maximum cache size
             if (skipped_message_keys.size() > MAX_SKIPPED_MESSAGE_KEYS) {
                 skipped_message_keys.erase(skipped_message_keys.begin());
                 std::cout << "  Removed oldest key from cache due to size limit" << std::endl;
             }
         }
-        
-        // restore the original chain key state before generating the message key
         memcpy(recv_chain.chain_key, original_chain_key, crypto_kdf_KEYBYTES);
-        
-        // advance the chain to the current message index
         for (int i = recv_chain.index; i < encrypted_message.header->message_index; i++) {
             unsigned char temp_key[crypto_kdf_KEYBYTES];
             if (crypto_kdf_derive_from_key(temp_key, crypto_kdf_KEYBYTES, 1, MSG_CTX, recv_chain.chain_key) != 0) {
                 throw std::runtime_error("Failed to derive temporary message key");
             }
-            
-            // update chain key
             if (crypto_kdf_derive_from_key(recv_chain.chain_key, crypto_kdf_KEYBYTES, 2, CHAIN_CTX, recv_chain.chain_key) != 0) {
                 throw std::runtime_error("Failed to update chain key");
             }
         }
     }
-    
-    // generate the message key
     std::vector<unsigned char> message_key = derive_message_key(recv_chain.chain_key);
     std::cout << "[DEBUG] Receiver derived message key: " << bin2hex(message_key.data(), crypto_kdf_KEYBYTES) << std::endl;
     std::cout.flush();
-    
-    // update the receive chain index
     recv_chain.index = encrypted_message.header->message_index + 1;
-
-    // Decrypt the message
     return decrypt_message_given_key(encrypted_message.ciphertext.data(), encrypted_message.ciphertext.size(), message_key.data());
 }
 

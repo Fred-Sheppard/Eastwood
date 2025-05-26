@@ -110,7 +110,8 @@ void test_device_communication_session_serialization() {
         
         // Test sending a message through the loaded sending session
         const char* test_message = "Hello, this is a test message!";
-        DeviceMessage encrypted = loaded_sending_session.getRatchet()->message_send((unsigned char*)test_message);
+        std::vector<uint8_t> dummy_device_id(32, 0); // Create a dummy device ID for testing
+        DeviceMessage encrypted = loaded_sending_session.getRatchet()->message_send((unsigned char*)test_message, dummy_device_id);
         
         // Test receiving the message through the loaded receiving session
         std::vector<unsigned char> decrypted = loaded_receiving_session.getRatchet()->message_receive(encrypted);
@@ -170,7 +171,7 @@ void test_device_communication_session_serialization() {
 
         // --- NEW: Continue conversation ---
         const char* test_message2 = "Second message after serialization!";
-        DeviceMessage encrypted2 = deserialized_sending_session.getRatchet()->message_send((unsigned char*)test_message2);
+        DeviceMessage encrypted2 = deserialized_sending_session.getRatchet()->message_send((unsigned char*)test_message2, dummy_device_id);
         std::vector<unsigned char> decrypted2 = deserialized_receiving_session.getRatchet()->message_receive(encrypted2);
         std::string decrypted_str2(decrypted2.begin(), decrypted2.end());
         if (decrypted_str2 == test_message2) {

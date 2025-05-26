@@ -3,6 +3,8 @@
 //
 #include "IdentityCommunicationSession.h"
 #include "utils.h"
+#include <cstring>
+
 
 IdentityCommunicationSession::IdentityCommunicationSession(const keyBundle &myBundle, const std::vector<keyBundle> &key_bundles, const unsigned char* public_identity_key_1, const unsigned char* public_identity_key_2)
     : myBundle(myBundle) {
@@ -24,12 +26,13 @@ void IdentityCommunicationSession::createSessionFromKeyBundle(const keyBundle &k
     //1. compute device_session_id
     size_t identity_session_key_len = sizeof(myBundle.device_key_public) + sizeof(key_bundle.device_key_public);
     unsigned char* device_session_id_new = concat_ordered(*myBundle.device_key_public, crypto_box_PUBLICKEYBYTES, *key_bundle.device_key_public, crypto_box_PUBLICKEYBYTES, identity_session_key_len);
+    std::string session_id(reinterpret_cast<char*>(device_session_id_new), identity_session_key_len);
 
     //2. verify if device_session_id doesnt exist already
-    if (!device_sessions[device_session_id_new]) {
+    if (!device_sessions[session_id]) {
         //3. create new device session
         if (key_bundle.isSending) {
-            device_sessions[device_session_id_new] = new DeviceSendingCommunicationSession(
+            device_sessions[session_id] = new DeviceSendingCommunicationSession(
             *key_bundle.device_key_public,
             *key_bundle.device_key_private,
             *key_bundle.ephemeral_key_public,
@@ -41,7 +44,7 @@ void IdentityCommunicationSession::createSessionFromKeyBundle(const keyBundle &k
             *myBundle.ed25519_device_key_public
             );
         } else {
-            device_sessions[device_session_id_new] = new DeviceReceivingCommunicationSession(
+            device_sessions[session_id] = new DeviceReceivingCommunicationSession(
             *key_bundle.device_key_public,
             *key_bundle.ephemeral_key_public,
             *myBundle.device_key_public,
@@ -52,6 +55,7 @@ void IdentityCommunicationSession::createSessionFromKeyBundle(const keyBundle &k
             );
         }
     }
+    delete[] device_session_id_new;
 }
 
 IdentityCommunicationSession::~IdentityCommunicationSession() {
@@ -67,14 +71,35 @@ IdentityCommunicationSession::~IdentityCommunicationSession() {
     }
 }
 
-void IdentityCommunicationSession::send_msg(const std::vector<unsigned char> &message) const {
-    for (const auto&[fst, snd] : device_sessions) {
-        snd->send_msg(message);
+void IdentityCommunicationSession::add_device_session(const std::string& device_id, DeviceCommunicationSession* session) {
+    if (device_sessions.find(device_id) != device_sessions.end()) {
+        delete device_sessions[device_id];
+    }
+    device_sessions[device_id] = session;
+}
+
+void IdentityCommunicationSession::remove_device_session(const std::string& device_id) {
+    auto it = device_sessions.find(device_id);
+    if (it != device_sessions.end()) {
+        delete it->second;
+        device_sessions.erase(it);
     }
 }
 
-void IdentityCommunicationSession::recv_msg(Message msg) const {
-    device_sessions[std::string<msg.header->device_session_id>()]->recv_msg(msg);
+void IdentityCommunicationSession::send_msg(const std::string& device_id, std::vector<unsigned char> message) {
+    auto it = device_sessions.find(device_id);
+    if (it != device_sessions.end()) {
+        it->second->send_msg(message);
+    }
+}
+
+void IdentityCommunicationSession::recv_msg(const DeviceMessage &msg) {
+    // Convert device_session_id vector to string for map lookup
+    std::string session_id(msg.header->device_session_id.begin(), msg.header->device_session_id.end());
+    auto it = device_sessions.find(session_id);
+    if (it != device_sessions.end()) {
+        it->second->recv_msg(msg);
+    }
 }
 
 

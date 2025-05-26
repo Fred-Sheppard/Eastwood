@@ -45,7 +45,7 @@ Message* get_messages() {
     json response = json::parse(""); // Replace with actual API response
     
     Message* msg = new Message();
-    msg->header = new MessageHeader();
+    msg->header = std::make_unique<MessageHeader>();
     
     std::vector<uint8_t> device_session_id = hex_string_to_binary(response["device_session_id"]);
     std::vector<uint8_t> dh_public = hex_string_to_binary(response["dh_public"]);
@@ -60,4 +60,16 @@ Message* get_messages() {
     return msg;
 
     // todo: route through identity session?
+}
+
+void post_ratchet_message(const Message* msg, std::vector<uint8_t> device_id) {
+    json body = {
+        {"device_session_id", bin_to_hex(msg->header->device_session_id.data(), sizeof(msg->header->device_session_id.data()))},
+        {"dh_public", bin_to_hex(msg->header->dh_public.data(), sizeof(msg->header->dh_public.data()))},
+        {"prev_chain_length", msg->header->prev_chain_length},
+        {"prev_chain_length", msg->header->message_index},
+        {"ciphertext", bin_to_hex(msg->message.data(), sizeof(msg->message.data()))},
+    };
+
+    //todo: post to /sendMessage/deviceId
 }

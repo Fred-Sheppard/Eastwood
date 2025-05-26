@@ -11,7 +11,7 @@ DeviceCommunicationSession::DeviceCommunicationSession()
 }
 
 void DeviceCommunicationSession::send_msg(std::vector<unsigned char> message) const {
-    ratchet->message_send(message.data());
+    ratchet->message_send(message.data(), device_session_id);
 };
 
 void DeviceCommunicationSession::recv_msg(const DeviceMessage &msg) const {

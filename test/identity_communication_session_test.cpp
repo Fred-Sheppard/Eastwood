@@ -308,7 +308,8 @@ void test_message_encryption_decryption() {
         std::cout << "Alice's original message: " << alice_message << std::endl;
         
         // Alice encrypts the message
-        DeviceMessage encrypted_message = alice_ratchet.message_send((unsigned char*)alice_message);
+        std::vector<uint8_t> dummy_device_id(32, 0); // Replace 32 with the correct length if needed
+        DeviceMessage encrypted_message = alice_ratchet.message_send((unsigned char*)alice_message, dummy_device_id);
         std::cout << "Message encrypted with header: " << std::endl;
         std::cout << "  DH Public Key: " << bin2hex(encrypted_message.header->dh_public.data(), encrypted_message.header->dh_public.size()) << std::endl;
         std::cout << "  Message Index: " << encrypted_message.header->message_index << std::endl;
@@ -330,7 +331,7 @@ void test_message_encryption_decryption() {
         std::cout << "Bob's original message: " << bob_message << std::endl;
         
         // Bob encrypts the message
-        DeviceMessage bob_encrypted = bob_ratchet.message_send((unsigned char*)bob_message);
+        DeviceMessage bob_encrypted = bob_ratchet.message_send((unsigned char*)bob_message, dummy_device_id);
         std::cout << "Message encrypted with header: " << std::endl;
         std::cout << "  DH Public Key: " << bin2hex(bob_encrypted.header->dh_public.data(), bob_encrypted.header->dh_public.size()) << std::endl;
         std::cout << "  Message Index: " << bob_encrypted.header->message_index << std::endl;
