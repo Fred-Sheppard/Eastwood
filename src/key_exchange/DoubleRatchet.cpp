@@ -108,7 +108,7 @@ unsigned char* DoubleRatchet::derive_message_key(unsigned char* chain_key) {
     return message_key;
 }
 
-DeviceMessage DoubleRatchet::message_send(unsigned char* message, unsigned char* device_id) {
+DeviceMessage DoubleRatchet::message_send(unsigned char* message, const unsigned char* device_id) {
     // Perform DH ratchet step if needed (no ratchet on first message in chain)
     if (send_chain.index == 0) {
         dh_ratchet(nullptr, true);
@@ -121,7 +121,7 @@ DeviceMessage DoubleRatchet::message_send(unsigned char* message, unsigned char*
     memcpy(device_message.header->dh_public, local_dh_public, crypto_kx_PUBLICKEYBYTES);
     device_message.header->prev_chain_length = prev_send_chain_length;
     device_message.header->message_index = send_chain.index;
-    device_message.header->device_id = device_id;
+    memcpy(device_message.header->device_id, device_id, crypto_box_PUBLICKEYBYTES);
 
     // Derive message key for the current message
     unsigned char* message_key = derive_message_key(send_chain.chain_key);
@@ -141,10 +141,7 @@ DeviceMessage DoubleRatchet::message_send(unsigned char* message, unsigned char*
     delete[] message_key;
 
     // Convert DeviceMessage to Message for post_ratchet_message
-    Message msg;
-    msg.header = device_message.header;
-    msg.message = device_message.ciphertext;
-    post_ratchet_message(&msg);
+    post_ratchet_message(&device_message);
     return device_message;
 }
 
