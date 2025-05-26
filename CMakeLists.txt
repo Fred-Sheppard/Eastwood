@@ -66,28 +66,22 @@ set(CRYPTO_SOURCES
 )
 
 set(CRYPTO_HEADERS
-    src/key_exchange/DoubleRatchet.h
-    src/key_exchange/x3dh.h
-    src/key_exchange/DeviceCommunicationSession.h
-    src/key_exchange/utils.h
-    src/algorithms/algorithms.cpp
-    src/algorithms/algorithms.h
-    src/algorithms/algorithms.cpp
-    src/algorithms/algorithms.h
-    src/key_exchange/XChaCha20-Poly1305.h
-    src/libraries/BaseClient.h
-    src/libraries/HTTPSClient.h
-    src/libraries/BaseClient.cpp
-    src/libraries/HTTPSClient.cpp
-    src/endpoints/endpoints.cpp
-    src/endpoints/endpoints.h
-    src/auth/register_device/register_device.h
-    src/auth/register_user/register_user.h
-    src/client_api_interactions/MakeAuthReq.h
-    src/client_api_interactions/MakeUnauthReq.h
-    src/client_api_interactions/MakeAuthReq.h
-    src/client_api_interactions/MakeUnauthReq.h
-    src/utils/ConversionUtils.h
+        src/key_exchange/DoubleRatchet.h
+        src/key_exchange/x3dh.h
+        src/key_exchange/DeviceCommunicationSession.h
+        src/key_exchange/utils.h
+        src/algorithms/algorithms.cpp
+        src/algorithms/algorithms.h
+        src/key_exchange/XChaCha20-Poly1305.h
+        src/key_exchange/utils/ConversionUtils.h
+        src/libraries/BaseClient.h
+        src/libraries/HTTPSClient.h
+        src/libraries/BaseClient.cpp
+        src/libraries/HTTPSClient.cpp
+        src/endpoints/endpoints.cpp
+        src/endpoints/endpoints.h
+        src/auth/register_device/register_device.h
+        src/auth/register_user/register_user.h
 )
 
 # Create main executable
@@ -102,7 +96,6 @@ add_executable(Eastwood
 target_include_directories(Eastwood PRIVATE 
     ${SODIUM_INCLUDE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/external/cereal/include
 )
 
 target_link_libraries(Eastwood PRIVATE 
@@ -116,17 +109,12 @@ target_link_libraries(Eastwood PRIVATE
     nlohmann_json::nlohmann_json
 )
 
-# Create test executables (one per test file to avoid duplicate main)
-add_executable(identity_communication_session_test
+# Create test executable
+add_executable(EastwoodTests
     test/identity_communication_session_test.cpp
     ${CRYPTO_SOURCES}
 )
-add_executable(device_communication_session_serialization_test
-    test/device_communication_session_serialization_test.cpp
-    ${CRYPTO_SOURCES}
-)
 
-# Include directories and link libraries for tests
 foreach(test_target IN ITEMS identity_communication_session_test device_communication_session_serialization_test)
     target_include_directories(${test_target} PRIVATE 
         ${SODIUM_INCLUDE_DIR}
@@ -144,3 +132,4 @@ endforeach()
 # Add tests
 add_test(NAME identity_communication_session_test COMMAND identity_communication_session_test)
 add_test(NAME device_communication_session_serialization_test COMMAND device_communication_session_serialization_test)
+add_test(NAME EastwoodTests COMMAND EastwoodTests)
