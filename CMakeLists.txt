@@ -73,7 +73,7 @@ set(CRYPTO_HEADERS
         src/algorithms/algorithms.cpp
         src/algorithms/algorithms.h
         src/key_exchange/XChaCha20-Poly1305.h
-        src/key_exchange/utils/ConversionUtils.h
+        src/utils/ConversionUtils.h
         src/libraries/BaseClient.h
         src/libraries/HTTPSClient.h
         src/libraries/BaseClient.cpp
@@ -115,21 +115,22 @@ add_executable(EastwoodTests
     ${CRYPTO_SOURCES}
 )
 
-foreach(test_target IN ITEMS identity_communication_session_test device_communication_session_serialization_test)
-    target_include_directories(${test_target} PRIVATE 
-        ${SODIUM_INCLUDE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/external/cereal/include
-    )
-    
-    target_link_libraries(${test_target} PRIVATE 
-        ${SODIUM_LIBRARY}
-        OpenSSL::SSL
-        OpenSSL::Crypto
-    )
-endforeach()
+# Configure test target
+target_include_directories(EastwoodTests PRIVATE 
+    ${SODIUM_INCLUDE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/cereal/include
+)
 
-# Add tests
-add_test(NAME identity_communication_session_test COMMAND identity_communication_session_test)
-add_test(NAME device_communication_session_serialization_test COMMAND device_communication_session_serialization_test)
+target_link_libraries(EastwoodTests PRIVATE 
+    ${SODIUM_LIBRARY}
+    OpenSSL::SSL
+    OpenSSL::Crypto
+    nlohmann_json::nlohmann_json
+)
+
+# Enable testing
+enable_testing()
+
+# Add test
 add_test(NAME EastwoodTests COMMAND EastwoodTests)
