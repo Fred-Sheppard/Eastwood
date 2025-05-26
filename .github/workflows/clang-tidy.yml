@@ -44,7 +44,7 @@ jobs:
       run: |
         echo "Checking files: ${{ steps.changed-files.outputs.RELATIVE_FILES }}"
         # Run clang-tidy from project root, not build directory
-        clang-tidy -p build ${{ steps.changed-files.outputs.RELATIVE_FILES }} > clang-tidy-report.txt 2>&1 || true
+        clang-tidy -p build ${{ steps.changed-files.outputs.RELATIVE_FILES }} > clang-tidy-report.txt 2>&1
         cat clang-tidy-report.txt
 
     - name: Upload tidy report
