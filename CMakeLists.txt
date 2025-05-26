@@ -48,6 +48,9 @@ set(FRONTEND_SOURCES
     src/ui/windows/register/register.h
     src/ui/windows/register/register.ui
     src/ui/utils/messagebox.h
+    src/ui/windows/received_dashboard/received.cpp
+    src/ui/windows/received_dashboard/received.h
+    src/ui/windows/received_dashboard/received.ui
 )
 
 # Define cryptography sources and headers
@@ -63,6 +66,7 @@ set(CRYPTO_SOURCES
         src/libraries/BaseClient.cpp
         src/libraries/HTTPSClient.cpp
         src/endpoints/endpoints.cpp
+        
 )
 
 set(CRYPTO_HEADERS
