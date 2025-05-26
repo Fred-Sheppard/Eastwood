@@ -2,8 +2,11 @@
 #define MAKE_UNAUTH_REQ_H
 
 #include <string>
+#include <nlohmann/json.hpp>
 
-std::string post_unauth(const std::string& data, const std::string& endpoint = "/");
+using json = nlohmann::json;
+
+std::string post_unauth(const json& data, const std::string& endpoint = "/");
 std::string get_unauth(const std::string& endpoint = "/");
 
 #endif // MAKE_UNAUTH_REQ_H

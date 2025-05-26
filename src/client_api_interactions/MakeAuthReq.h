@@ -2,8 +2,11 @@
 #define MAKE_AUTH_REQ_H
 
 #include <string>
+#include <nlohmann/json.hpp>
 
-std::string post_auth(const std::string& data, const std::string& endpoint = "/");
+using json = nlohmann::json;
+
+std::string post_auth(const json& data, const std::string& endpoint = "/");
 std::string get_auth(const std::string& endpoint = "/");
 
 #endif // MAKE_AUTH_REQ_H

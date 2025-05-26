@@ -2,8 +2,11 @@
 #include <iostream>
 #include "src/libraries/HTTPSClient.h"
 #include "../utils/ConversionUtils.h"
+#include <nlohmann/json.hpp>
 
-std::string post_unauth(const std::string& data, const std::string& endpoint = "/") {
+using json = nlohmann::json;
+
+std::string post_unauth(const json& data, const std::string& endpoint = "/") {
 
     std::string API_HOST = load_env_variable("API_HOST");
     if (API_HOST.empty()) {
@@ -15,7 +18,8 @@ std::string post_unauth(const std::string& data, const std::string& endpoint = "
     std::string headers = "Content-Type: application/json\n";
 
     webwood::HTTPSClient httpsclient;
-    std::string response = httpsclient.post(API_HOST, API_PATH, headers, data);
+    std::string request_body = data.dump();
+    std::string response = httpsclient.post(API_HOST, API_PATH, headers, request_body);
 
     return response;
 }

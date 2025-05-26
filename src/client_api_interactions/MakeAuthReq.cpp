@@ -1,11 +1,14 @@
 #include <sodium.h>
 #include <iostream>
 #include <map>
+#include <nlohmann/json.hpp>
 #include "../libraries/HTTPSClient.h"
 #include "../algorithms/algorithms.h"
 #include "../utils/ConversionUtils.h"
 
-std::string post_auth(const std::string& data, const std::string& endpoint = "/") {
+using json = nlohmann::json;
+
+std::string post_auth(const json& data, const std::string& endpoint = "/") {
 
     unsigned char public_key[crypto_box_PUBLICKEYBYTES];
     unsigned char private_key[crypto_box_SECRETKEYBYTES];
@@ -49,11 +52,24 @@ std::string post_auth(const std::string& data, const std::string& endpoint = "/"
     unsigned char nonce[NONCE_LEN];
     randombytes_buf(nonce, sizeof nonce);
 
-    // Create nonce signed with private key
-    unsigned char signature[crypto_sign_BYTES];
-    crypto_sign_detached(signature, nullptr, nonce, sizeof(nonce), private_key);
 
-    std::string request_body = data;
+    char b64_nonce[NONCE_LEN * 2];
+    sodium_bin2base64(b64_nonce, sizeof(b64_nonce),
+                    nonce, sizeof(nonce),
+                    sodium_base64_VARIANT_URLSAFE_NO_PADDING);
+
+    // Parse and modify JSON
+    json request_json = data;
+    request_json.push_back({"nonce", std::string(b64_nonce)});
+    // convert to string for signing
+    std::string request_body = request_json.dump();
+
+    // Sign the request body and nonce with the private key
+    unsigned char signature[crypto_sign_BYTES];
+    crypto_sign_detached(signature, nullptr, 
+                        reinterpret_cast<const unsigned char*>(request_body.c_str()),
+                        request_body.length(), 
+                        private_key);
 
     // convert headers to base64
     char b64_public_key[crypto_sign_PUBLICKEYBYTES * 2];
