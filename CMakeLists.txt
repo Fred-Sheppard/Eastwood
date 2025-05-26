@@ -48,6 +48,7 @@ set(FRONTEND_SOURCES
     src/ui/windows/register/register.h
     src/ui/windows/register/register.ui
     src/ui/utils/messagebox.h
+    CMAKE_EXPORT_COMPILE_COMMANDS ON
 )
 
 # Define cryptography sources and headers

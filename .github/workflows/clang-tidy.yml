@@ -1,0 +1,42 @@
+name: Clang-Tidy Lint
+
+on:
+  push:
+    paths:
+      - '**.cpp'
+      - '**.h'
+  pull_request:
+    paths:
+      - '**.cpp'
+      - '**.h'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-tidy cmake build-essential
+
+    - name: Configure CMake
+      run: |
+        mkdir -p build
+        cd build
+        cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+    - name: Run clang-tidy
+      run: |
+        cd build
+        clang-tidy -p . $(find ../src -name '*.cpp') > tidy-report.txt || true
+        cat tidy-report.txt
+
+    - name: Upload clang-tidy report as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: clang-tidy-report
+        path: build/tidy-report.txt
