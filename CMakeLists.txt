@@ -13,8 +13,15 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets UiTools)
 find_package(OpenSSL REQUIRED)
 
-# Add nlohmann_json
+# Add Google Test
 include(FetchContent)
+FetchContent_Declare(
+    googletest
+    URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+)
+FetchContent_MakeAvailable(googletest)
+
+# Add nlohmann_json
 FetchContent_Declare(
     json
     URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
@@ -52,36 +59,36 @@ set(FRONTEND_SOURCES
 
 # Define cryptography sources and headers
 set(CRYPTO_SOURCES
-        src/key_exchange/DoubleRatchet.cpp
-        src/key_exchange/x3dh.cpp
-        src/key_exchange/DeviceCommunicationSession.cpp
-        src/key_exchange/IdentityCommunicationSession.cpp
-        src/key_exchange/XChaCha20-Poly1305.cpp
-        src/utils/ConversionUtils.cpp
-        src/client_api_interactions/MakeAuthReq.cpp
-        src/client_api_interactions/MakeUnauthReq.cpp
-        src/libraries/BaseClient.cpp
-        src/libraries/HTTPSClient.cpp
-        src/endpoints/endpoints.cpp
+    src/key_exchange/DoubleRatchet.cpp
+    src/key_exchange/x3dh.cpp
+    src/key_exchange/DeviceCommunicationSession.cpp
+    src/key_exchange/IdentityCommunicationSession.cpp
+    src/key_exchange/XChaCha20-Poly1305.cpp
+    src/utils/ConversionUtils.cpp
+    src/client_api_interactions/MakeAuthReq.cpp
+    src/client_api_interactions/MakeUnauthReq.cpp
+    src/libraries/BaseClient.cpp
+    src/libraries/HTTPSClient.cpp
+    src/endpoints/endpoints.cpp
 )
 
 set(CRYPTO_HEADERS
-        src/key_exchange/DoubleRatchet.h
-        src/key_exchange/x3dh.h
-        src/key_exchange/DeviceCommunicationSession.h
-        src/key_exchange/utils.h
-        src/algorithms/algorithms.cpp
-        src/algorithms/algorithms.h
-        src/key_exchange/XChaCha20-Poly1305.h
-        src/utils/ConversionUtils.h
-        src/libraries/BaseClient.h
-        src/libraries/HTTPSClient.h
-        src/libraries/BaseClient.cpp
-        src/libraries/HTTPSClient.cpp
-        src/endpoints/endpoints.cpp
-        src/endpoints/endpoints.h
-        src/auth/register_device/register_device.h
-        src/auth/register_user/register_user.h
+    src/key_exchange/DoubleRatchet.h
+    src/key_exchange/x3dh.h
+    src/key_exchange/DeviceCommunicationSession.h
+    src/key_exchange/utils.h
+    src/algorithms/algorithms.cpp
+    src/algorithms/algorithms.h
+    src/key_exchange/XChaCha20-Poly1305.h
+    src/utils/ConversionUtils.h
+    src/libraries/BaseClient.h
+    src/libraries/HTTPSClient.h
+    src/libraries/BaseClient.cpp
+    src/libraries/HTTPSClient.cpp
+    src/endpoints/endpoints.cpp
+    src/endpoints/endpoints.h
+    src/auth/register_device/register_device.h
+    src/auth/register_user/register_user.h
 )
 
 # Create main executable
@@ -111,7 +118,7 @@ target_link_libraries(Eastwood PRIVATE
 
 # Create test executable
 add_executable(EastwoodTests
-    test/identity_communication_session_test.cpp
+    test/identity_session_message_test.cpp
     ${CRYPTO_SOURCES}
 )
 
@@ -119,10 +126,14 @@ add_executable(EastwoodTests
 target_include_directories(EastwoodTests PRIVATE 
     ${SODIUM_INCLUDE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/key_exchange
     ${CMAKE_CURRENT_SOURCE_DIR}/external/cereal/include
+    ${CMAKE_CURRENT_BINARY_DIR}/_deps/googletest-src/googletest/include
 )
 
 target_link_libraries(EastwoodTests PRIVATE 
+    GTest::gtest_main
     ${SODIUM_LIBRARY}
     OpenSSL::SSL
     OpenSSL::Crypto

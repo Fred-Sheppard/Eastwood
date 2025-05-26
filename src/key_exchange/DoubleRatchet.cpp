@@ -132,8 +132,8 @@ DeviceMessage DoubleRatchet::message_send(unsigned char* message, const unsigned
     send_chain.index++;
 
     // Encrypt the message
-    device_message.length = strlen(reinterpret_cast<const char*>(message));
-    std::vector<unsigned char> ciphertext_vec = encrypt_message_given_key(message, device_message.length, message_key);
+    size_t message_len = strlen(reinterpret_cast<const char*>(message));
+    std::vector<unsigned char> ciphertext_vec = encrypt_message_given_key(message, message_len, message_key);
     device_message.ciphertext = new unsigned char[ciphertext_vec.size()];
     memcpy(device_message.ciphertext, ciphertext_vec.data(), ciphertext_vec.size());
     device_message.length = ciphertext_vec.size();
