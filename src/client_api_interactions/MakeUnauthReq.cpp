@@ -33,7 +33,7 @@ std::string get_unauth(const std::string& endpoint = "/") {
     }
     const std::string API_PATH = API_HOST + endpoint;
 
-    std::string headers = "";
+    std::string headers;
     
     webwood::HTTPSClient httpsclient;
     std::string response = httpsclient.get(API_HOST, API_PATH, headers);

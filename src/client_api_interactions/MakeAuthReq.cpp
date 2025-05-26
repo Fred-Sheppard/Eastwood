@@ -99,7 +99,7 @@ std::string post_auth(const json& data, const std::string& endpoint = "/") {
     // Convert the map of headers into a single string
     std::string header_string;
     for (const auto& [key, value] : headers) {
-        header_string += key + ": " + value + "\n";
+        header_string.append(key).append(": ").append(value).append("\n");
     }
 
     webwood::HTTPSClient httpsclient;
@@ -184,7 +184,7 @@ std::string get_auth(const std::string& endpoint = "/") {
     // Convert the map of headers into a single string
     std::string header_string;
     for (const auto& [key, value] : headers) {
-        header_string += key + ": " + value + "\n";
+        header_string.append(key).append(": ").append(value).append("\n");
     }
 
     webwood::HTTPSClient httpsclient;
