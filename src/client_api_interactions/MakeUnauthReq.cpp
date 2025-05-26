@@ -13,13 +13,12 @@ std::string post_unauth(const json& data, const std::string& endpoint = "/") {
         std::cerr << "API_HOST not found in .env file" << std::endl;
         return "";
     }
-    const std::string API_PATH = API_HOST + endpoint;
 
     std::string headers = "Content-Type: application/json\n";
 
     webwood::HTTPSClient httpsclient;
     std::string request_body = data.dump();
-    std::string response = httpsclient.post(API_HOST, API_PATH, headers, request_body);
+    std::string response = httpsclient.post(API_HOST, endpoint, headers, request_body);
 
     return response;
 }
@@ -31,12 +30,11 @@ std::string get_unauth(const std::string& endpoint = "/") {
         std::cerr << "API_HOST not found in .env file" << std::endl;
         return "";
     }
-    const std::string API_PATH = API_HOST + endpoint;
 
     std::string headers;
     
     webwood::HTTPSClient httpsclient;
-    std::string response = httpsclient.get(API_HOST, API_PATH, headers);
+    std::string response = httpsclient.get(API_HOST, endpoint, headers);
 
     return response;
 }

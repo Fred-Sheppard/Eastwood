@@ -46,7 +46,6 @@ std::string post_auth(const json& data, const std::string& endpoint = "/") {
         std::cerr << "API_HOST not found in .env file" << std::endl;
         return "";
     }
-    const std::string API_PATH = API_HOST + endpoint;
 
     // Generate nonce
     unsigned char nonce[NONCE_LEN];
@@ -103,7 +102,7 @@ std::string post_auth(const json& data, const std::string& endpoint = "/") {
     }
 
     webwood::HTTPSClient httpsclient;
-    std::string response = httpsclient.post(API_HOST, API_PATH, header_string, request_body);
+    std::string response = httpsclient.post(API_HOST, endpoint, header_string, request_body);
 
     return response;
 }
@@ -147,7 +146,6 @@ std::string get_auth(const std::string& endpoint = "/") {
         std::cerr << "API_HOST not found in .env file" << std::endl;
         return "";
     }
-    const std::string API_PATH = API_HOST + endpoint;
 
     // Generate nonce
     unsigned char nonce[NONCE_LEN];
@@ -188,7 +186,8 @@ std::string get_auth(const std::string& endpoint = "/") {
     }
 
     webwood::HTTPSClient httpsclient;
-    std::string response = httpsclient.get(API_HOST, API_PATH, header_string);
+    std::string response = httpsclient.get(API_HOST, endpoint, header_string);
+
 
     return response;
 }
