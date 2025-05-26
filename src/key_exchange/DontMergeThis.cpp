@@ -53,5 +53,11 @@ WarningExample::~WarningExample() {
     // Warning: empty destructor
 }
 
-// Warning: non-const static member
-int WarningExample::globalCounter = 0;
+WarningExample::WarningExample() {
+    // Warning: empty constructor
+}
+
+WarningExample::WarningExample(int x) {
+    // Warning: unused parameter
+    x = 3.14;
+}
