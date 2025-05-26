@@ -5,6 +5,7 @@
 #include "./HTTPSClient.h"
 #include <iostream>
 #include <sstream>
+
 using namespace webwood;
 
 void HTTPSClient::init() {
@@ -66,6 +67,7 @@ std::string HTTPSClient::formatHeaders(const std::string &headers) {
 
     return formatted_headers;
 }
+
 
 std::string HTTPSClient::get(const std::string& host, const std::string& path, std::string& port, const std::string &headers) {
     int sock_fd = create_socket(host.c_str(), port.c_str());

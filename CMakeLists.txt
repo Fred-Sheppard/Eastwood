@@ -75,6 +75,7 @@ set(CRYPTO_HEADERS
     src/algorithms/algorithms.cpp
     src/algorithms/algorithms.h
     src/key_exchange/XChaCha20-Poly1305.h
+    src/key_exchange/utils/ConversionUtils.h
     src/libraries/BaseClient.h
     src/libraries/HTTPSClient.h
     src/libraries/BaseClient.cpp
@@ -88,7 +89,6 @@ set(CRYPTO_HEADERS
     src/client_api_interactions/MakeAuthReq.h
     src/client_api_interactions/MakeUnauthReq.h
     src/utils/ConversionUtils.h
-
 )
 
 # Create main executable
@@ -129,12 +129,13 @@ add_executable(device_communication_session_serialization_test
 
 # Include directories and link libraries for tests
 foreach(test_target IN ITEMS identity_communication_session_test device_communication_session_serialization_test)
-    target_include_directories(${test_target} PRIVATE
+    target_include_directories(${test_target} PRIVATE 
         ${SODIUM_INCLUDE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/external/cereal/include
     )
-    target_link_libraries(${test_target} PRIVATE
+    
+    target_link_libraries(${test_target} PRIVATE 
         ${SODIUM_LIBRARY}
         OpenSSL::SSL
         OpenSSL::Crypto
