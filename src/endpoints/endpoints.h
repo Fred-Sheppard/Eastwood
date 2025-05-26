@@ -4,6 +4,7 @@
 #include <sodium.h>
 
 #include "src/algorithms/constants.h"
+#include "src/key_exchange/DoubleRatchet.h"
 
 void post_register_user(
     const std::string &username,
@@ -19,4 +20,9 @@ void post_register_device(
     unsigned char pk_signature[crypto_sign_BYTES]
 );
 
+void post_ratchet_message(
+    const Message* msg
+);
+
+Message* get_messages();
 #endif //ENDPOINTS_H

@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <sstream>
 #include "XChaCha20-Poly1305.h"
+#include "src/endpoints/endpoints.h"
 
 // Context strings for key derivation - must be exactly 8 bytes
 const char* const ROOT_CTX = "DRROOT01";
@@ -107,7 +108,7 @@ unsigned char* DoubleRatchet::derive_message_key(unsigned char* chain_key) {
     return message_key;
 }
 
-DeviceMessage DoubleRatchet::message_send(unsigned char* message) {
+DeviceMessage DoubleRatchet::message_send(unsigned char* message, unsigned char* device_id) {
     // Perform DH ratchet step if needed (no ratchet on first message in chain)
     if (send_chain.index == 0) {
         dh_ratchet(nullptr, true);
@@ -120,6 +121,7 @@ DeviceMessage DoubleRatchet::message_send(unsigned char* message) {
     memcpy(device_message.header->dh_public, local_dh_public, crypto_kx_PUBLICKEYBYTES);
     device_message.header->prev_chain_length = prev_send_chain_length;
     device_message.header->message_index = send_chain.index;
+    device_message.header->device_id = device_id;
 
     // Derive message key for the current message
     unsigned char* message_key = derive_message_key(send_chain.chain_key);
@@ -137,6 +139,12 @@ DeviceMessage DoubleRatchet::message_send(unsigned char* message) {
     device_message.length = ciphertext_vec.size();
 
     delete[] message_key;
+
+    // Convert DeviceMessage to Message for post_ratchet_message
+    Message msg;
+    msg.header = device_message.header;
+    msg.message = device_message.ciphertext;
+    post_ratchet_message(&msg);
     return device_message;
 }
 
