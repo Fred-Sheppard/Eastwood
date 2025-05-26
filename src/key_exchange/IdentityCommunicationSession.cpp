@@ -67,4 +67,16 @@ IdentityCommunicationSession::~IdentityCommunicationSession() {
     }
 }
 
+void IdentityCommunicationSession::message_send(unsigned char* message) {
+    for (auto&[fst, snd] : device_sessions) {
+        snd->message_send(message);
+    }
+}
+
+void IdentityCommunicationSession::message_send(DeviceMessage message) {
+    for (auto&[fst, snd] : device_sessions) {
+        snd->message_receive(message);
+    }
+}
+
 #include "IdentityCommunicationSession.h"

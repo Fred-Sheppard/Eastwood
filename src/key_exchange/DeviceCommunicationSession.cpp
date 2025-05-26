@@ -18,6 +18,15 @@ DeviceCommunicationSession::DeviceCommunicationSession()
     std::cout << "\n===== INITIALIZING DEVICE COMMUNICATION SESSION =====" << std::endl;
 }
 
+void DeviceCommunicationSession::message_send(unsigned char* message, unsigned char* device_id) {
+    ratchet->message_send(message, device_id);
+}
+
+void DeviceCommunicationSession::message_receive(DeviceMessage message) {
+    ratchet->message_receive(message);
+}
+
+
 DeviceCommunicationSession::~DeviceCommunicationSession() {
     // Base class destructor - will be called after derived class destructors
 }

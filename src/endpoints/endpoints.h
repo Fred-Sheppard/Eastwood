@@ -21,7 +21,7 @@ void post_register_device(
 );
 
 void post_ratchet_message(
-    const Message* msg
+    const DeviceMessage* msg
 );
 
 Message* get_messages();

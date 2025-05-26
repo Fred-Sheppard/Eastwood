@@ -35,6 +35,9 @@ public:
     // ensure to make sure the device session does not already exist
     // device session id of two device ids in alphabetical order hashed
     ~IdentityCommunicationSession();
+
+    void message_send(unsigned char* message);
+    void message_receive(DeviceMessage message);
 private:
     keyBundle myBundle;
     unsigned char* identity_session_id;

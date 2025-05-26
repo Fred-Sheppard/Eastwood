@@ -58,13 +58,13 @@ Message* get_messages() {
     // todo: route through identity session?
 }
 
-void post_ratchet_message(const Message* msg) {
+void post_ratchet_message(const DeviceMessage* msg) {
     json body = {
         {"device_id", bin_to_hex(msg->header->device_id, sizeof(msg->header->device_id))},
         {"dh_public", bin_to_hex(msg->header->dh_public, sizeof(msg->header->dh_public))},
         {"prev_chain_length", msg->header->prev_chain_length},
         {"prev_chain_length", msg->header->message_index},
-        {"ciphertext", bin_to_hex(msg->message, sizeof(msg->message))},
+        {"ciphertext", bin_to_hex(msg->ciphertext, sizeof(msg->ciphertext))},
     };
     //todo: post to /sendMessage/deviceId
 }
