@@ -77,6 +77,8 @@ set(CRYPTO_HEADERS
         src/libraries/BaseClient.h
         src/libraries/HTTPSClient.h
         src/endpoints/endpoints.h
+        src/auth/register_device/register_device.h
+        src/auth/register_user/register_user.h
         src/client_api_interactions/MakeAuthReq.h
         src/client_api_interactions/MakeUnauthReq.h
         src/client_api_interactions/MakeAuthReq.h
