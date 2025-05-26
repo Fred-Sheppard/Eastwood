@@ -73,7 +73,7 @@ void IdentityCommunicationSession::message_send(unsigned char* message) {
     }
 }
 
-void IdentityCommunicationSession::message_send(DeviceMessage message) {
+void IdentityCommunicationSession::message_receive(DeviceMessage message) {
     for (auto&[fst, snd] : device_sessions) {
         snd->message_receive(message);
     }

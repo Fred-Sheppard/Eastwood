@@ -17,10 +17,11 @@ public:
     virtual DoubleRatchet* getRatchet() = 0;
     unsigned char* getDeviceSessionId();
 
-    void message_send(unsigned char* message, unsigned char* device_id);
+    void message_send(unsigned char* message);
     void message_receive(DeviceMessage message);
 protected:
     unsigned char* device_session_id;
+    const unsigned char *device_id;
     std::unique_ptr<DoubleRatchet> ratchet;
     unsigned char* shared_secret;
 };
