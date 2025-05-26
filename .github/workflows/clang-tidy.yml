@@ -2,9 +2,7 @@ name: Clang-Tidy on PR Files Only
 
 on:
   pull_request:
-    paths:
-      - 'src/**/*.cpp'
-      - 'src/**/*.h'
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
