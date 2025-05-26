@@ -74,9 +74,10 @@ void IdentityCommunicationSession::message_send(unsigned char* message) {
 }
 
 void IdentityCommunicationSession::message_receive(DeviceMessage message) {
-    for (auto&[fst, snd] : device_sessions) {
-        snd->message_receive(message);
-    }
+    size_t identity_session_key_len = sizeof(myBundle.device_key_public) + sizeof(message.header->device_id);
+    unsigned char* device_session_id_new = concat_ordered(*myBundle.device_key_public, crypto_box_PUBLICKEYBYTES, message.header->device_id, crypto_box_PUBLICKEYBYTES, identity_session_key_len);
+
+    device_sessions[device_session_id_new]->message_receive(message);
 }
 
 #include "IdentityCommunicationSession.h"
