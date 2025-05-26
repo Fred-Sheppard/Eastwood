@@ -2,12 +2,21 @@
 #include "ui/windows/login/login.h"
 #include "./libraries/HTTPSClient.h"
 #include <iostream>
+#include "./client_api_interactions/MakeAuthReq.h"
+#include "./client_api_interactions/MakeUnauthReq.h"
 
 int main(int argc, char *argv[]) {
+    
     webwood::HTTPSClient httpclient;
     // std::string headers = "User-Agent: NiallClient/1.0\nAuthorization: Bearer abc123";
     // std::string body = "bod: bod";
     // std::string res = httpclient.post("webhook.site", "/86b5bc32-daa9-4f09-88eb-c658b71ae426", headers, body );
+    // std::cout << res << std::endl;
+    // std::string test_data = "Hi there";
+    // std::string res = post_auth(test_data, "/86b5bc32-daa9-4f09-88eb-c658b71ae426");
+    // std::cout << "res: " << res << std::endl;
+    // std::string res2 = post_unauth(test_data, "/86b5bc32-daa9-4f09-88eb-c658b71ae426");
+    // std::cout << "res2: " << res2 << std::endl;
     // std::cout << res << std::endl;
     QApplication app(argc, argv);
     Login login;

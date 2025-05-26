@@ -3,24 +3,46 @@
 #include <map>
 #include "../libraries/HTTPSClient.h"
 #include "../algorithms/algorithms.h"
+#include "../utils/ConversionUtils.h"
 
 std::string post_auth(const std::string& data, const std::string& endpoint = "/") {
 
-    unsigned char public_key[crypto_sign_PUBLICKEYBYTES];
-    unsigned char private_key[crypto_sign_SECRETKEYBYTES];
+    unsigned char public_key[crypto_box_PUBLICKEYBYTES];
+    unsigned char private_key[crypto_box_SECRETKEYBYTES];
     unsigned char session_key[crypto_aead_xchacha20poly1305_ietf_KEYBYTES];
 
-    // db.get_public_key();
-    // db.get_private_key();
-    // db.get_session_key();
+    // TODO - this should be pulled from db
 
-    const char* env_api_host = std::getenv("API_HOST");
-    if (env_api_host == nullptr) {
-        std::cerr << "API_HOST environment variable is not set" << std::endl;
+    // std::string pub_key_hex = db.get_public_key();
+    // std::string priv_key_hex = db.get_private_key();
+    // std::string sess_key_hex = db.get_session_key();
+
+    std::string pub_key_hex = "AA6AC815B5859DFE390C7036BBAD44CDFD786CFAD51DC5805ECDC42F150CFD2D";
+    std::string priv_key_hex = "68184CD166663D8C78803C8F8DF4311FCD8F0B69EAADC7C124F1B492ADE8832D";
+    std::string sess_key_hex = "3132333435363738393031323334353637383930313233343536373839303132";
+    
+    // Convert hex strings to bytes using the utility function
+    if (!hex_to_bin(pub_key_hex, public_key, crypto_box_PUBLICKEYBYTES)) {
+        std::cerr << "Failed to convert public key hex to binary" << std::endl;
         return "";
     }
+    
+    if (!hex_to_bin(priv_key_hex, private_key, crypto_box_SECRETKEYBYTES)) {
+        std::cerr << "Failed to convert private key hex to binary" << std::endl;
+        return "";
+    }
+    
+    if (!hex_to_bin(sess_key_hex, session_key, crypto_aead_xchacha20poly1305_ietf_KEYBYTES)) {
+        std::cerr << "Failed to convert session key hex to binary" << std::endl;
+        return "";
+    }
+    // finish
 
-    const std::string API_HOST(env_api_host);
+    std::string API_HOST = load_env_variable("API_HOST");
+    if (API_HOST.empty()) {
+        std::cerr << "API_HOST not found in .env file" << std::endl;
+        return "";
+    }
     const std::string API_PATH = API_HOST + endpoint;
 
     // Generate nonce
@@ -50,8 +72,7 @@ std::string post_auth(const std::string& data, const std::string& endpoint = "/"
                     session_key, crypto_aead_xchacha20poly1305_ietf_KEYBYTES,
                     sodium_base64_VARIANT_URLSAFE_NO_PADDING);
 
-    // `Content-Type` header to `application/json`
-    // tells the server that the data being sent is in JSON format
+
     std::map<std::string, std::string> headers = {
         {"Content-Type", "application/json"},
         {"public_key", b64_public_key},
@@ -59,25 +80,57 @@ std::string post_auth(const std::string& data, const std::string& endpoint = "/"
         {"session_key", b64_session_key}
     };
 
+    // Convert the map of headers into a single string
+    std::string header_string;
+    for (const auto& [key, value] : headers) {
+        header_string += key + ": " + value + "\n";
+    }
+
     webwood::HTTPSClient httpsclient;
-    std::string response = httpsclient.post(API_HOST, API_PATH, request_body, headers);
+    std::string response = httpsclient.post(API_HOST, API_PATH, header_string, request_body);
 
     return response;
 }
 
 std::string get_auth(const std::string& endpoint = "/") {
 
-    // db.get_public_key();
-    // db.get_private_key();
-    // db.get_session_key();
+    unsigned char public_key[crypto_box_PUBLICKEYBYTES];
+    unsigned char private_key[crypto_box_SECRETKEYBYTES];
+    unsigned char session_key[crypto_aead_xchacha20poly1305_ietf_KEYBYTES];
 
-    const char* env_api_host = std::getenv("API_HOST");
-    if (env_api_host == nullptr) {
-        std::cerr << "API_HOST environment variable is not set" << std::endl;
+    // TODO - this should be pulled from db
+
+    // std::string pub_key_hex = db.get_public_key();
+    // std::string priv_key_hex = db.get_private_key();
+    // std::string sess_key_hex = db.get_session_key();
+
+    std::string pub_key_hex = "AA6AC815B5859DFE390C7036BBAD44CDFD786CFAD51DC5805ECDC42F150CFD2D";
+    std::string priv_key_hex = "68184CD166663D8C78803C8F8DF4311FCD8F0B69EAADC7C124F1B492ADE8832D";
+    std::string sess_key_hex = "3132333435363738393031323334353637383930313233343536373839303132";
+    
+    // Convert hex strings to bytes
+    if (!hex_to_bin(pub_key_hex, public_key, crypto_box_PUBLICKEYBYTES)) {
+        std::cerr << "Failed to convert public key hex to binary" << std::endl;
+        return "";
+    }
+    
+    if (!hex_to_bin(priv_key_hex, private_key, crypto_box_SECRETKEYBYTES)) {
+        std::cerr << "Failed to convert private key hex to binary" << std::endl;
+        return "";
+    }
+    
+    if (!hex_to_bin(sess_key_hex, session_key, crypto_aead_xchacha20poly1305_ietf_KEYBYTES)) {
+        std::cerr << "Failed to convert session key hex to binary" << std::endl;
         return "";
     }
 
-    const std::string API_HOST(env_api_host);
+    // finish
+
+    std::string API_HOST = load_env_variable("API_HOST");
+    if (API_HOST.empty()) {
+        std::cerr << "API_HOST not found in .env file" << std::endl;
+        return "";
+    }
     const std::string API_PATH = API_HOST + endpoint;
 
     // Generate nonce
@@ -105,16 +158,21 @@ std::string get_auth(const std::string& endpoint = "/") {
                     session_key, crypto_aead_xchacha20poly1305_ietf_KEYBYTES,
                     sodium_base64_VARIANT_URLSAFE_NO_PADDING);
 
-    // `Content-Type` header to `application/json`
-    // tells the server that the data being sent is in JSON format
+
     std::map<std::string, std::string> headers = {
         {"public_key", b64_public_key},
         {"signature", b64_signature},
         {"session_key", b64_session_key}
     };
 
+    // Convert the map of headers into a single string
+    std::string header_string;
+    for (const auto& [key, value] : headers) {
+        header_string += key + ": " + value + "\n";
+    }
+
     webwood::HTTPSClient httpsclient;
-    std::string response = httpsclient.get(API_HOST, API_PATH, headers);
+    std::string response = httpsclient.get(API_HOST, API_PATH, header_string);
 
     return response;
 }
