@@ -1,19 +1,10 @@
 #include "DeviceCommunicationSession.h"
-#include <stdexcept>
 #include <iostream>
-#include <iomanip>
 #include <sstream>
 #include "utils.h"
 
-static void print_key(const char* name, const unsigned char* key, size_t len) {
-    std::ostringstream oss;
-    for (size_t i = 0; i < len; ++i)
-        oss << std::hex << std::setw(2) << std::setfill('0') << (int)key[i];
-    std::cout << name << ": " << oss.str() << std::endl;
-}
-
 DeviceCommunicationSession::DeviceCommunicationSession() 
-    : shared_secret(), ratchet(nullptr), device_session_id() {
+    : device_session_id(), ratchet(nullptr), shared_secret() {
     // Initialize base class - common functionality can be implemented here
     std::cout << "\n===== INITIALIZING DEVICE COMMUNICATION SESSION =====" << std::endl;
 }
@@ -34,7 +25,6 @@ DeviceSendingCommunicationSession::DeviceSendingCommunicationSession(
     const unsigned char* recipient_ed25519_device_key_public
 ) : DeviceCommunicationSession() {
 
-    size_t device_session_key_len = crypto_box_PUBLICKEYBYTES + crypto_box_PUBLICKEYBYTES;
     size_t out_len;
     unsigned char* session_id_ptr = concat_ordered(device_key_public, crypto_box_PUBLICKEYBYTES, 
                                                  recipient_device_key_public, crypto_box_PUBLICKEYBYTES, 
@@ -84,7 +74,6 @@ DeviceReceivingCommunicationSession::DeviceReceivingCommunicationSession(
     const unsigned char* signed_prekey_private,
     const unsigned char* onetime_prekey_private
 ) : DeviceCommunicationSession() {
-    size_t device_session_key_len = crypto_box_PUBLICKEYBYTES + crypto_box_PUBLICKEYBYTES;
     size_t out_len;
     unsigned char* session_id_ptr = concat_ordered(device_key_public, crypto_box_PUBLICKEYBYTES, 
                                                  initiator_device_key_public, crypto_box_PUBLICKEYBYTES, 

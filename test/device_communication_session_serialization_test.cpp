@@ -3,12 +3,8 @@
 #include <fstream>
 #include <cereal/cereal.hpp>
 #include <cereal/archives/json.hpp>
-#include <cereal/types/memory.hpp>
-#include <cereal/types/vector.hpp>
-#include <cereal/types/map.hpp>
 #include "src/key_exchange/DeviceCommunicationSession.h"
 #include "src/key_exchange/DoubleRatchet.h"
-#include "src/key_exchange/x3dh.h"
 
 void test_device_communication_session_serialization() {
     std::cout << "\n===== TESTING DEVICE COMMUNICATION SESSION SERIALIZATION =====" << std::endl;

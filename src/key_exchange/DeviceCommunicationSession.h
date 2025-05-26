@@ -5,7 +5,6 @@
 #ifndef COMMUNICATIONSESSION_H
 #define COMMUNICATIONSESSION_H
 #include "DoubleRatchet.h"
-#include "x3dh.h"
 #include <sodium.h>
 #include <memory>
 #include <vector>

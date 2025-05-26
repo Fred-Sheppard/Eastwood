@@ -5,9 +5,7 @@
 #include <sodium.h>
 #include <stdexcept>
 #include <iostream>
-#include <string>
 #include <map>
-#include <unordered_map>
 #include <vector>
 #include <memory>
 
@@ -115,7 +113,7 @@ private:
     void kdf_ratchet(const unsigned char* shared_secret, unsigned char* chain_key, bool is_sending);
     
     // Derive a message key from a chain key and updates the chain key
-    std::vector<unsigned char> derive_message_key(unsigned char* chain_key);
+    static std::vector<unsigned char> derive_message_key(unsigned char* chain_key);
 
     std::vector<unsigned char> root_key;
     std::vector<unsigned char> local_dh_public;
@@ -129,7 +127,7 @@ private:
     // Cache of message keys for skipped/out-of-order messages
     std::map<SkippedMessageKey, std::vector<unsigned char>> skipped_message_keys;
     // Maximum number of skipped message keys to keep in memory
-    static const int MAX_SKIPPED_MESSAGE_KEYS = 100;
+    static constexpr int MAX_SKIPPED_MESSAGE_KEYS = 100;
 };
 
 #endif //DOUBLERATCHET_H
