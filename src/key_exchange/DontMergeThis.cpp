@@ -55,3 +55,5 @@ WarningExample::~WarningExample() {
 
 // Warning: non-const static member
 int WarningExample::globalCounter = 0;
+int WarningExample::globalCounter = 0;
+int WarningExample::globalCounter = 0;
