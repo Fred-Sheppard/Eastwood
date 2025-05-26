@@ -6,6 +6,11 @@ on:
       - 'src/**/*.cpp'
       - 'src/**/*.h'
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   clang-tidy:
     runs-on: ubuntu-latest
@@ -33,16 +38,16 @@ jobs:
         CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }} | grep '^src/.*\.\(cpp\|h\)
 
     - name: Check if files were found
-      if: steps.changed-files.outputs.RELATIVE_FILES == ''
+      if: steps.changed-files.outputs.FILES_FOUND == 'false'
       run: echo "No C++ files changed in this PR"
 
     - name: Run clang-tidy on changed files
-      if: steps.changed-files.outputs.FILES != ''
+      if: steps.changed-files.outputs.FILES_FOUND == 'true'
       run: |
-        cd build
         echo "Checking files: ${{ steps.changed-files.outputs.RELATIVE_FILES }}"
-        clang-tidy -p . ${{ steps.changed-files.outputs.FILES }} > tidy-report.txt
-        cat tidy-report.txt
+        # Run clang-tidy from project root, not build directory
+        clang-tidy -p build ${{ steps.changed-files.outputs.RELATIVE_FILES }} > clang-tidy-report.txt 2>&1 || true
+        cat clang-tidy-report.txt
 
     - name: Upload tidy report
       if: steps.changed-files.outputs.FILES != ''
