@@ -6,7 +6,7 @@
 #include "src/key_exchange/DoubleRatchet.h"
 #include <map>
 #include <gtest/gtest.h>
-#include "key_exchange/IdentityCommunicationSession.h"
+#include "src/session/IdentityCommunicationSession.h"
 #include <memory>
 
 struct keyBundle {

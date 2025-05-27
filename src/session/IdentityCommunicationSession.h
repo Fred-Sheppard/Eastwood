@@ -5,7 +5,10 @@
 #ifndef IDENTITYCOMMUNICATIONSESSION_H
 #define IDENTITYCOMMUNICATIONSESSION_H
 #include <vector>
+#include <map>
 #include "DeviceCommunicationSession.h"
+#include "../key_exchange/DoubleRatchet.h"
+#include "../key_exchange/utils.h"
 
 struct keyBundle {
     bool isSending;

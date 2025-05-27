@@ -2,12 +2,13 @@
 // Created by Josh Sloggett on 21/05/2025.
 //
 
-#ifndef COMMUNICATIONSESSION_H
-#define COMMUNICATIONSESSION_H
-#include "DoubleRatchet.h"
-#include "x3dh.h"
-#include <sodium.h>
+#ifndef DEVICECOMMUNICATIONSESSION_H
+#define DEVICECOMMUNICATIONSESSION_H
+
 #include <memory>
+#include "../key_exchange/DoubleRatchet.h"
+#include "../key_exchange/x3dh.h"
+#include <sodium.h>
 
 class DeviceCommunicationSession {
 public:
@@ -60,4 +61,4 @@ public:
     DoubleRatchet* getRatchet() override;
 };
 
-#endif //COMMUNICATIONSESSION_H
+#endif //DEVICECOMMUNICATIONSESSION_H
