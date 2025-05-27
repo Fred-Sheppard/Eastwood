@@ -86,6 +86,7 @@ set(CRYPTO_SOURCES
         src/sessions/SessionManager.cpp
         src/key_exchange/XChaCha20-Poly1305.cpp
         src/utils/ConversionUtils.cpp
+        src/utils/JsonParser.cpp
         src/client_api_interactions/MakeAuthReq.cpp
         src/client_api_interactions/MakeUnauthReq.cpp
         src/libraries/BaseClient.cpp
@@ -103,6 +104,7 @@ set(CRYPTO_HEADERS
         src/algorithms/algorithms.h
         src/key_exchange/XChaCha20-Poly1305.h
         src/utils/ConversionUtils.h
+        src/utils/JsonParser.h
         src/libraries/BaseClient.h
         src/libraries/HTTPSClient.h
         src/libraries/BaseClient.cpp
