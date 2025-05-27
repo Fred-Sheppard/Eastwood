@@ -18,6 +18,15 @@ DeviceCommunicationSession::DeviceCommunicationSession()
     std::cout << "\n===== INITIALIZING DEVICE COMMUNICATION SESSION =====" << std::endl;
 }
 
+void DeviceCommunicationSession::message_send(unsigned char* message) {
+    ratchet->message_send(message, device_id);
+}
+
+void DeviceCommunicationSession::message_receive(DeviceMessage message) {
+    ratchet->message_receive(message);
+}
+
+
 DeviceCommunicationSession::~DeviceCommunicationSession() {
     // Base class destructor - will be called after derived class destructors
 }
@@ -38,6 +47,7 @@ DeviceSendingCommunicationSession::DeviceSendingCommunicationSession(
     const unsigned char* recipient_ed25519_device_key_public
 ) : DeviceCommunicationSession() {
 
+    device_id = recipient_device_key_public;
     size_t device_session_key_len = sizeof(device_key_public) + sizeof(recipient_device_key_public);
     device_session_id = concat_ordered(device_key_public, crypto_box_PUBLICKEYBYTES, recipient_device_key_public, crypto_box_PUBLICKEYBYTES, device_session_key_len);
 
@@ -85,6 +95,9 @@ DeviceReceivingCommunicationSession::DeviceReceivingCommunicationSession(
     const unsigned char* signed_prekey_private,
     const unsigned char* onetime_prekey_private
 ) : DeviceCommunicationSession() {
+
+    device_id = initiator_device_key_public;
+
     size_t device_session_key_len = sizeof(device_key_public) + sizeof(initiator_device_key_public);
     device_session_id = concat_ordered(device_key_public, crypto_box_PUBLICKEYBYTES, initiator_device_key_public, crypto_box_PUBLICKEYBYTES, device_session_key_len);
     shared_secret = x3dh_responder(
