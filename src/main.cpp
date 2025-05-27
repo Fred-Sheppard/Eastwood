@@ -2,6 +2,7 @@
 #define SQLITE_HAS_CODEC 1
 #include <QFile>
 #include <QApplication>
+#include "ui/windows/login/login.h"
 
 #include "auth/register_device/register_device.h"
 #include "auth/register_user/register_user.h"
@@ -50,6 +51,8 @@ int main(int argc, char *argv[]) {
     //     std::move(master_key)
     // );
     // KekManager::instance().setKEK(std::move(kek));
-    return 0;
-}
 
+    Login login;
+    login.show();
+    return app.exec();
+}
