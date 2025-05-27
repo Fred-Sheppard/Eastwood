@@ -25,6 +25,14 @@ void post_ratchet_message(
     const DeviceMessage* msg
 );
 
+void post_handshake_device(
+    const unsigned char* recipient_device_key_public,
+    const unsigned char* recipient_signed_prekey_public,
+    const unsigned char* recipient_onetime_prekey_public,
+    const unsigned char* my_device_key_public,
+    const unsigned char* my_ephemeral_key_public
+);
+
 void get_messages(SessionManager manager);
 
 void get_keybundles(
