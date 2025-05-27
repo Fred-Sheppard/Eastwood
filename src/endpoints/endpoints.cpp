@@ -15,9 +15,9 @@ void post_register_user(
 ) {
     json body = {
         {"username", username},
-        {"identity_public", bin2base64(pk_identity, crypto_sign_PUBLICKEYBYTES)},
-        {"nonce", bin2base64(registration_nonce, NONCE_LEN)},
-        {"nonce_signature", bin2base64(nonce_signature, crypto_sign_BYTES)}
+        {"identity_public", bin2hex(pk_identity, crypto_sign_PUBLICKEYBYTES)},
+        {"nonce", bin2hex(registration_nonce, NONCE_LEN)},
+        {"nonce_signature", bin2hex(nonce_signature, crypto_sign_BYTES)}
     };
 
     post_auth(body, "/registerUser");
@@ -29,9 +29,9 @@ void post_register_device(
     unsigned char pk_signature[crypto_sign_BYTES]
 ) {
     json body = {
-        {"identity_public", bin2base64(pk_id, crypto_sign_PUBLICKEYBYTES)},
-        {"device_public", bin2base64(pk_device, crypto_sign_PUBLICKEYBYTES)},
-        {"signature", bin2base64(pk_signature, crypto_sign_BYTES)}
+        {"identity_public", bin2hex(pk_id, crypto_sign_PUBLICKEYBYTES)},
+        {"device_public", bin2hex(pk_device, crypto_sign_PUBLICKEYBYTES)},
+        {"signature", bin2hex(pk_signature, crypto_sign_BYTES)}
     };
 
     post_auth(body, "/registerDevice");
