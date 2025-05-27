@@ -43,7 +43,7 @@ void get_messages(SessionManager manager) {
     std::tuple<QByteArray, QByteArray> keypair = get_keypair("device");
     std::string device_key = std::get<0>(keypair).toStdString();
     //TODO: get vector of messages and parse individually and send on through identity
-    json response = get_auth("/getMessages/"+device_key);
+    json response = get("/getMessages/"+device_key);
 
     DeviceMessage msg;
     msg.header = new MessageHeader();
@@ -83,14 +83,14 @@ void post_ratchet_message(const DeviceMessage* msg) {
     };
     //todo: post to /sendMessage/deviceId
 
-    post_auth(body, "/sendMessage");
+    post(body, "/sendMessage");
 };
 
 void get_keybundles(unsigned char pk_identity[crypto_sign_PUBLICKEYBYTES], SessionManager& manager) {
     char hex_pk_identity[crypto_sign_PUBLICKEYBYTES * 2 + 1];
     sodium_bin2hex(hex_pk_identity, sizeof(hex_pk_identity), pk_identity, crypto_sign_PUBLICKEYBYTES);
 
-    json response = get_auth("/keybundle/" + std::string(hex_pk_identity));
+    json response = get("/keybundle/" + std::string(hex_pk_identity));
     
     keyBundleRequest request;
     
@@ -152,6 +152,6 @@ void post_handshake_device(
         {"my_device_key", bin2hex(my_device_key_public, crypto_box_PUBLICKEYBYTES)},
         {"my_ephemeral_key", bin2hex(my_ephemeral_key_public, crypto_box_PUBLICKEYBYTES)}
     };
-    post_auth(body, "/handshake");
+    post(body, "/handshake");
 }
 
