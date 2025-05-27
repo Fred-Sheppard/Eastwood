@@ -48,9 +48,18 @@ set(FRONTEND_SOURCES
     src/ui/windows/register/register.h
     src/ui/windows/register/register.ui
     src/ui/utils/messagebox.h
-    src/ui/windows/received_dashboard/received.cpp
-    src/ui/windows/received_dashboard/received.h
-    src/ui/windows/received_dashboard/received.ui
+    src/ui/windows/received_dashboard/received_dash.cpp
+    src/ui/windows/received_dashboard/received_dash.h
+    src/ui/windows/received_dashboard/received_dash.ui
+    src/ui/windows/sent_dashboard/sent_dash.cpp
+    src/ui/windows/sent_dashboard/sent_dash.h
+    src/ui/windows/sent_dashboard/sent_dash.ui
+    src/ui/windows/send_file/send_file.cpp
+    src/ui/windows/send_file/send_file.h
+    src/ui/windows/send_file/send_file.ui
+    src/ui/resources.qrc
+    src/ui/utils/file_item_widget.cpp
+    src/ui/utils/file_item_widget.h
 )
 
 # Define cryptography sources and headers

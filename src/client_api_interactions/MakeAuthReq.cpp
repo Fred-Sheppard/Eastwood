@@ -187,7 +187,5 @@ std::string get_auth(const std::string& endpoint = "/") {
 
     webwood::HTTPSClient httpsclient;
     std::string response = httpsclient.get(API_HOST, endpoint, header_string);
-
-
     return response;
 }
