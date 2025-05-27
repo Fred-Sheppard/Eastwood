@@ -93,6 +93,9 @@ set(CRYPTO_SOURCES
         src/libraries/HTTPSClient.cpp
         src/endpoints/endpoints.cpp
         src/auth/register_user/register_user.cpp
+        src/auth/register_device/register_device.cpp
+        src/keys/KEKManager.cpp
+        src/keys/SecureMemoryBuffer.cpp
         src/algorithms/algorithms.cpp
 )
 
@@ -114,6 +117,8 @@ set(CRYPTO_HEADERS
         src/auth/register_device/register_device.h
         src/auth/register_user/register_user.h
         src/sessions/SessionManager.h
+        src/keys/KEKManager.h
+        src/keys/SecureMemoryBuffer.h
 )
 
 # Create main executable

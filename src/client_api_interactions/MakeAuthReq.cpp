@@ -9,6 +9,9 @@
 
 using json = nlohmann::json;
 json post(const json& data, const std::string& endpoint = "/") {
+    // TODO
+    std::cerr << data.dump(4) << std::endl;
+    return 0;
 
     unsigned char public_key[crypto_box_PUBLICKEYBYTES];
     unsigned char private_key[crypto_box_SECRETKEYBYTES];
@@ -48,11 +51,11 @@ json post(const json& data, const std::string& endpoint = "/") {
     }
 
     // Generate nonce
-    unsigned char nonce[NONCE_LEN];
+    unsigned char nonce[CHA_CHA_NONCE_LEN];
     randombytes_buf(nonce, sizeof nonce);
 
 
-    char b64_nonce[NONCE_LEN * 2];
+    char b64_nonce[CHA_CHA_NONCE_LEN * 2];
     sodium_bin2base64(b64_nonce, sizeof(b64_nonce),
                     nonce, sizeof(nonce),
                     sodium_base64_VARIANT_URLSAFE_NO_PADDING);
@@ -153,7 +156,7 @@ json get(const std::string& endpoint = "/") {
     }
 
     // Generate nonce
-    unsigned char nonce[NONCE_LEN];
+    unsigned char nonce[CHA_CHA_NONCE_LEN];
     randombytes_buf(nonce, sizeof nonce);
 
     // Create nonce signed with private key
