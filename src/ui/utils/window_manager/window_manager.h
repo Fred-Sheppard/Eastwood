@@ -3,12 +3,16 @@
 
 #include <QObject>
 #include <QString>
+#include <QList>
+#include <QWidget>
 
 // Forward declarations to reduce includes
 class Received;
 class Sent;
 class SendFile;
-class Settings;  // Add this forward declaration
+class Settings;
+class Login;
+class Register;
 
 class WindowManager : public QObject
 {
@@ -19,10 +23,9 @@ public:
     void showReceived();
     void showSent();
     void showSendFile();
-    void showSettings();  // Add this method declaration
-    void showLogin();  // Add showLogin method declaration
-
-    // Add cleanup method
+    void showSettings();
+    void showLogin();
+    void showRegister();
     void cleanup();
 
 signals:
@@ -50,7 +53,10 @@ private:
     Received* m_received;
     Sent* m_sent;
     SendFile* m_sendFile;
-    Settings* m_settings;  // Add this member variable
+    Settings* m_settings;
+    Login* m_login;
+    Register* m_register;
+    QList<QWidget*> m_windows;  // List to track all windows
 };
 
 #endif // WINDOW_MANAGER_H

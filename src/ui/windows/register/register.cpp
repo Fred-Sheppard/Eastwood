@@ -1,6 +1,7 @@
 #include "./register.h"
 #include "ui_register.h"
 #include "../../utils/messagebox.h"
+#include "../../utils/window_manager/window_manager.h"
 
 
 Register::Register(QWidget *parent)
@@ -70,20 +71,18 @@ void Register::onRegisterButtonClicked()
         return;
     }
 
+    // TODO: Implement actual registration logic here
     StyledMessageBox::info(this, "Success", "Registration functionality here");
 }
 
 void Register::onLoginButtonClicked()
 {
-    if (m_loginWindow) {
-        m_loginWindow->show();
-    }
-
     // TODO: do on backend for NIST SP 800-63B standard
     // 1. Blocklist commonly used passphrases
     // 2. Passphrases from known breaches
     // 3. Context-specific words (username, app name, etc.)
     // Do NOT implement complexity requirements (uppercase, numbers, special chars)
-
-    this->close();
+    
+    WindowManager::instance().showLogin();
+    hide();
 } 
