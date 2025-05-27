@@ -3,6 +3,7 @@
 //
 #include "IdentityCommunicationSession.h"
 #include "../key_exchange/utils.h"
+#include "src/endpoints/endpoints.h"
 
 IdentityCommunicationSession::IdentityCommunicationSession(keyBundle myBundle, std::vector<keyBundle> key_bundles, unsigned char* public_identity_key_1, unsigned char* public_identity_key_2)
     : myBundle(myBundle) {
