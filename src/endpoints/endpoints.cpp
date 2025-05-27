@@ -16,12 +16,6 @@ void post_register_user(
     const unsigned char registration_nonce[CHA_CHA_NONCE_LEN],
     const unsigned char nonce_signature[crypto_sign_BYTES]
 ) {
-    qDebug() << "Checking user registration:";
-    if (crypto_sign_verify_detached(nonce_signature, registration_nonce, CHA_CHA_NONCE_LEN, pk_identity) == 0) {
-        qDebug() << "C'est bon!";
-    } else {
-        qDebug() << "Signature is BAD";
-    };
     const json body = {
         {"username", username},
         {"identity_public", bin2hex(pk_identity, crypto_sign_PUBLICKEYBYTES)},
@@ -37,11 +31,6 @@ void post_register_device(
     const unsigned char pk_device[crypto_sign_PUBLICKEYBYTES],
     const unsigned char pk_signature[crypto_sign_BYTES]
 ) {
-    if (crypto_sign_verify_detached(pk_signature, pk_device, crypto_sign_PUBLICKEYBYTES, pk_id) == 0) {
-        qDebug() << "C'est bon!";
-    } else {
-        qDebug() << "Signature is BAD";
-    };
     const json body = {
         {"identity_public", bin2hex(pk_id, crypto_sign_PUBLICKEYBYTES)},
         {"device_public", bin2hex(pk_device, crypto_sign_PUBLICKEYBYTES)},
