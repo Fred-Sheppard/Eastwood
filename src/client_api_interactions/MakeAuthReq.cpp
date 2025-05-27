@@ -8,8 +8,7 @@
 #include "../utils/JsonParser.h"
 
 using json = nlohmann::json;
-
-json post_auth(const json& data, const std::string& endpoint = "/") {
+json post(const json& data, const std::string& endpoint = "/") {
 
     unsigned char public_key[crypto_box_PUBLICKEYBYTES];
     unsigned char private_key[crypto_box_SECRETKEYBYTES];
@@ -113,7 +112,7 @@ json post_auth(const json& data, const std::string& endpoint = "/") {
     }
 }
 
-json get_auth(const std::string& endpoint = "/") {
+json get(const std::string& endpoint = "/") {
 
     unsigned char public_key[crypto_box_PUBLICKEYBYTES];
     unsigned char private_key[crypto_box_SECRETKEYBYTES];

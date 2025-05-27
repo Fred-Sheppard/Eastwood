@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
     // NOTE: Debugging only. Refreshes the database on every run
     QFile::remove("/Users/fred/Library/Application Support/encrypted.db");
     auto &db = Database::get();
-    if (db.initialize("master key")) {
+    if (db.initialize("master key", false)) {
         std::cout << "Database initialized successfully." << std::endl;
     } else {
         std::cout << "Failed to initialize database." << std::endl;
@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
     }
 
 
-    json response = get_auth("/posts/1");
+    json response = get("");
     std::cout << response.dump(4) << std::endl;  // Pretty print with 4 spaces
 
 
@@ -31,8 +31,8 @@ int main(int argc, char *argv[]) {
     // json data = {
     //     {"hello", "world"}  // Key-value pair in JSON object
     // };
-    
-    // std::string res3 = post_auth(data);
+
+    // std::string res3 = post(data);
     // std::cout << res3 << std::endl;
 
     // std::string res4 = post_unauth();

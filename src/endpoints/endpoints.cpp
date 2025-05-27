@@ -23,7 +23,7 @@ void post_register_user(
         {"nonce_signature", bin2hex(nonce_signature, crypto_sign_BYTES)}
     };
 
-    post_auth(body, "/registerUser");
+    post(body, "/registerUser");
 };
 
 void post_register_device(
@@ -36,7 +36,7 @@ void post_register_device(
         {"device_public", bin2hex(pk_device, crypto_sign_PUBLICKEYBYTES)},
         {"signature", bin2hex(pk_signature, crypto_sign_BYTES)}
     };
-    post_auth(body, "/registerDevice");
+    post(body, "/registerDevice");
 };
 
 void get_messages(SessionManager manager) {
