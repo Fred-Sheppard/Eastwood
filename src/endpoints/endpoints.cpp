@@ -6,6 +6,7 @@
 #include "src/utils/ConversionUtils.h"
 #include "src/client_api_interactions/MakeAuthReq.h"
 #include "src/sql/queries.h"
+#include "src/client_api_interactions/MakeUnauthReq.h"
 
 using json = nlohmann::json;
 
@@ -27,8 +28,9 @@ void post_register_user(
         {"nonce", bin2hex(registration_nonce, CHA_CHA_NONCE_LEN)},
         {"nonce_signature", bin2hex(nonce_signature, crypto_sign_BYTES)}
     };
+    std::cout << body << std::endl;
 
-    post(body, "/registerUser");
+    post_unauth(body, "/registerUser");
 };
 
 void post_register_device(
@@ -47,7 +49,7 @@ void post_register_device(
         {"device_public", bin2hex(pk_device, crypto_sign_PUBLICKEYBYTES)},
         {"signature", bin2hex(pk_signature, crypto_sign_BYTES)}
     };
-    post(body, "/registerDevice");
+    post_unauth(body, "/registerDevice");
 };
 
 void get_messages(SessionManager manager) {

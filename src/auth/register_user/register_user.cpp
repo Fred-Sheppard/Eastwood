@@ -7,6 +7,7 @@
 #include "../../algorithms/constants.h"
 #include "src/endpoints/endpoints.h"
 #include "src/sql/queries.h"
+#include "src/utils/ConversionUtils.h"
 
 
 int register_user(const std::string &username, const std::unique_ptr<const std::string> &master_password) {
@@ -34,6 +35,7 @@ int register_user(const std::string &username, const std::unique_ptr<const std::
     // TODO: post_store_kek(kek, nonce_kek);
 
     unsigned char pk_identity[crypto_sign_PUBLICKEYBYTES];
+
     auto sk_identity = SecureMemoryBuffer::create(crypto_sign_SECRETKEYBYTES);
     crypto_sign_keypair(pk_identity, sk_identity->data());
 
