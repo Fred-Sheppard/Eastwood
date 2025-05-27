@@ -22,7 +22,7 @@
   </property>
   <layout class="QVBoxLayout" name="navBarLayout">
    <property name="spacing">
-    <number>24</number>
+    <number>17</number>
    </property>
    <property name="leftMargin">
     <number>20</number>

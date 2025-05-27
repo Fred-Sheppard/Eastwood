@@ -29,7 +29,7 @@ class Ui_NavBar(object):
 "  border-right: 1px solid #e9ecef;\n"
 "}")
         self.navBarLayout = QVBoxLayout(NavBar)
-        self.navBarLayout.setSpacing(24)
+        self.navBarLayout.setSpacing(17)
         self.navBarLayout.setObjectName(u"navBarLayout")
         self.navBarLayout.setContentsMargins(20, 28, 20, 28)
         self.logoLayout = QHBoxLayout()
