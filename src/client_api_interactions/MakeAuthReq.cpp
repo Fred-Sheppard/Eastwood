@@ -87,9 +87,9 @@ std::string post_auth(const json& data, const std::string& endpoint = "/") {
 
     std::map<std::string, std::string> headers = {
         {"Content-Type", "application/json"},
-        {"public_key", b64_public_key},
-        {"signature", b64_signature},
-        {"session_key", b64_session_key}
+        {"public_key", hex_public_key},
+        {"signature", hex_signature},
+        {"session_key", hex_session_key}
     };
 
     // Convert the map of headers into a single string
