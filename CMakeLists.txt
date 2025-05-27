@@ -81,8 +81,8 @@ set(DATABASE_SOURCES
 set(CRYPTO_SOURCES
         src/key_exchange/DoubleRatchet.cpp
         src/key_exchange/x3dh.cpp
-        src/key_exchange/DeviceCommunicationSession.cpp
-        src/key_exchange/IdentityCommunicationSession.cpp
+        src/sessions/DeviceCommunicationSession.cpp
+        src/sessions/IdentityCommunicationSession.cpp
         src/key_exchange/XChaCha20-Poly1305.cpp
         src/utils/ConversionUtils.cpp
         src/client_api_interactions/MakeAuthReq.cpp
@@ -94,22 +94,24 @@ set(CRYPTO_SOURCES
 )
 
 set(CRYPTO_HEADERS
-    src/key_exchange/DoubleRatchet.h
-    src/key_exchange/x3dh.h
-    src/key_exchange/DeviceCommunicationSession.h
-    src/key_exchange/utils.h
-    src/algorithms/algorithms.cpp
-    src/algorithms/algorithms.h
-    src/key_exchange/XChaCha20-Poly1305.h
-    src/utils/ConversionUtils.h
-    src/libraries/BaseClient.h
-    src/libraries/HTTPSClient.h
-    src/libraries/BaseClient.cpp
-    src/libraries/HTTPSClient.cpp
-    src/endpoints/endpoints.cpp
-    src/endpoints/endpoints.h
-    src/auth/register_device/register_device.h
-    src/auth/register_user/register_user.h
+        src/key_exchange/DoubleRatchet.h
+        src/key_exchange/x3dh.h
+        src/sessions/DeviceCommunicationSession.h
+        src/key_exchange/utils.h
+        src/algorithms/algorithms.cpp
+        src/algorithms/algorithms.h
+        src/key_exchange/XChaCha20-Poly1305.h
+        src/utils/ConversionUtils.h
+        src/libraries/BaseClient.h
+        src/libraries/HTTPSClient.h
+        src/libraries/BaseClient.cpp
+        src/libraries/HTTPSClient.cpp
+        src/endpoints/endpoints.cpp
+        src/endpoints/endpoints.h
+        src/auth/register_device/register_device.h
+        src/auth/register_user/register_user.h
+        src/sessions/SessionManager.cpp
+        src/sessions/SessionManager.h
 )
 
 # Create main executable

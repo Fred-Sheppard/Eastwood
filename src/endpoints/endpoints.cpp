@@ -70,3 +70,10 @@ void post_ratchet_message(const DeviceMessage* msg) {
     };
     //todo: post to /sendMessage/deviceId
 };
+
+keyBundleRequest get_keybundles(unsigned char pk_identity[32]) {
+    std::string hex_pk_identity = bin2hex(pk_identity, 32);
+    std::string response = get_auth("/keybundle/"+hex_pk_identity);
+
+    //TODO:: parse response
+};
