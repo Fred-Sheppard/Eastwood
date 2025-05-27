@@ -20,8 +20,10 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    // std::string res = get_auth("/posts/1");
-    // std::cout << res << std::endl;
+
+    json response = get_auth("/posts/1");
+    std::cout << response.dump(4) << std::endl;  // Pretty print with 4 spaces
+
 
     // std::string res2 = get_unauth("/posts/1");
     // std::cout << res2 << std::endl;

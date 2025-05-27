@@ -9,7 +9,7 @@
 
 using json = nlohmann::json;
 
-std::string post_auth(const json& data, const std::string& endpoint = "/") {
+json post_auth(const json& data, const std::string& endpoint = "/") {
 
     unsigned char public_key[crypto_box_PUBLICKEYBYTES];
     unsigned char private_key[crypto_box_SECRETKEYBYTES];
@@ -28,24 +28,24 @@ std::string post_auth(const json& data, const std::string& endpoint = "/") {
     // Convert hex strings to bytes using the utility function
     if (!hex_to_bin(pub_key_hex, public_key, crypto_box_PUBLICKEYBYTES)) {
         std::cerr << "Failed to convert public key hex to binary" << std::endl;
-        return "";
+        throw;
     }
     
     if (!hex_to_bin(priv_key_hex, private_key, crypto_box_SECRETKEYBYTES)) {
         std::cerr << "Failed to convert private key hex to binary" << std::endl;
-        return "";
+        throw;
     }
     
     if (!hex_to_bin(sess_key_hex, session_token, crypto_aead_xchacha20poly1305_ietf_KEYBYTES)) {
         std::cerr << "Failed to convert session key hex to binary" << std::endl;
-        return "";
+        throw;
     }
     // finish
 
     std::string API_HOST = load_env_variable("API_HOST");
     if (API_HOST.empty()) {
         std::cerr << "API_HOST not found in .env file" << std::endl;
-        return "";
+        throw;
     }
 
     // Generate nonce
@@ -103,8 +103,7 @@ std::string post_auth(const json& data, const std::string& endpoint = "/") {
     std::string response = httpsclient.post(API_HOST, endpoint, header_string, request_body);
     
     try {
-        nlohmann::json parsed_response = webwood::parse_json_response(response);
-        return parsed_response.dump();
+        return webwood::parse_json_response(response);
     } catch (const webwood::HttpError& e) {
         std::cerr << "HTTP Error: " << e.what() << std::endl;
         throw;
@@ -114,7 +113,7 @@ std::string post_auth(const json& data, const std::string& endpoint = "/") {
     }
 }
 
-std::string get_auth(const std::string& endpoint = "/") {
+json get_auth(const std::string& endpoint = "/") {
 
     unsigned char public_key[crypto_box_PUBLICKEYBYTES];
     unsigned char private_key[crypto_box_SECRETKEYBYTES];
@@ -133,17 +132,17 @@ std::string get_auth(const std::string& endpoint = "/") {
     // Convert hex strings to bytes
     if (!hex_to_bin(pub_key_hex, public_key, crypto_box_PUBLICKEYBYTES)) {
         std::cerr << "Failed to convert public key hex to binary" << std::endl;
-        return "";
+        throw;
     }
     
     if (!hex_to_bin(priv_key_hex, private_key, crypto_box_SECRETKEYBYTES)) {
         std::cerr << "Failed to convert private key hex to binary" << std::endl;
-        return "";
+        throw;
     }
     
     if (!hex_to_bin(sess_key_hex, session_token, crypto_aead_xchacha20poly1305_ietf_KEYBYTES)) {
         std::cerr << "Failed to convert session key hex to binary" << std::endl;
-        return "";
+        throw;
     }
 
     // finish
@@ -151,7 +150,7 @@ std::string get_auth(const std::string& endpoint = "/") {
     std::string API_HOST = load_env_variable("API_HOST");
     if (API_HOST.empty()) {
         std::cerr << "API_HOST not found in .env file" << std::endl;
-        return "";
+        throw;
     }
 
     // Generate nonce
@@ -196,8 +195,7 @@ std::string get_auth(const std::string& endpoint = "/") {
     std::string response = httpsclient.get(API_HOST, endpoint, header_string);
     
     try {
-        nlohmann::json parsed_response = webwood::parse_json_response(response);
-        return parsed_response.dump();
+        return webwood::parse_json_response(response);
     } catch (const webwood::HttpError& e) {
         std::cerr << "HTTP Error: " << e.what() << std::endl;
         throw;

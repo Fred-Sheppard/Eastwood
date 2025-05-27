@@ -7,12 +7,11 @@
 
 using json = nlohmann::json;
 
-std::string post_unauth(const json& data, const std::string& endpoint = "/") {
-
+json post_unauth(const json& data, const std::string& endpoint = "/") {
     std::string API_HOST = load_env_variable("API_HOST");
     if (API_HOST.empty()) {
         std::cerr << "API_HOST not found in .env file" << std::endl;
-        return "";
+        return {{"error", "API_HOST not found"}};
     }
 
     std::string headers = "Content-Type: application/json\n";
@@ -20,10 +19,9 @@ std::string post_unauth(const json& data, const std::string& endpoint = "/") {
     webwood::HTTPSClient httpsclient;
     std::string request_body = data.dump();
     std::string response = httpsclient.post(API_HOST, endpoint, headers, request_body);
-
+    
     try {
-        nlohmann::json parsed_response = webwood::parse_json_response(response);
-        return parsed_response.dump();
+        return webwood::parse_json_response(response);
     } catch (const webwood::HttpError& e) {
         std::cerr << "HTTP Error: " << e.what() << std::endl;
         throw;
@@ -33,22 +31,20 @@ std::string post_unauth(const json& data, const std::string& endpoint = "/") {
     }
 }
 
-std::string get_unauth(const std::string& endpoint = "/") {
-
+json get_unauth(const std::string& endpoint = "/") {
     std::string API_HOST = load_env_variable("API_HOST");
     if (API_HOST.empty()) {
         std::cerr << "API_HOST not found in .env file" << std::endl;
-        return "";
+        return {{"error", "API_HOST not found"}};
     }
 
     std::string headers;
     
     webwood::HTTPSClient httpsclient;
     std::string response = httpsclient.get(API_HOST, endpoint, headers);
-
+    
     try {
-        nlohmann::json parsed_response = webwood::parse_json_response(response);
-        return parsed_response.dump();
+        return webwood::parse_json_response(response);
     } catch (const webwood::HttpError& e) {
         std::cerr << "HTTP Error: " << e.what() << std::endl;
         throw;

@@ -21,7 +21,7 @@ std::string post_unauthenticated(const std::string& data, const std::string& end
 
     try {
         nlohmann::json parsed_response = webwood::parse_html_to_json(response);
-        return parsed_response.dump();
+        return parsed_response;
     } catch (const webwood::HttpError& e) {
         std::cerr << "HTTP Error: " << e.what() << std::endl;
         throw;
@@ -46,7 +46,7 @@ std::string get_unauthenticated(const std::string& endpoint = "/") {
 
     try {
         nlohmann::json parsed_response = webwood::parse_html_to_json(response);
-        return parsed_response.dump();
+        return parsed_response;
     } catch (const webwood::HttpError& e) {
         std::cerr << "HTTP Error: " << e.what() << std::endl;
         throw;
