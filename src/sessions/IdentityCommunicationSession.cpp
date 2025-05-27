@@ -29,6 +29,15 @@ void IdentityCommunicationSession::createSessionFromKeyBundle(keyBundle key_bund
     if (!device_sessions[device_session_id_new]) {
         //3. create new device session
         if (myBundle.isSending) {  // If I am sending, create a sending session
+            // Post handshake information to server
+            post_handshake_device(
+                key_bundle.device_key_public,  // recipient's device key
+                key_bundle.signed_prekey_public,  // recipient's signed prekey
+                key_bundle.onetime_prekey_public,  // recipient's one-time prekey
+                myBundle.device_key_public,  // my device key
+                myBundle.ephemeral_key_public  // my ephemeral key
+            );
+
             device_sessions[device_session_id_new] = new DeviceSendingCommunicationSession(
                 myBundle.device_key_public,
                 myBundle.device_key_private,
