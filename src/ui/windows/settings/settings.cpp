@@ -1,7 +1,17 @@
 #include "settings.h"
 #include "ui_settings.h"
 #include "../../utils/messagebox.h"
-#include "../../utils/window_manager.h"
+#include "../../utils/window_manager/window_manager.h"
+#include "../../utils/navbar/navbar.h"
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QFileInfo>
+#include <QFileDialog>
+#include <QLineEdit>
+#include <QDialog>
+#include <QScrollArea>
+#include <QTimer>
+#include <QCheckBox>
 
 Settings::Settings(QWidget *parent)
     : QWidget(parent)
@@ -9,6 +19,10 @@ Settings::Settings(QWidget *parent)
 {
     ui->setupUi(this);
     setupConnections();
+
+    // Connect WindowManager signal to handle navbar highlighting
+    connect(&WindowManager::instance(), &WindowManager::windowShown,
+            this, &Settings::onWindowShown);
 }
 
 Settings::~Settings()
@@ -18,48 +32,22 @@ Settings::~Settings()
 
 void Settings::setupConnections()
 {
-    connect(ui->saveButton, &QPushButton::clicked, this, &Settings::onSaveButtonClicked);
-    connect(ui->cancelButton, &QPushButton::clicked, this, &Settings::onCancelButtonClicked);
+    // Connect password fields to validation
+    connect(ui->currentPassword, &QLineEdit::textChanged, this, &Settings::validatePassword);
     connect(ui->newPassword, &QLineEdit::textChanged, this, &Settings::validatePassword);
     connect(ui->confirmPassword, &QLineEdit::textChanged, this, &Settings::validatePassword);
-    
-    // Add navigation connections
-    connect(ui->receivedButton, &QPushButton::clicked, this, &Settings::onReceivedButtonClicked);
-    connect(ui->sentButton, &QPushButton::clicked, this, &Settings::onSentButtonClicked);
-    connect(ui->sendFileButton, &QPushButton::clicked, this, &Settings::onSendFileButtonClicked);
-}
 
-void Settings::onSaveButtonClicked()
-{
-    QString currentPassword = ui->currentPassword->text();
-    QString newPassword = ui->newPassword->text();
-    QString confirmPassword = ui->confirmPassword->text();
+    // Connect buttons
+    connect(ui->cancelButton, &QPushButton::clicked, this, &Settings::onCancelClicked);
 
-    // TODO: Verify current password against stored password
-    if (currentPassword.isEmpty()) {
-        StyledMessageBox::error(this, "Error", "Please enter your current password");
-        return;
+    // Connect NavBar signals
+    NavBar* navbar = findChild<NavBar*>();
+    if (navbar) {
+        connect(navbar, &NavBar::receivedClicked, this, &Settings::onReceivedButtonClicked);
+        connect(navbar, &NavBar::sentClicked, this, &Settings::onSentButtonClicked);
+        connect(navbar, &NavBar::sendFileClicked, this, &Settings::onSendFileButtonClicked);
+        connect(navbar, &NavBar::settingsClicked, this, &Settings::onSettingsButtonClicked);
     }
-
-    if (!validatePasswordRequirements(newPassword)) {
-        StyledMessageBox::error(this, "Error", "New password must be between 8 and 64 characters");
-        return;
-    }
-
-    if (newPassword != confirmPassword) {
-        StyledMessageBox::error(this, "Error", "New passwords do not match");
-        return;
-    }
-
-    // TODO: Update password in secure storage
-    StyledMessageBox::info(this, "Success", "Password updated successfully");
-    close();
-}
-
-void Settings::onCancelButtonClicked()
-{
-    WindowManager::instance().showReceived();
-    hide();
 }
 
 void Settings::validatePassword()
@@ -67,15 +55,27 @@ void Settings::validatePassword()
     QString newPassword = ui->newPassword->text();
     QString confirmPassword = ui->confirmPassword->text();
 
-    bool isValid = validatePasswordRequirements(newPassword);
-    bool passwordsMatch = newPassword == confirmPassword;
+    if (newPassword.isEmpty() && confirmPassword.isEmpty()) {
+        ui->passwordRequirements->setText("Password must be between 8 and 64 characters");
+        ui->passwordRequirements->setStyleSheet("font-size: 12px; color: #636e72; margin-top: 5px;");
+        return;
+    }
 
-    ui->saveButton->setEnabled(isValid && passwordsMatch);
+    if (newPassword == confirmPassword) {
+        ui->passwordRequirements->setText("Passwords match");
+        ui->passwordRequirements->setStyleSheet("font-size: 12px; color: #27ae60; margin-top: 5px;");
+    } else {
+        ui->passwordRequirements->setText("Passwords do not match");
+        ui->passwordRequirements->setStyleSheet("font-size: 12px; color: #e74c3c; margin-top: 5px;");
+    }
 }
 
-bool Settings::validatePasswordRequirements(const QString& password)
+void Settings::navigateTo(QWidget* newWindow)
 {
-    return password.length() >= 8 && password.length() <= 64;
+    newWindow->setParent(this->parentWidget());  // Set the same parent
+    newWindow->show();
+    this->setAttribute(Qt::WA_DeleteOnClose);  // Mark for deletion when closed
+    close();  // This will trigger deletion due to WA_DeleteOnClose
 }
 
 void Settings::onReceivedButtonClicked()
@@ -93,5 +93,36 @@ void Settings::onSentButtonClicked()
 void Settings::onSendFileButtonClicked()
 {
     WindowManager::instance().showSendFile();
+    hide();
+}
+
+void Settings::onSettingsButtonClicked()
+{
+    WindowManager::instance().showSettings();
+    hide();
+}
+
+void Settings::onWindowShown(const QString& windowName)
+{
+    // Find the navbar and update its active button
+    NavBar* navbar = findChild<NavBar*>();
+    if (navbar) {
+        navbar->setActiveButton(windowName);
+    }
+}
+
+void Settings::onCancelClicked()
+{
+    // Clear all password fields
+    ui->currentPassword->clear();
+    ui->newPassword->clear();
+    ui->confirmPassword->clear();
+    
+    // Reset password requirements text
+    ui->passwordRequirements->setText("Password must be between 8 and 64 characters");
+    ui->passwordRequirements->setStyleSheet("font-size: 12px; color: #636e72; margin-top: 5px;");
+    
+    // Navigate back to the previous window
+    WindowManager::instance().showReceived();
     hide();
 }

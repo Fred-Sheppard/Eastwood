@@ -1,7 +1,8 @@
 #include "received_dash.h"
 #include "ui_received_dash.h"
 #include "../../utils/messagebox.h"
-#include "../../utils/window_manager.h"
+#include "../../utils/window_manager/window_manager.h"
+#include "../../utils/navbar/navbar.h"
 #include "../send_file/send_file.h"
 #include "../sent_dashboard/sent_dash.h"
 #include <QVBoxLayout>
@@ -23,6 +24,10 @@ Received::Received(QWidget *parent, QWidget* sendFileWindow)
     setupConnections();
     setupFileList();
     refreshFileList();
+
+    // Connect WindowManager signal to handle navbar highlighting
+    connect(&WindowManager::instance(), &WindowManager::windowShown,
+            this, &Received::onWindowShown);
 }
 
 Received::~Received()
@@ -33,9 +38,15 @@ Received::~Received()
 void Received::setupConnections()
 {
     connect(ui->sendButton, &QPushButton::clicked, this, &Received::onSendButtonClicked);
-    connect(ui->sentButton, &QPushButton::clicked, this, &Received::onSentButtonClicked);
-    connect(ui->settingsButton, &QPushButton::clicked, this, &Received::onSettingsButtonClicked);
-    connect(ui->sendFileButton, &QPushButton::clicked, this, &Received::onSendFileButtonClicked);
+    
+    // Connect NavBar signals
+    NavBar* navbar = findChild<NavBar*>();
+    if (navbar) {
+        connect(navbar, &NavBar::receivedClicked, this, &Received::onReceivedButtonClicked);
+        connect(navbar, &NavBar::sentClicked, this, &Received::onSentButtonClicked);
+        connect(navbar, &NavBar::sendFileClicked, this, &Received::onSendFileButtonClicked);
+        connect(navbar, &NavBar::settingsClicked, this, &Received::onSettingsButtonClicked);
+    }
 }
 
 void Received::setupFileList()
@@ -113,7 +124,6 @@ void Received::onSettingsButtonClicked()
 {
     WindowManager::instance().showSettings();
     hide();
-    
 }
 
 void Received::showFileMetadata(FileItemWidget* widget)
@@ -134,5 +144,20 @@ void Received::sendFileToUser(const QString& username, const QString& fileId)
 void Received::onSendFileButtonClicked()
 {
     WindowManager::instance().showSendFile();
+    hide();
+}
+
+void Received::onWindowShown(const QString& windowName)
+{
+    // Find the navbar and update its active button
+    NavBar* navbar = findChild<NavBar*>();
+    if (navbar) {
+        navbar->setActiveButton(windowName);
+    }
+}
+
+void Received::onReceivedButtonClicked()
+{
+    WindowManager::instance().showReceived();
     hide();
 }

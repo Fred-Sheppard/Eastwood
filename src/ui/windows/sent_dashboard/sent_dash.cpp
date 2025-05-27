@@ -1,9 +1,8 @@
 #include "sent_dash.h"
 #include "ui_sent_dash.h"
 #include "../../utils/messagebox.h"
-#include "../../utils/window_manager.h"
-#include "../send_file/send_file.h"
-#include "../received_dashboard/received_dash.h"
+#include "../../utils/window_manager/window_manager.h"
+#include "../../utils/navbar/navbar.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFileInfo>
@@ -24,6 +23,10 @@ Sent::Sent(QWidget *parent, QWidget* receivedWindow)
     setupConnections();
     setupFileList();
     refreshFileList();
+
+    // Connect WindowManager signal to handle navbar highlighting
+    connect(&WindowManager::instance(), &WindowManager::windowShown,
+            this, &Sent::onWindowShown);
 }
 
 Sent::~Sent()
@@ -33,10 +36,14 @@ Sent::~Sent()
 
 void Sent::setupConnections()
 {
-    connect(ui->sendButton, &QPushButton::clicked, this, &Sent::onSendButtonClicked);
-    connect(ui->receivedButton, &QPushButton::clicked, this, &Sent::onReceivedButtonClicked);
-    connect(ui->settingsButton, &QPushButton::clicked, this, &Sent::onSettingsButtonClicked);
-    connect(ui->sendFileButton, &QPushButton::clicked, this, &Sent::onSendFileButtonClicked);
+    // Connect NavBar signals
+    NavBar* navbar = findChild<NavBar*>();
+    if (navbar) {
+        connect(navbar, &NavBar::receivedClicked, this, &Sent::onReceivedButtonClicked);
+        connect(navbar, &NavBar::sentClicked, this, &Sent::onSentButtonClicked);
+        connect(navbar, &NavBar::sendFileClicked, this, &Sent::onSendFileButtonClicked);
+        connect(navbar, &NavBar::settingsClicked, this, &Sent::onSettingsButtonClicked);
+    }
 }
 
 void Sent::setupFileList()
@@ -73,20 +80,6 @@ void Sent::refreshFileList()
     addFileItem("Important Document.pdf", "2.5 MB", "2024-03-15 14:30", "John Doe");
     addFileItem("Project Presentation.pptx", "5.8 MB", "2024-03-14 09:15", "Alice Smith");
     addFileItem("Budget Report.xlsx", "1.2 MB", "2024-03-13 16:45", "Bob Johnson");
-}
-
-void Sent::navigateTo(QWidget* newWindow)
-{
-    newWindow->setParent(this->parentWidget());  // Set the same parent
-    newWindow->show();
-    this->setAttribute(Qt::WA_DeleteOnClose);  // Mark for deletion when closed
-    close();  // This will trigger deletion due to WA_DeleteOnClose
-}
-
-void Sent::onSendButtonClicked()
-{
-    WindowManager::instance().showSendFile();
-    hide();
 }
 
 void Sent::onFileItemClicked(FileItemWidget* widget)
@@ -293,24 +286,6 @@ void Sent::onDeleteFileClicked(FileItemWidget* widget)
     }
 }
 
-void Sent::onReceivedButtonClicked()
-{
-    WindowManager::instance().showReceived();
-    hide();
-}
-
-void Sent::onSettingsButtonClicked()
-{
-    WindowManager::instance().showSettings();
-    hide();
-}
-
-void Sent::onSendFileButtonClicked()
-{
-    WindowManager::instance().showSendFile();
-    hide();
-}
-
 void Sent::showFileMetadata(FileItemWidget* widget)
 {
     StyledMessageBox::info(this, "File Details",
@@ -324,4 +299,45 @@ void Sent::showFileMetadata(FileItemWidget* widget)
 void Sent::sendFileToUser(const QString& username, const QString& fileId)
 {
     // TODO: Implement file sharing logic
+}
+
+void Sent::onWindowShown(const QString& windowName)
+{
+    // Find the navbar and update its active button
+    NavBar* navbar = findChild<NavBar*>();
+    if (navbar) {
+        navbar->setActiveButton(windowName);
+    }
+}
+
+void Sent::navigateTo(QWidget* newWindow)
+{
+    newWindow->setParent(this->parentWidget());  // Set the same parent
+    newWindow->show();
+    this->setAttribute(Qt::WA_DeleteOnClose);  // Mark for deletion when closed
+    close();  // This will trigger deletion due to WA_DeleteOnClose
+}
+
+void Sent::onReceivedButtonClicked()
+{
+    WindowManager::instance().showReceived();
+    hide();
+}
+
+void Sent::onSentButtonClicked()
+{
+    WindowManager::instance().showSent();
+    hide();
+}
+
+void Sent::onSendFileButtonClicked()
+{
+    WindowManager::instance().showSendFile();
+    hide();
+}
+
+void Sent::onSettingsButtonClicked()
+{
+    WindowManager::instance().showSettings();
+    hide();
 }

@@ -17,17 +17,18 @@ public:
     ~Settings() override;
 
 private slots:
-    void onSaveButtonClicked();
-    void onCancelButtonClicked();
-    void validatePassword();
+    void onWindowShown(const QString& windowName);
     void onReceivedButtonClicked();
     void onSentButtonClicked();
     void onSendFileButtonClicked();
+    void onSettingsButtonClicked();
+    void validatePassword();
+    void onCancelClicked();
 
 private:
     Ui::Settings *ui;
     void setupConnections();
-    bool validatePasswordRequirements(const QString& password);
+    void navigateTo(QWidget* newWindow);
 };
 
 #endif // SETTINGS_H

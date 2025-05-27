@@ -3,7 +3,8 @@
 
 #include <QWidget>
 #include <QListWidgetItem>
-#include "../../utils/file_item_widget.h"
+#include "../../utils/file_item_widget/file_item_widget.h"
+#include "../../utils/window_manager/window_manager.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class Received; }
@@ -20,10 +21,12 @@ private slots:
     void onSendButtonClicked();
     void onFileItemClicked(FileItemWidget* widget);
     void onDeleteFileClicked(FileItemWidget* widget);
+    void onReceivedButtonClicked();
     void onSentButtonClicked();
     void onSettingsButtonClicked();
     void refreshFileList();
     void onSendFileButtonClicked();
+    void onWindowShown(const QString& windowName);
 
 private:
     Ui::Received *ui;

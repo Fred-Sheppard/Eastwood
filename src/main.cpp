@@ -3,6 +3,7 @@
 #include "ui/windows/received_dashboard/received_dash.h"
 #include "ui/windows/sent_dashboard/sent_dash.h"
 #include "./libraries/HTTPSClient.h"
+#include "ui/utils/window_manager/window_manager.h"
 #include <iostream>
 
 int main(int argc, char *argv[]) {
@@ -12,9 +13,7 @@ int main(int argc, char *argv[]) {
     // std::string res = httpclient.post("webhook.site", "/86b5bc32-daa9-4f09-88eb-c658b71ae426", headers, body );
     // std::cout << res << std::endl;
     QApplication app(argc, argv);
-    Received receivedDashboard;
-    receivedDashboard.show();
-    // Sent sentDashboard;
-    // sentDashboard.show();
+    WindowManager::instance().showReceived();
+    
     return app.exec();
 }

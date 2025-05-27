@@ -48,8 +48,6 @@ set(FRONTEND_SOURCES
     src/ui/windows/register/register.h
     src/ui/windows/register/register.ui
     src/ui/utils/messagebox.h
-    src/ui/utils/window_manager.cpp
-    src/ui/utils/window_manager.h
     src/ui/windows/received_dashboard/received_dash.cpp
     src/ui/windows/received_dashboard/received_dash.h
     src/ui/windows/received_dashboard/received_dash.ui
@@ -60,8 +58,13 @@ set(FRONTEND_SOURCES
     src/ui/windows/send_file/send_file.h
     src/ui/windows/send_file/send_file.ui
     src/ui/resources.qrc
-    src/ui/utils/file_item_widget.cpp
-    src/ui/utils/file_item_widget.h
+    src/ui/utils/file_item_widget/file_item_widget.cpp
+    src/ui/utils/file_item_widget/file_item_widget.h
+    src/ui/utils/navbar/navbar.cpp
+    src/ui/utils/navbar/navbar.h
+    src/ui/utils/navbar/navbar.ui
+    src/ui/utils/window_manager/window_manager.cpp
+    src/ui/utils/window_manager/window_manager.h
     src/ui/windows/settings/settings.cpp
     src/ui/windows/settings/settings.h
     src/ui/windows/settings/settings.ui

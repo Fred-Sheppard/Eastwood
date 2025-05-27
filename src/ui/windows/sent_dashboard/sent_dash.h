@@ -2,8 +2,9 @@
 #define SENT_DASH_H
 
 #include <QWidget>
+#include <QListWidget>
 #include <QListWidgetItem>
-#include "../../utils/file_item_widget.h"
+#include "../../utils/file_item_widget/file_item_widget.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class Sent; }
@@ -17,27 +18,25 @@ public:
     ~Sent() override;
 
 private slots:
-    void onSendButtonClicked();
     void onFileItemClicked(FileItemWidget* widget);
     void onRevokeAccessClicked(FileItemWidget* widget);
     void onDeleteFileClicked(FileItemWidget* widget);
+    void onWindowShown(const QString& windowName);
     void onReceivedButtonClicked();
+    void onSentButtonClicked();
     void onSendFileButtonClicked();
     void onSettingsButtonClicked();
-    void refreshFileList();
 
 private:
     Ui::Sent *ui;
     QWidget* m_receivedWindow;
-    QWidget* m_sendFileWindow;
     void setupConnections();
     void setupFileList();
+    void refreshFileList();
+    void addFileItem(const QString& fileName, const QString& fileSize, 
+                    const QString& timestamp, const QString& owner);
     void showFileMetadata(FileItemWidget* widget);
     void sendFileToUser(const QString& username, const QString& fileId);
-    void addFileItem(const QString& fileName, 
-                    const QString& fileSize, 
-                    const QString& timestamp,
-                    const QString& owner);
     void navigateTo(QWidget* newWindow);
 };
 

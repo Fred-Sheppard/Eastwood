@@ -1,25 +1,26 @@
-#ifndef SENDFILE_H
-#define SENDFILE_H
+#ifndef SEND_FILE_H
+#define SEND_FILE_H
 
 #include <QWidget>
-#include "../received_dashboard/received_dash.h"
+#include <QLineEdit>
+#include <QPushButton>
+#include <QFileDialog>
 
-namespace Ui {
-class SendFile;
-}
+QT_BEGIN_NAMESPACE
+namespace Ui { class SendFile; }
+QT_END_NAMESPACE
 
-class SendFile : public QWidget
-{
+class SendFile : public QWidget {
     Q_OBJECT
 
 public:
-    explicit SendFile(QWidget *parent = nullptr, QWidget* receivedWindow = nullptr, QWidget* sentWindow = nullptr);
-    ~SendFile();
+    explicit SendFile(QWidget *parent = nullptr);
+    ~SendFile() override;
 
 private slots:
     void onBrowseClicked();
     void onSendClicked();
-    void updateSendButtonState();
+    void onWindowShown(const QString& windowName);
     void onReceivedButtonClicked();
     void onSentButtonClicked();
     void onSendFileButtonClicked();
@@ -27,13 +28,8 @@ private slots:
 
 private:
     Ui::SendFile *ui;
-    QWidget* m_receivedWindow;
-    QWidget* m_sentWindow;
-
-    void setupUI();
     void setupConnections();
-    void updateFileDetails(const QString &filePath);
     void navigateTo(QWidget* newWindow);
 };
 
-#endif
+#endif // SEND_FILE_H

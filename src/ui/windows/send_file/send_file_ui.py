@@ -19,6 +19,8 @@ from PySide6.QtWidgets import (QApplication, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QSizePolicy, QSpacerItem, QVBoxLayout,
     QWidget)
 
+from src.ui.utils.navbar.navbar import NavBar
+
 class Ui_SendFile(object):
     def setupUi(self, SendFile):
         if not SendFile.objectName():
@@ -30,124 +32,10 @@ class Ui_SendFile(object):
         self.mainLayout.setSpacing(0)
         self.mainLayout.setObjectName(u"mainLayout")
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
-        self.navBar = QWidget(SendFile)
+        self.navBar = NavBar(SendFile)
         self.navBar.setObjectName(u"navBar")
         self.navBar.setMinimumSize(QSize(220, 0))
         self.navBar.setMaximumSize(QSize(220, 16777215))
-        self.navBar.setStyleSheet(u"QWidget#navBar {\n"
-"  background-color: white;\n"
-"  border-right: 1px solid #dfe6e9;\n"
-"}")
-        self.navBarLayout = QVBoxLayout(self.navBar)
-        self.navBarLayout.setSpacing(30)
-        self.navBarLayout.setObjectName(u"navBarLayout")
-        self.navBarLayout.setContentsMargins(25, 30, 25, 30)
-        self.logoLayout = QHBoxLayout()
-        self.logoLayout.setSpacing(12)
-        self.logoLayout.setObjectName(u"logoLayout")
-        self.logoLabel = QLabel(self.navBar)
-        self.logoLabel.setObjectName(u"logoLabel")
-        self.logoLabel.setMinimumSize(QSize(32, 32))
-        self.logoLabel.setMaximumSize(QSize(32, 32))
-        self.logoLabel.setStyleSheet(u"background-color: #6c5ce7;\n"
-"border-radius: 6px;")
-
-        self.logoLayout.addWidget(self.logoLabel)
-
-        self.logoTextLabel = QLabel(self.navBar)
-        self.logoTextLabel.setObjectName(u"logoTextLabel")
-        self.logoTextLabel.setStyleSheet(u"font-size: 20px; font-weight: bold; color: #2d3436; letter-spacing: 0.5px;")
-
-        self.logoLayout.addWidget(self.logoTextLabel)
-
-
-        self.navBarLayout.addLayout(self.logoLayout)
-
-        self.receivedButton = QPushButton(self.navBar)
-        self.receivedButton.setObjectName(u"receivedButton")
-        self.receivedButton.setMinimumSize(QSize(0, 42))
-        self.receivedButton.setStyleSheet(u"QPushButton {\n"
-"  font-size: 14px;\n"
-"  color: #2d3436;\n"
-"  background-color: transparent;\n"
-"  border-radius: 8px;\n"
-"  text-align: left;\n"
-"  padding-left: 15px;\n"
-"}\n"
-"QPushButton:hover {\n"
-"  background-color: #f1f2f6;\n"
-"}\n"
-"QPushButton:pressed {\n"
-"  background-color: #dfe6e9;\n"
-"}")
-
-        self.navBarLayout.addWidget(self.receivedButton)
-
-        self.sentButton = QPushButton(self.navBar)
-        self.sentButton.setObjectName(u"sentButton")
-        self.sentButton.setMinimumSize(QSize(0, 42))
-        self.sentButton.setStyleSheet(u"QPushButton {\n"
-"  font-size: 14px;\n"
-"  color: #2d3436;\n"
-"  background-color: transparent;\n"
-"  border-radius: 8px;\n"
-"  text-align: left;\n"
-"  padding-left: 15px;\n"
-"}\n"
-"QPushButton:hover {\n"
-"  background-color: #f1f2f6;\n"
-"}\n"
-"QPushButton:pressed {\n"
-"  background-color: #dfe6e9;\n"
-"}")
-
-        self.navBarLayout.addWidget(self.sentButton)
-
-        self.sendFileButton = QPushButton(self.navBar)
-        self.sendFileButton.setObjectName(u"sendFileButton")
-        self.sendFileButton.setMinimumSize(QSize(0, 42))
-        self.sendFileButton.setStyleSheet(u"QPushButton {\n"
-"  font-size: 14px;\n"
-"  font-weight: 500;\n"
-"  color: white;\n"
-"  background-color: #6c5ce7;\n"
-"  border-radius: 8px;\n"
-"  text-align: left;\n"
-"  padding-left: 15px;\n"
-"}\n"
-"QPushButton:hover {\n"
-"  background-color: #5049c9;\n"
-"}\n"
-"QPushButton:pressed {\n"
-"  background-color: #4040b0;\n"
-"}")
-
-        self.navBarLayout.addWidget(self.sendFileButton)
-
-        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-
-        self.navBarLayout.addItem(self.verticalSpacer)
-
-        self.settingsButton = QPushButton(self.navBar)
-        self.settingsButton.setObjectName(u"settingsButton")
-        self.settingsButton.setMinimumSize(QSize(0, 42))
-        self.settingsButton.setStyleSheet(u"QPushButton {\n"
-"  font-size: 14px;\n"
-"  color: #2d3436;\n"
-"  background-color: transparent;\n"
-"  border-radius: 8px;\n"
-"  text-align: left;\n"
-"  padding-left: 15px;\n"
-"}\n"
-"QPushButton:hover {\n"
-"  background-color: #f1f2f6;\n"
-"}\n"
-"QPushButton:pressed {\n"
-"  background-color: #dfe6e9;\n"
-"}")
-
-        self.navBarLayout.addWidget(self.settingsButton)
-
 
         self.mainLayout.addWidget(self.navBar)
 
@@ -300,12 +188,6 @@ class Ui_SendFile(object):
 
     def retranslateUi(self, SendFile):
         SendFile.setWindowTitle(QCoreApplication.translate("SendFile", u"Nightwood - Send File", None))
-        self.logoLabel.setText("")
-        self.logoTextLabel.setText(QCoreApplication.translate("SendFile", u"Nightwood", None))
-        self.receivedButton.setText(QCoreApplication.translate("SendFile", u"Received Files", None))
-        self.sentButton.setText(QCoreApplication.translate("SendFile", u"Sent Files", None))
-        self.sendFileButton.setText(QCoreApplication.translate("SendFile", u"Send File", None))
-        self.settingsButton.setText(QCoreApplication.translate("SendFile", u"Settings", None))
         self.pageTitle.setText(QCoreApplication.translate("SendFile", u"Send File", None))
         self.usernameLabel.setText(QCoreApplication.translate("SendFile", u"Send to username:", None))
         self.usernameInput.setPlaceholderText(QCoreApplication.translate("SendFile", u"Enter recipient's username", None))

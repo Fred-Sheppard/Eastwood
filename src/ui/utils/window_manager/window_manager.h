@@ -23,6 +23,9 @@ public:
     // Add cleanup method
     void cleanup();
 
+signals:
+    void windowShown(const QString& windowName);
+
 protected:
     WindowManager();
     virtual ~WindowManager();
