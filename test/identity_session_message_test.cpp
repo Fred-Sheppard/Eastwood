@@ -7,12 +7,12 @@
 #include <memory>
 #include <vector>
 
-// Helper function to generate key bundles for testing
-keyBundle create_key_bundle(bool is_sending) {
+// Helper function to generate a key bundle
+keyBundle generateKeyBundle(bool isSending) {
     keyBundle bundle;
-    bundle.isSending = is_sending;
+    bundle.isSending = isSending;
     
-    // Allocate memory for keys
+    // Allocate memory for all keys
     bundle.device_key_public = new unsigned char[crypto_box_PUBLICKEYBYTES];
     bundle.device_key_private = new unsigned char[crypto_box_SECRETKEYBYTES];
     bundle.ephemeral_key_public = new unsigned char[crypto_box_PUBLICKEYBYTES];
@@ -21,11 +21,11 @@ keyBundle create_key_bundle(bool is_sending) {
     bundle.signed_prekey_private = new unsigned char[crypto_box_SECRETKEYBYTES];
     bundle.onetime_prekey_public = new unsigned char[crypto_box_PUBLICKEYBYTES];
     bundle.onetime_prekey_private = new unsigned char[crypto_box_SECRETKEYBYTES];
+    bundle.signed_prekey_signature = new unsigned char[crypto_sign_BYTES];
     bundle.ed25519_device_key_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
     bundle.ed25519_device_key_private = new unsigned char[crypto_sign_SECRETKEYBYTES];
-    bundle.signed_prekey_signature = new unsigned char[crypto_sign_BYTES];
     
-    // Generate key pairs
+    // Generate keys
     crypto_box_keypair(bundle.device_key_public, bundle.device_key_private);
     crypto_box_keypair(bundle.ephemeral_key_public, bundle.ephemeral_key_private);
     crypto_box_keypair(bundle.signed_prekey_public, bundle.signed_prekey_private);
@@ -33,16 +33,15 @@ keyBundle create_key_bundle(bool is_sending) {
     crypto_sign_keypair(bundle.ed25519_device_key_public, bundle.ed25519_device_key_private);
     
     // Sign the signed prekey
-    unsigned long long siglen;
-    crypto_sign_detached(bundle.signed_prekey_signature, &siglen,
+    crypto_sign_detached(bundle.signed_prekey_signature, nullptr,
                         bundle.signed_prekey_public, crypto_box_PUBLICKEYBYTES,
                         bundle.ed25519_device_key_private);
     
     return bundle;
 }
 
-// Helper function to clean up key bundles
-void cleanup_key_bundle(keyBundle& bundle) {
+// Helper function to clean up a key bundle
+void cleanupKeyBundle(keyBundle& bundle) {
     delete[] bundle.device_key_public;
     delete[] bundle.device_key_private;
     delete[] bundle.ephemeral_key_public;
@@ -51,9 +50,9 @@ void cleanup_key_bundle(keyBundle& bundle) {
     delete[] bundle.signed_prekey_private;
     delete[] bundle.onetime_prekey_public;
     delete[] bundle.onetime_prekey_private;
+    delete[] bundle.signed_prekey_signature;
     delete[] bundle.ed25519_device_key_public;
     delete[] bundle.ed25519_device_key_private;
-    delete[] bundle.signed_prekey_signature;
 }
 
 class IdentitySessionTest : public ::testing::Test {
@@ -65,8 +64,8 @@ protected:
         }
         
         // Create key bundles for Alice and Bob
-        alice_bundle = create_key_bundle(true);  // Alice is sending
-        bob_bundle = create_key_bundle(false);   // Bob is receiving
+        alice_bundle = generateKeyBundle(true);
+        bob_bundle = generateKeyBundle(false);
         
         // Create identity keys for Alice and Bob
         alice_identity_key_public = new unsigned char[crypto_box_PUBLICKEYBYTES];
@@ -95,8 +94,8 @@ protected:
     void TearDown() override {
         delete alice_session;
         delete bob_session;
-        cleanup_key_bundle(alice_bundle);
-        cleanup_key_bundle(bob_bundle);
+        cleanupKeyBundle(alice_bundle);
+        cleanupKeyBundle(bob_bundle);
         delete[] alice_identity_key_public;
         delete[] alice_identity_key_private;
         delete[] bob_identity_key_public;
@@ -138,8 +137,8 @@ TEST_F(IdentitySessionTest, BasicMessageExchange) {
 // Test multi-device message exchange
 TEST_F(IdentitySessionTest, MultiDeviceMessageExchange) {
     // Create additional key bundles for multiple devices
-    keyBundle alice_device2 = create_key_bundle(true);
-    keyBundle bob_device2 = create_key_bundle(false);
+    keyBundle alice_device2 = generateKeyBundle(true);
+    keyBundle bob_device2 = generateKeyBundle(false);
     
     // Add new device bundles to sessions
     std::vector<keyBundle> alice_new_bundles = {bob_device2};
@@ -153,8 +152,8 @@ TEST_F(IdentitySessionTest, MultiDeviceMessageExchange) {
     EXPECT_GE(bob_session->getDeviceSessions().size(), 2);
     
     // Clean up additional bundles
-    cleanup_key_bundle(alice_device2);
-    cleanup_key_bundle(bob_device2);
+    cleanupKeyBundle(alice_device2);
+    cleanupKeyBundle(bob_device2);
 }
 
 // Test session key derivation
@@ -174,7 +173,7 @@ TEST_F(IdentitySessionTest, SessionKeyDerivation) {
 // Test session cleanup
 TEST_F(IdentitySessionTest, SessionCleanup) {
     // Create a temporary session
-    auto temp_bundle = create_key_bundle(true);
+    auto temp_bundle = generateKeyBundle(true);
     std::vector<keyBundle> temp_bundles = {bob_bundle};
     
     {
@@ -187,7 +186,7 @@ TEST_F(IdentitySessionTest, SessionCleanup) {
     }
     // Session should be properly cleaned up when it goes out of scope
     
-    cleanup_key_bundle(temp_bundle);
+    cleanupKeyBundle(temp_bundle);
 }
 
 TEST_F(IdentitySessionTest, EncryptedMessageExchange) {
@@ -251,8 +250,8 @@ TEST_F(IdentitySessionTest, EncryptedMessageExchange) {
 
 TEST_F(IdentitySessionTest, MessageBroadcastToAllDevices) {
     // Create additional key bundles for multiple devices
-    keyBundle alice_device2 = create_key_bundle(false);  // Alice's second device (receiving)
-    keyBundle bob_device2 = create_key_bundle(true);     // Bob's second device (sending)
+    keyBundle alice_device2 = generateKeyBundle(false);  // Alice's second device (receiving)
+    keyBundle bob_device2 = generateKeyBundle(true);     // Bob's second device (sending)
     
     // Add new device bundles to sessions
     std::vector<keyBundle> alice_new_bundles = {bob_device2};
@@ -294,6 +293,6 @@ TEST_F(IdentitySessionTest, MessageBroadcastToAllDevices) {
     
     // Clean up
     delete[] message;
-    cleanup_key_bundle(alice_device2);
-    cleanup_key_bundle(bob_device2);
+    cleanupKeyBundle(alice_device2);
+    cleanupKeyBundle(bob_device2);
 } 
