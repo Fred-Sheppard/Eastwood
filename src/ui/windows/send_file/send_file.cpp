@@ -2,6 +2,7 @@
 #include "ui_send_file.h"
 #include "../../utils/messagebox.h"
 #include "../../utils/window_manager/window_manager.h"
+#include "../../utils/messagebox.h"
 #include "../../utils/navbar/navbar.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -42,6 +43,7 @@ void SendFile::setupConnections()
         connect(navbar, &NavBar::sentClicked, this, &SendFile::onSentButtonClicked);
         connect(navbar, &NavBar::sendFileClicked, this, &SendFile::onSendFileButtonClicked);
         connect(navbar, &NavBar::settingsClicked, this, &SendFile::onSettingsButtonClicked);
+        connect(navbar, &NavBar::logoutClicked, this, &SendFile::onLogoutButtonClicked);
     }
 }
 
@@ -50,6 +52,36 @@ void SendFile::onBrowseClicked()
     QString filePath = QFileDialog::getOpenFileName(this, "Select File", "", "All Files (*.*)");
     if (!filePath.isEmpty()) {
         ui->filePathInput->setText(filePath);
+        
+        // Get file information
+        QFileInfo fileInfo(filePath);
+        QString fileName = fileInfo.fileName();
+        qint64 size = fileInfo.size();
+        QString sizeStr;
+        
+        // Convert size to human-readable format
+        if (size < 1024) {
+            sizeStr = QString("%1 B").arg(size);
+        } else if (size < 1024 * 1024) {
+            sizeStr = QString("%1 KB").arg(size / 1024.0, 0, 'f', 1);
+        } else if (size < 1024 * 1024 * 1024) {
+            sizeStr = QString("%1 MB").arg(size / (1024.0 * 1024.0), 0, 'f', 1);
+        } else {
+            sizeStr = QString("%1 GB").arg(size / (1024.0 * 1024.0 * 1024.0), 0, 'f', 1);
+        }
+        
+        // Format the details text
+        QString details = QString("File Details:\n\n"
+                                "Name: %1\n"
+                                "Size: %2\n"
+                                "Type: %3\n"
+                                "Last Modified: %4")
+                                .arg(fileName)
+                                .arg(sizeStr)
+                                .arg(fileInfo.suffix().toUpper())
+                                .arg(fileInfo.lastModified().toString("yyyy-MM-dd hh:mm:ss"));
+        
+        ui->fileDetailsLabel->setText(details);
     }
 }
 
@@ -74,25 +106,37 @@ void SendFile::navigateTo(QWidget* newWindow)
 }
 
 void SendFile::onReceivedButtonClicked()
-{
+{   
+    ui->usernameInput->clear();
+    ui->filePathInput->clear();
+    ui->fileDetailsLabel->clear();
     WindowManager::instance().showReceived();
     hide();
 }
 
 void SendFile::onSentButtonClicked()
-{
+{   
+    ui->usernameInput->clear();
+    ui->filePathInput->clear();
+    ui->fileDetailsLabel->clear();
     WindowManager::instance().showSent();
     hide();
 }
 
 void SendFile::onSendFileButtonClicked()
-{
+{   
+    ui->usernameInput->clear();
+    ui->filePathInput->clear();
+    ui->fileDetailsLabel->clear();
     WindowManager::instance().showSendFile();
     hide();
 }
 
 void SendFile::onSettingsButtonClicked()
-{
+{   
+    ui->filePathInput->clear();
+    ui->fileDetailsLabel->clear();
+    ui->usernameInput->clear();
     WindowManager::instance().showSettings();
     hide();
 }
@@ -104,4 +148,9 @@ void SendFile::onWindowShown(const QString& windowName)
     if (navbar) {
         navbar->setActiveButton(windowName);
     }
+}
+
+void SendFile::onLogoutButtonClicked()
+{
+    StyledMessageBox::info(this, "Not Implemented", "Logout functionality is not yet implemented.");
 }

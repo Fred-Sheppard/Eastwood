@@ -43,7 +43,11 @@ void Sent::setupConnections()
         connect(navbar, &NavBar::sentClicked, this, &Sent::onSentButtonClicked);
         connect(navbar, &NavBar::sendFileClicked, this, &Sent::onSendFileButtonClicked);
         connect(navbar, &NavBar::settingsClicked, this, &Sent::onSettingsButtonClicked);
+        connect(navbar, &NavBar::logoutClicked, this, &Sent::onLogoutButtonClicked);
     }
+    
+    // Connect the send button
+    connect(ui->sendButton, &QPushButton::clicked, this, &Sent::onSendFileButtonClicked);
 }
 
 void Sent::setupFileList()
@@ -340,4 +344,9 @@ void Sent::onSettingsButtonClicked()
 {
     WindowManager::instance().showSettings();
     hide();
+}
+
+void Sent::onLogoutButtonClicked()
+{
+    StyledMessageBox::info(this, "Not Implemented", "Logout functionality is not yet implemented.");
 }

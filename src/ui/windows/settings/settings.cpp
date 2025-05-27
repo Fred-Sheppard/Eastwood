@@ -47,6 +47,7 @@ void Settings::setupConnections()
         connect(navbar, &NavBar::sentClicked, this, &Settings::onSentButtonClicked);
         connect(navbar, &NavBar::sendFileClicked, this, &Settings::onSendFileButtonClicked);
         connect(navbar, &NavBar::settingsClicked, this, &Settings::onSettingsButtonClicked);
+        connect(navbar, &NavBar::logoutClicked, this, &Settings::onLogoutButtonClicked);
     }
 }
 
@@ -80,24 +81,36 @@ void Settings::navigateTo(QWidget* newWindow)
 
 void Settings::onReceivedButtonClicked()
 {
+    ui->currentPassword->clear();
+    ui->newPassword->clear();
+    ui->confirmPassword->clear();
     WindowManager::instance().showReceived();
     hide();
 }
 
 void Settings::onSentButtonClicked()
 {
+    ui->currentPassword->clear();
+    ui->newPassword->clear();
+    ui->confirmPassword->clear();
     WindowManager::instance().showSent();
     hide();
 }
 
 void Settings::onSendFileButtonClicked()
-{
+{   
+    ui->currentPassword->clear();
+    ui->newPassword->clear();
+    ui->confirmPassword->clear();
     WindowManager::instance().showSendFile();
     hide();
 }
 
 void Settings::onSettingsButtonClicked()
-{
+{   
+    ui->currentPassword->clear();
+    ui->newPassword->clear();
+    ui->confirmPassword->clear();
     WindowManager::instance().showSettings();
     hide();
 }
@@ -125,4 +138,9 @@ void Settings::onCancelClicked()
     // Navigate back to the previous window
     WindowManager::instance().showReceived();
     hide();
+}
+
+void Settings::onLogoutButtonClicked() {
+    // TODO: Implement logout functionality
+    StyledMessageBox::info(this, "Not Implemented", "Logout functionality is not yet implemented.");
 }

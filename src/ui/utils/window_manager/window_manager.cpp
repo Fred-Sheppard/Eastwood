@@ -78,3 +78,7 @@ void WindowManager::showSettings()
     m_settings->show();
     emit windowShown("settingsButton");
 }
+
+void WindowManager::showLogin() {
+    // Close all existing wi
+}

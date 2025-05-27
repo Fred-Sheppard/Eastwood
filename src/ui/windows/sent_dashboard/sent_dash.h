@@ -26,6 +26,7 @@ private slots:
     void onSentButtonClicked();
     void onSendFileButtonClicked();
     void onSettingsButtonClicked();
+    void onLogoutButtonClicked();
 
 private:
     Ui::Sent *ui;

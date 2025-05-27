@@ -2,6 +2,7 @@
 #define WINDOW_MANAGER_H
 
 #include <QObject>
+#include <QString>
 
 // Forward declarations to reduce includes
 class Received;
@@ -19,6 +20,7 @@ public:
     void showSent();
     void showSendFile();
     void showSettings();  // Add this method declaration
+    void showLogin();  // Add showLogin method declaration
 
     // Add cleanup method
     void cleanup();

@@ -138,6 +138,26 @@ class Ui_NavBar(object):
 
         self.navBarLayout.addWidget(self.settingsButton)
 
+        self.logoutButton = QPushButton(NavBar)
+        self.logoutButton.setObjectName(u"logoutButton")
+        self.logoutButton.setMinimumSize(QSize(0, 40))
+        self.logoutButton.setStyleSheet(u"QPushButton {\n"
+"  font-size: 13px;\n"
+"  color: #e74c3c;\n"
+"  background-color: transparent;\n"
+"  border-radius: 6px;\n"
+"  text-align: left;\n"
+"  padding-left: 14px;\n"
+"}\n"
+"QPushButton:hover {\n"
+"  background-color: #fff5f5;\n"
+"}\n"
+"QPushButton:pressed {\n"
+"  background-color: #ffe3e3;\n"
+"}")
+
+        self.navBarLayout.addWidget(self.logoutButton)
+
 
         self.retranslateUi(NavBar)
 
@@ -151,6 +171,7 @@ class Ui_NavBar(object):
         self.sentButton.setText(QCoreApplication.translate("NavBar", u"Sent Files", None))
         self.sendFileButton.setText(QCoreApplication.translate("NavBar", u"Send File", None))
         self.settingsButton.setText(QCoreApplication.translate("NavBar", u"Settings", None))
+        self.logoutButton.setText(QCoreApplication.translate("NavBar", u"Logout", None))
         pass
     # retranslateUi
 

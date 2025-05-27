@@ -26,6 +26,7 @@ private slots:
     void onSettingsButtonClicked();
     void refreshFileList();
     void onSendFileButtonClicked();
+    void onLogoutButtonClicked();
     void onWindowShown(const QString& windowName);
 
 private:

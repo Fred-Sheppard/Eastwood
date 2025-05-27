@@ -2,6 +2,7 @@
 #include "ui_received_dash.h"
 #include "../../utils/messagebox.h"
 #include "../../utils/window_manager/window_manager.h"
+#include "../../utils/messagebox.h"
 #include "../../utils/navbar/navbar.h"
 #include "../send_file/send_file.h"
 #include "../sent_dashboard/sent_dash.h"
@@ -46,6 +47,7 @@ void Received::setupConnections()
         connect(navbar, &NavBar::sentClicked, this, &Received::onSentButtonClicked);
         connect(navbar, &NavBar::sendFileClicked, this, &Received::onSendFileButtonClicked);
         connect(navbar, &NavBar::settingsClicked, this, &Received::onSettingsButtonClicked);
+        connect(navbar, &NavBar::logoutClicked, this, &Received::onLogoutButtonClicked);
     }
 }
 
@@ -160,4 +162,9 @@ void Received::onReceivedButtonClicked()
 {
     WindowManager::instance().showReceived();
     hide();
+}
+
+void Received::onLogoutButtonClicked()
+{
+    StyledMessageBox::info(this, "Not Implemented", "Logout functionality is not yet implemented.");
 }

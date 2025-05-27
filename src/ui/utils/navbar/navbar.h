@@ -17,12 +17,14 @@ signals:
     void sentClicked();
     void sendFileClicked();
     void settingsClicked();
+    void logoutClicked();
 
 private slots:
     void onReceivedButtonClicked();
     void onSentButtonClicked();
     void onSendFileButtonClicked();
     void onSettingsButtonClicked();
+    void onLogoutButtonClicked();
 
 private:
     Ui::NavBar *ui;

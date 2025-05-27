@@ -1,6 +1,7 @@
 #include "navbar.h"
 #include "ui_navbar.h"
 #include "../../utils/window_manager/window_manager.h"
+#include "../../utils/messagebox.h"
 
 NavBar::NavBar(QWidget *parent) : QWidget(parent), ui(new Ui::NavBar) {
     ui->setupUi(this);
@@ -16,6 +17,7 @@ void NavBar::setupConnections() {
     connect(ui->sentButton, &QPushButton::clicked, this, &NavBar::sentClicked);
     connect(ui->sendFileButton, &QPushButton::clicked, this, &NavBar::sendFileClicked);
     connect(ui->settingsButton, &QPushButton::clicked, this, &NavBar::settingsClicked);
+    connect(ui->logoutButton, &QPushButton::clicked, this, &NavBar::logoutClicked);
 }
 
 void NavBar::setActiveButton(const QString& buttonName) {
@@ -43,34 +45,42 @@ void NavBar::updateButtonStyle(QPushButton* button, bool isActive) {
             QPushButton {
                 font-size: 14px;
                 font-weight: 500;
-                color: white;
-                background-color: #6c5ce7;
+                color: #6c5ce7;
+                background-color: #f0eeff;
                 border-radius: 8px;
                 text-align: left;
                 padding-left: 15px;
+                border: 1px solid #e6e3ff;
             }
             QPushButton:hover {
-                background-color: #5049c9;
+                background-color: #e6e3ff;
+                border-color: #dcd8ff;
             }
             QPushButton:pressed {
-                background-color: #4040b0;
+                background-color: #dcd8ff;
+                border-color: #6c5ce7;
             }
         )");
     } else {
         button->setStyleSheet(R"(
             QPushButton {
                 font-size: 14px;
-                color: #2d3436;
+                color: #636e72;
                 background-color: transparent;
                 border-radius: 8px;
                 text-align: left;
                 padding-left: 15px;
+                border: 1px solid #f1f2f6;
             }
             QPushButton:hover {
-                background-color: #f1f2f6;
+                background-color: #f8f9fa;
+                color: #2d3436;
+                border-color: #e9ecef;
             }
             QPushButton:pressed {
-                background-color: #dfe6e9;
+                background-color: #f1f2f6;
+                color: #2d3436;
+                border-color: #dfe6e9;
             }
         )");
     }
@@ -98,4 +108,13 @@ void NavBar::onSettingsButtonClicked() {
     WindowManager::instance().showSettings();
     setActiveButton("settingsButton");
     hide();
+}
+
+void NavBar::onLogoutButtonClicked() {
+    // TODO: Implement logout functionality
+    // - Show confirmation dialog
+    // - Clear sensitive data
+    // - Close all windows
+    // - Return to login screen
+    StyledMessageBox::info(this, "Not Implemented", "Logout functionality is not yet implemented.");
 }

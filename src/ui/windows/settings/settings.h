@@ -22,6 +22,7 @@ private slots:
     void onSentButtonClicked();
     void onSendFileButtonClicked();
     void onSettingsButtonClicked();
+    void onLogoutButtonClicked();
     void validatePassword();
     void onCancelClicked();
 
