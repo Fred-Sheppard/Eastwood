@@ -2,17 +2,9 @@
 #include "ui_received_dash.h"
 #include "../../utils/messagebox.h"
 #include "../../utils/window_manager/window_manager.h"
-#include "../../utils/messagebox.h"
 #include "../../utils/navbar/navbar.h"
-#include "../send_file/send_file.h"
 #include "../sent_dashboard/sent_dash.h"
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QFileInfo>
 #include <QFileDialog>
-#include <QLineEdit>
-#include <QDialog>
-#include <QScrollArea>
 #include <QTimer>
 #include <QCheckBox>
 

@@ -148,12 +148,15 @@ class Ui_NavBar(object):
 "  border-radius: 6px;\n"
 "  text-align: left;\n"
 "  padding-left: 14px;\n"
+"  border: 1px solid #e74c3c;\n"
 "}\n"
 "QPushButton:hover {\n"
 "  background-color: #fff5f5;\n"
+"  border-color: #c0392b;\n"
 "}\n"
 "QPushButton:pressed {\n"
 "  background-color: #ffe3e3;\n"
+"  border-color: #a93226;\n"
 "}")
 
         self.navBarLayout.addWidget(self.logoutButton)
