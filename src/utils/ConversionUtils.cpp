@@ -1,6 +1,11 @@
+#include <string>
+#include <stdexcept>
 #include <iostream>
+#include <vector>
 #include <fstream>
+#include <filesystem>
 #include <qbytearray.h>
+#include <vector>
 
 bool hex_to_bin(const std::string &hex, unsigned char *bin, size_t bin_size) {
     if (hex.length() != bin_size * 2) return false;
