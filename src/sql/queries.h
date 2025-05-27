@@ -16,7 +16,7 @@ inline std::tuple<QByteArray, QByteArray> get_keypair(const std::string &label) 
     const auto &db = Database::get();
     sqlite3_stmt *stmt;
     db.prepare_or_throw("SELECT public_key, encrypted_private_key FROM keypairs WHERE label = ?", &stmt);
-    sqlite3_bind_text(stmt, 1, label.c_str(), static_cast<int>(label.length()), nullptr);
+    sqlite3_bind_text(stmt, 1, label.c_str(), static_cast<int>(label.length()), SQLITE_TRANSIENT);
     // Label is marked as unique - will always return at most one row
     auto rows = db.query(stmt);
     if (rows.empty()) {
