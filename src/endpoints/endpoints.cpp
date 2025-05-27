@@ -77,3 +77,4 @@ keyBundleRequest get_keybundles(unsigned char pk_identity[32]) {
 
     //TODO:: parse response
 };
+
