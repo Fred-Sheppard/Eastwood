@@ -86,48 +86,54 @@ void post_ratchet_message(const DeviceMessage* msg) {
     post_auth(body, "/sendMessage");
 };
 
-keyBundleRequest get_keybundles(unsigned char pk_identity[32]) {
-    std::string hex_pk_identity = bin2hex(pk_identity, 32);
-    json response = get_auth("/keybundle/"+hex_pk_identity);
+void get_keybundles(unsigned char pk_identity[crypto_sign_PUBLICKEYBYTES], SessionManager& manager) {
+    char hex_pk_identity[crypto_sign_PUBLICKEYBYTES * 2 + 1];
+    sodium_bin2hex(hex_pk_identity, sizeof(hex_pk_identity), pk_identity, crypto_sign_PUBLICKEYBYTES);
 
+    json response = get_auth("/keybundle/" + std::string(hex_pk_identity));
+    
     keyBundleRequest request;
     
-    // Allocate and copy my identity public key
-    request.my_identity_public = new unsigned char[32];
-    memcpy(request.my_identity_public, pk_identity, 32);
+    // Copy the identity public key
+    request.my_identity_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
+    memcpy(request.my_identity_public, pk_identity, crypto_sign_PUBLICKEYBYTES);
     
-    // Allocate and copy their identity public key
-    std::vector<uint8_t> their_identity = hex_string_to_binary(response["their_identity_public"]);
-    request.their_identity_public = new unsigned char[32];
-    memcpy(request.their_identity_public, their_identity.data(), 32);
-    
-    // Parse key bundles from response
+    // Copy their identity public key from response
+    std::vector<uint8_t> their_identity = hex_string_to_binary(response["identity_public_key"]);
+    request.their_identity_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
+    memcpy(request.their_identity_public, their_identity.data(), crypto_sign_PUBLICKEYBYTES);
+
+    // Process each key bundle
     for (const auto& bundle : response["key_bundles"]) {
         keyBundle kb;
         
         // Allocate and copy device public key
-        std::vector<uint8_t> device_public = hex_string_to_binary(bundle["device_public"]);
-        kb.device_key_public = new unsigned char[32];
-        memcpy(kb.device_key_public, device_public.data(), 32);
+        std::vector<uint8_t> device_public = hex_string_to_binary(bundle["device_public_key"]);
+        kb.device_key_public = new unsigned char[crypto_box_PUBLICKEYBYTES];
+        memcpy(kb.device_key_public, device_public.data(), crypto_box_PUBLICKEYBYTES);
         
-        // Allocate and copy signed prekey public key
-        std::vector<uint8_t> signed_prekey = hex_string_to_binary(bundle["signed_prekey_public"]);
-        kb.signed_prekey_public = new unsigned char[32];
-        memcpy(kb.signed_prekey_public, signed_prekey.data(), 32);
+        // Allocate and copy signed prekey public key if present
+        if (!bundle["presigned_key"].is_null() && !bundle["presigned_key"].empty()) {
+            std::vector<uint8_t> signed_prekey = hex_string_to_binary(bundle["presigned_key"]);
+            kb.signed_prekey_public = new unsigned char[crypto_box_PUBLICKEYBYTES];
+            memcpy(kb.signed_prekey_public, signed_prekey.data(), crypto_box_PUBLICKEYBYTES);
+        } else {
+            kb.signed_prekey_public = nullptr;
+        }
         
-        // Allocate and copy signed prekey signature
-        std::vector<uint8_t> signature = hex_string_to_binary(bundle["signed_prekey_signature"]);
-        kb.signed_prekey_signature = new unsigned char[64];
-        memcpy(kb.signed_prekey_signature, signature.data(), 64);
-        
-        // Allocate and copy one-time prekey public key
-        std::vector<uint8_t> one_time_prekey = hex_string_to_binary(bundle["one_time_prekey_public"]);
-        kb.onetime_prekey_public = new unsigned char[32];
-        memcpy(kb.onetime_prekey_public, one_time_prekey.data(), 32);
+        // Allocate and copy one-time prekey public key if present
+        if (!bundle["one_time_key"].is_null() && !bundle["one_time_key"].empty()) {
+            std::vector<uint8_t> one_time_prekey = hex_string_to_binary(bundle["one_time_key"]);
+            kb.onetime_prekey_public = new unsigned char[crypto_box_PUBLICKEYBYTES];
+            memcpy(kb.onetime_prekey_public, one_time_prekey.data(), crypto_box_PUBLICKEYBYTES);
+        } else {
+            kb.onetime_prekey_public = nullptr;
+        }
         
         request.key_bundles.push_back(kb);
     }
 
-    return request;
+    // Route the keybundle request through the identity session
+    manager.import_key_bundles(request);
 }
 
