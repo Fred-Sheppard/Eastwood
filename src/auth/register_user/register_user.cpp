@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <sodium.h>
+#include <memory>
 #include "src/algorithms/algorithms.h"
 
 #include "../../algorithms/constants.h"
