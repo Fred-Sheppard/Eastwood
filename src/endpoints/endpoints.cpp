@@ -2,6 +2,8 @@
 #include <nlohmann/json.hpp>
 
 #include "src/key_exchange/utils.h"
+#include "src/utils/ConversionUtils.h"
+#include "src/client_api_interactions/MakeAuthReq.h"
 
 using json = nlohmann::json;
 
@@ -17,7 +19,8 @@ void post_register_user(
         {"nonce", bin2base64(registration_nonce, NONCE_LEN)},
         {"nonce_signature", bin2base64(nonce_signature, crypto_sign_BYTES)}
     };
-    // TODO:  post("/registerUser", body.dump());
+
+    post_auth(body, "/registerUser");
 };
 
 void post_register_device(
@@ -30,5 +33,6 @@ void post_register_device(
         {"device_public", bin2base64(pk_device, crypto_sign_PUBLICKEYBYTES)},
         {"signature", bin2base64(pk_signature, crypto_sign_BYTES)}
     };
-    // TODO:  post("/registerDevice", body.dump());
+
+    post_auth(body, "/registerDevice");
 };
