@@ -146,6 +146,7 @@ target_link_libraries(Eastwood PRIVATE
 add_executable(EastwoodTests
     test/identity_session_message_test.cpp
     ${CRYPTO_SOURCES}
+    src/database/database.cpp
 )
 
 # Configure test target
