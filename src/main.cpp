@@ -7,7 +7,6 @@
 #define SQLITE_HAS_CODEC 1
 #include <QFile>
 #include <QApplication>
-
 #include "auth/register_user/register_user.h"
 #include "database/database.h"
 #include "database/schema.h"
