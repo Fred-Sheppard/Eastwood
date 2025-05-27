@@ -25,7 +25,7 @@ void post_ratchet_message(
     const DeviceMessage* msg
 );
 
-Message* get_messages();
+void get_messages(SessionManager manager);
 
 keyBundleRequest get_keybundles(
     unsigned char pk_identity[crypto_sign_PUBLICKEYBYTES]
