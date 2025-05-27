@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include "src/session/IdentityCommunicationSession.h"
-#include "src/session/DeviceCommunicationSession.h"
+#include "src/sessions/IdentityCommunicationSession.h"
+#include "src/sessions/DeviceCommunicationSession.h"
 #include "src/key_exchange/DoubleRatchet.h"
 #include "src/key_exchange/utils.h"
 #include <sodium.h>

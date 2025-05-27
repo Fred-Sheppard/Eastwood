@@ -4,6 +4,7 @@
 
 #ifndef IDENTITYCOMMUNICATIONSESSION_H
 #define IDENTITYCOMMUNICATIONSESSION_H
+
 #include <vector>
 #include <map>
 #include "DeviceCommunicationSession.h"

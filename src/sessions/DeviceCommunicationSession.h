@@ -62,3 +62,4 @@ public:
     DoubleRatchet* getRatchet() override;
 };
 
+#endif //COMMUNICATIONSESSION_H

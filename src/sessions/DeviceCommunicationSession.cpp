@@ -12,7 +12,7 @@ static void print_key(const char* name, const unsigned char* key, size_t len) {
     std::cout << name << ": " << oss.str() << std::endl;
 }
 
-DeviceCommunicationSession::DeviceCommunicationSession() 
+DeviceCommunicationSession::DeviceCommunicationSession()
     : shared_secret(nullptr), ratchet(nullptr), device_session_id(nullptr) {
     // Initialize base class - common functionality can be implemented here
     std::cout << "\n===== INITIALIZING DEVICE COMMUNICATION SESSION =====" << std::endl;
