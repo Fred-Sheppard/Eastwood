@@ -20,7 +20,6 @@ int register_user(const std::string &username, const std::unique_ptr<const std::
     randombytes_buf(salt, sizeof salt);
 
     auto master_key = derive_master_key(std::move(master_password), salt);
-    // std::fill_n(master_key, MASTER_KEY_LEN, 0x11);
 
     auto kek = SecureMemoryBuffer::create(SYM_KEY_LEN);
     crypto_secretbox_keygen(kek->data());

@@ -31,7 +31,7 @@ void SecureMemoryBuffer::zero_and_unlock() {
     }
 }
 
-unsigned char* SecureMemoryBuffer::data() {
+unsigned char* SecureMemoryBuffer::data() const {
     return buffer_;
 }
 

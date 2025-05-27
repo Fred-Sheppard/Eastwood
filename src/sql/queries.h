@@ -40,7 +40,6 @@ inline std::unique_ptr<SecureMemoryBuffer> get_decrypted_sk(const std::string &l
     return decrypt_secret_key(q_byte_array_to_chars(encrypted_sk), q_byte_array_to_chars(nonce));
 };
 
-
 inline void save_keypair(
     const std::string &label,
     unsigned char pk_identity[crypto_sign_PUBLICKEYBYTES],
@@ -103,19 +102,6 @@ inline void save_encrypted_key(
 inline QByteArray get_public_key(const std::string &label) {
     auto [publicKey, _, __] = get_keypair(label);
     return publicKey;
-}
-
-inline std::unique_ptr<SecureMemoryBuffer> get_decrypted_symmetric_key(const std::string &label) {
-    auto [encryptedKey, nonce] = get_encrypted_key(label);
-    if (encryptedKey.size() != SYM_KEY_LEN + ENC_OVERHEAD || nonce.size() != CHA_CHA_NONCE_LEN) {
-        throw std::runtime_error("Invalid encrypted key or nonce size");
-    }
-    auto buf = SecureMemoryBuffer::create(SYM_KEY_LEN);
-    auto *kek = KekManager::instance().getKEK();
-    // if (decrypt_secret_key(buf->data(), reinterpret_cast<const unsigned char*>(encryptedKey.constData()), reinterpret_cast<const unsigned char*>(nonce.constData()), kek->data()) != 0) {
-    //     throw std::runtime_error("Failed to decrypt symmetric key");
-    // }
-    return buf;
 }
 
 #endif //QUERIES_H

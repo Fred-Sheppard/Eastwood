@@ -7,7 +7,7 @@ public:
     static std::unique_ptr<SecureMemoryBuffer> create(size_t size);
     ~SecureMemoryBuffer();
 
-    unsigned char* data();
+    unsigned char* data() const;
     size_t size() const;
 
     // Non-copyable, movable
