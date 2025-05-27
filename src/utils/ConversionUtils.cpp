@@ -107,6 +107,11 @@ std::string load_env_variable(const std::string& key, const std::string& default
         value.erase(value.find_last_not_of(" \t") + 1);
 
         if (current_key == key) {
+            // TODO debugging
+            std::cout << "KEY: " << key;
+            std::cout << "VALUE: " << value;
+            std::cerr << "KEY: " << key;
+            std::cerr << "VALUE: " << value;
             return value;
         }
     }

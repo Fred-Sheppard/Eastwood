@@ -3,7 +3,6 @@
 #include <QFile>
 #include <QApplication>
 
-#include "auth/register_user/register_user.h"
 #include "database/database.h"
 #include "database/schema.h"
 
