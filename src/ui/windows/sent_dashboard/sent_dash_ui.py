@@ -24,7 +24,7 @@ class Ui_Sent(object):
             Sent.setObjectName(u"Sent")
         Sent.resize(1000, 700)
         Sent.setMinimumSize(QSize(1000, 700))
-        Sent.setStyleSheet(u"background-color: #f5f6fa;")
+        Sent.setStyleSheet(u"background-color: white;")
         self.mainLayout = QHBoxLayout(Sent)
         self.mainLayout.setSpacing(0)
         self.mainLayout.setObjectName(u"mainLayout")

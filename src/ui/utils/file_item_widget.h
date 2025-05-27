@@ -9,10 +9,16 @@ class FileItemWidget : public QWidget {
     Q_OBJECT
 
 public:
+    enum class Mode {
+        Received,
+        Sent
+    };
+
     explicit FileItemWidget(const QString& fileName, 
                           const QString& fileSize, 
                           const QString& timestamp,
                           const QString& owner,
+                          Mode mode = Mode::Received,
                           QWidget* parent = nullptr);
 
     // Add getter methods
@@ -35,6 +41,7 @@ private:
     QString fileSize;
     QString timestamp;
     QString owner;
+    Mode mode;
 
     void setupUI();
     void setupConnections();

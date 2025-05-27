@@ -20,7 +20,7 @@
    <string>Nightwood - Register</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: #f5f6fa;</string>
+   <string notr="true">background-color: white;</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">

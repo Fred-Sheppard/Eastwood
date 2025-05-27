@@ -13,7 +13,7 @@ class Sent : public QWidget {
     Q_OBJECT
 
 public:
-    explicit Sent(QWidget *parent = nullptr);
+    explicit Sent(QWidget *parent = nullptr, QWidget* receivedWindow = nullptr);
     ~Sent() override;
 
 private slots:
@@ -22,11 +22,14 @@ private slots:
     void onRevokeAccessClicked(FileItemWidget* widget);
     void onDeleteFileClicked(FileItemWidget* widget);
     void onReceivedButtonClicked();
+    void onSendFileButtonClicked();
     void onSettingsButtonClicked();
     void refreshFileList();
 
 private:
     Ui::Sent *ui;
+    QWidget* m_receivedWindow;
+    QWidget* m_sendFileWindow;
     void setupConnections();
     void setupFileList();
     void showFileMetadata(FileItemWidget* widget);
@@ -35,6 +38,7 @@ private:
                     const QString& fileSize, 
                     const QString& timestamp,
                     const QString& owner);
+    void navigateTo(QWidget* newWindow);
 };
 
 #endif // SENT_DASH_H

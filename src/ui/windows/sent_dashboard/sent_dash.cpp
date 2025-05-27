@@ -1,7 +1,9 @@
 #include "sent_dash.h"
 #include "ui_sent_dash.h"
 #include "../../utils/messagebox.h"
+#include "../../utils/window_manager.h"
 #include "../send_file/send_file.h"
+#include "../received_dashboard/received_dash.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFileInfo>
@@ -13,9 +15,10 @@
 #include <QCheckBox>
 
 // Sent implementation
-Sent::Sent(QWidget *parent)
+Sent::Sent(QWidget *parent, QWidget* receivedWindow)
     : QWidget(parent)
     , ui(new Ui::Sent)
+    , m_receivedWindow(receivedWindow)
 {
     ui->setupUi(this);
     setupConnections();
@@ -33,6 +36,7 @@ void Sent::setupConnections()
     connect(ui->sendButton, &QPushButton::clicked, this, &Sent::onSendButtonClicked);
     connect(ui->receivedButton, &QPushButton::clicked, this, &Sent::onReceivedButtonClicked);
     connect(ui->settingsButton, &QPushButton::clicked, this, &Sent::onSettingsButtonClicked);
+    connect(ui->sendFileButton, &QPushButton::clicked, this, &Sent::onSendFileButtonClicked);
 }
 
 void Sent::setupFileList()
@@ -48,7 +52,8 @@ void Sent::addFileItem(const QString& fileName,
                      const QString& owner)
 {
     auto* item = new QListWidgetItem(ui->fileList);
-    auto* widget = new FileItemWidget(fileName, fileSize, timestamp, owner, this);
+    auto* widget = new FileItemWidget(fileName, fileSize, timestamp, owner, 
+                                    FileItemWidget::Mode::Sent, this);
 
     connect(widget, &FileItemWidget::revokeAccessClicked, this, &Sent::onRevokeAccessClicked);
     connect(widget, &FileItemWidget::deleteFileClicked, this, &Sent::onDeleteFileClicked);
@@ -70,10 +75,17 @@ void Sent::refreshFileList()
     addFileItem("Budget Report.xlsx", "1.2 MB", "2024-03-13 16:45", "Bob Johnson");
 }
 
+void Sent::navigateTo(QWidget* newWindow)
+{
+    newWindow->setParent(this->parentWidget());  // Set the same parent
+    newWindow->show();
+    this->setAttribute(Qt::WA_DeleteOnClose);  // Mark for deletion when closed
+    close();  // This will trigger deletion due to WA_DeleteOnClose
+}
+
 void Sent::onSendButtonClicked()
 {
-    SendFile* sendFileWindow = new SendFile(parentWidget());
-    sendFileWindow->show();
+    WindowManager::instance().showSendFile();
     hide();
 }
 
@@ -283,12 +295,20 @@ void Sent::onDeleteFileClicked(FileItemWidget* widget)
 
 void Sent::onReceivedButtonClicked()
 {
-    // TODO: Switch to received dashboard view
+    WindowManager::instance().showReceived();
+    hide();
 }
 
 void Sent::onSettingsButtonClicked()
 {
-    // TODO: Open settings view
+    WindowManager::instance().showSettings();
+    hide();
+}
+
+void Sent::onSendFileButtonClicked()
+{
+    WindowManager::instance().showSendFile();
+    hide();
 }
 
 void Sent::showFileMetadata(FileItemWidget* widget)

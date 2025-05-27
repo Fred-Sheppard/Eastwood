@@ -1,14 +1,18 @@
 #include "send_file.h"
 #include "ui_send_file.h"
 #include "../../utils/messagebox.h"
+#include "../../utils/window_manager.h"
+#include "../sent_dashboard/sent_dash.h"
+#include "../received_dashboard/received_dash.h"
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QTimer>
 
-SendFile::SendFile(QWidget *parent, QWidget* receivedWindow)
+SendFile::SendFile(QWidget *parent, QWidget* receivedWindow, QWidget* sentWindow)
     : QWidget(parent)
     , ui(new Ui::SendFile)
     , m_receivedWindow(receivedWindow)
+    , m_sentWindow(sentWindow)
 {
     ui->setupUi(this);
     setupUI();
@@ -163,19 +167,24 @@ void SendFile::updateSendButtonState()
                              !ui->filePathInput->text().isEmpty());
 }
 
+void SendFile::navigateTo(QWidget* newWindow)
+{
+    newWindow->setParent(this->parentWidget());  // Set the same parent
+    newWindow->show();
+    this->setAttribute(Qt::WA_DeleteOnClose);  // Mark for deletion when closed
+    close();  // This will trigger deletion due to WA_DeleteOnClose
+}
+
 void SendFile::onReceivedButtonClicked()
 {
-    if (m_receivedWindow) {
-        m_receivedWindow->show();
-        deleteLater(); // This will delete the SendFile window after the event loop processes it
-    }
+    WindowManager::instance().showReceived();
+    hide();
 }
 
 void SendFile::onSentButtonClicked()
 {
-    // TODO: Create and show sent files window
-    // For now, just show a message
-    StyledMessageBox::info(this, "Coming Soon", "Sent Files view will be implemented soon.");
+    WindowManager::instance().showSent();
+    hide();
 }
 
 void SendFile::onSendFileButtonClicked()
@@ -185,12 +194,6 @@ void SendFile::onSendFileButtonClicked()
 
 void SendFile::onSettingsButtonClicked()
 {
-    // TODO: Create and show settings window
-    // For now, just show a message
-    StyledMessageBox::info(this, "Coming Soon", "Settings view will be implemented soon.");
-}
-
-void SendFile::onSendFileNavClicked()
-{
-    // TODO: Switch to send file page
+    WindowManager::instance().showSettings();
+    hide();
 }

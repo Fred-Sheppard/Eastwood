@@ -24,7 +24,7 @@ class Ui_Received(object):
             Received.setObjectName(u"Received")
         Received.resize(1000, 700)
         Received.setMinimumSize(QSize(1000, 700))
-        Received.setStyleSheet(u"background-color: #f5f6fa;")
+        Received.setStyleSheet(u"background-color: white;")
         self.mainLayout = QHBoxLayout(Received)
         self.mainLayout.setSpacing(0)
         self.mainLayout.setObjectName(u"mainLayout")

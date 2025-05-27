@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Received</class>
- <widget class="QWidget" name="Received">
+ <class>Settings</class>
+ <widget class="QWidget" name="Settings">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -17,7 +17,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Nightwood - Received Files</string>
+   <string>Nightwood - Settings</string>
   </property>
   <property name="styleSheet">
    <string notr="true">background-color: white;</string>
@@ -125,18 +125,17 @@ border-radius: 6px;</string>
         <property name="styleSheet">
          <string notr="true">QPushButton {
   font-size: 14px;
-  font-weight: 500;
-  color: white;
-  background-color: #6c5ce7;
+  color: #2d3436;
+  background-color: transparent;
   border-radius: 8px;
   text-align: left;
   padding-left: 15px;
 }
 QPushButton:hover {
-  background-color: #5049c9;
+  background-color: #f1f2f6;
 }
 QPushButton:pressed {
-  background-color: #4040b0;
+  background-color: #dfe6e9;
 }</string>
         </property>
         <property name="text">
@@ -169,7 +168,7 @@ QPushButton:pressed {
 }</string>
         </property>
         <property name="text">
-         <string>Received Files</string>
+         <string>Sent Files</string>
         </property>
        </widget>
       </item>
@@ -226,17 +225,18 @@ QPushButton:pressed {
         <property name="styleSheet">
          <string notr="true">QPushButton {
   font-size: 14px;
-  color: #2d3436;
-  background-color: transparent;
+  font-weight: 500;
+  color: white;
+  background-color: #6c5ce7;
   border-radius: 8px;
   text-align: left;
   padding-left: 15px;
 }
 QPushButton:hover {
-  background-color: #f1f2f6;
+  background-color: #5049c9;
 }
 QPushButton:pressed {
-  background-color: #dfe6e9;
+  background-color: #4040b0;
 }</string>
         </property>
         <property name="text">
@@ -250,7 +250,7 @@ QPushButton:pressed {
    <item>
     <layout class="QVBoxLayout" name="contentLayout">
      <property name="spacing">
-      <number>25</number>
+      <number>20</number>
      </property>
      <property name="leftMargin">
       <number>35</number>
@@ -264,68 +264,224 @@ QPushButton:pressed {
      <property name="bottomMargin">
       <number>35</number>
      </property>
+     
+     <!-- Title Section -->
      <item>
       <widget class="QLabel" name="pageTitle">
        <property name="styleSheet">
-        <string notr="true">font-size: 24px; font-weight: bold; color: #2d3436;</string>
+        <string notr="true">font-size: 24px; font-weight: bold; color: #2d3436; margin-bottom: 10px;</string>
        </property>
        <property name="text">
-        <string>Received Files</string>
+        <string>Settings</string>
        </property>
       </widget>
      </item>
+
+     <!-- Add a spacer to push content up -->
      <item>
-      <widget class="QListWidget" name="fileList">
+      <spacer name="topSpacer">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+
+     <!-- Password Section -->
+     <item>
+      <widget class="QWidget" name="passwordWidget" native="true">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>400</height>
+        </size>
+       </property>
        <property name="styleSheet">
-        <string notr="true">QListWidget {
+        <string notr="true">QWidget#passwordWidget {
   background-color: white;
   border: 1px solid #dfe6e9;
   border-radius: 12px;
-  padding: 5px;
-}
-QListWidget::item {
-  background-color: white;
-  border-bottom: 1px solid #f1f2f6;
-}
-QListWidget::item:last-child {
-  border-bottom: none;
-}
-QListWidget::item:hover {
-  background-color: #f8f9fa;
-}
-QScrollBar:vertical {
-  border: none;
-  background: #f5f6fa;
-  width: 8px;
-  margin: 0;
-}
-QScrollBar::handle:vertical {
-  background: #dfe6e9;
-  border-radius: 4px;
-  min-height: 30px;
-}
-QScrollBar::handle:vertical:hover {
-  background: #b2bec3;
-}
-QScrollBar::add-line:vertical,
-QScrollBar::sub-line:vertical {
-  height: 0px;
-}
-QScrollBar::add-page:vertical,
-QScrollBar::sub-page:vertical {
-  background: none;
+  padding: 30px;
 }</string>
        </property>
-       <property name="verticalScrollMode">
-        <enum>QAbstractItemView::ScrollPerPixel</enum>
-       </property>
-       <property name="horizontalScrollMode">
-        <enum>QAbstractItemView::ScrollPerPixel</enum>
-       </property>
+       <layout class="QVBoxLayout" name="passwordLayout">
+        <property name="spacing">
+         <number>20</number>
+        </property>
+        <property name="leftMargin">
+         <number>20</number>
+        </property>
+        <property name="rightMargin">
+         <number>20</number>
+        </property>
+        
+        <!-- Section Title -->
+        <item>
+         <widget class="QLabel" name="passwordSectionTitle">
+          <property name="styleSheet">
+           <string notr="true">font-size: 18px; font-weight: bold; color: #2d3436; margin-bottom: 10px;</string>
+          </property>
+          <property name="text">
+           <string>Change Password</string>
+          </property>
+         </widget>
+        </item>
+
+        <!-- Current Password -->
+        <item>
+         <widget class="QLabel" name="currentPasswordLabel">
+          <property name="styleSheet">
+           <string notr="true">font-size: 14px; color: #2d3436; font-weight: 500; margin-bottom: 5px;</string>
+          </property>
+          <property name="text">
+           <string>Current Password</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="currentPassword">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>40</height>
+           </size>
+          </property>
+          <property name="echoMode">
+           <enum>QLineEdit::Password</enum>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QLineEdit {
+  padding: 8px 12px;
+  border: 1px solid #dfe6e9;
+  border-radius: 6px;
+  background-color: #f8f9fa;
+  color: #2d3436;
+  font-size: 14px;
+}
+QLineEdit:focus {
+  border: 1px solid #6c5ce7;
+  background-color: white;
+}</string>
+          </property>
+         </widget>
+        </item>
+
+        <!-- New Password -->
+        <item>
+         <widget class="QLabel" name="newPasswordLabel">
+          <property name="styleSheet">
+           <string notr="true">font-size: 14px; color: #2d3436; font-weight: 500; margin-bottom: 5px;</string>
+          </property>
+          <property name="text">
+           <string>New Password</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="newPassword">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>40</height>
+           </size>
+          </property>
+          <property name="echoMode">
+           <enum>QLineEdit::Password</enum>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QLineEdit {
+  padding: 8px 12px;
+  border: 1px solid #dfe6e9;
+  border-radius: 6px;
+  background-color: #f8f9fa;
+  color: #2d3436;
+  font-size: 14px;
+}
+QLineEdit:focus {
+  border: 1px solid #6c5ce7;
+  background-color: white;
+}</string>
+          </property>
+         </widget>
+        </item>
+
+        <!-- Confirm Password -->
+        <item>
+         <widget class="QLabel" name="confirmPasswordLabel">
+          <property name="styleSheet">
+           <string notr="true">font-size: 14px; color: #2d3436; font-weight: 500; margin-bottom: 5px;</string>
+          </property>
+          <property name="text">
+           <string>Confirm New Password</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="confirmPassword">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>40</height>
+           </size>
+          </property>
+          <property name="echoMode">
+           <enum>QLineEdit::Password</enum>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QLineEdit {
+  padding: 8px 12px;
+  border: 1px solid #dfe6e9;
+  border-radius: 6px;
+  background-color: #f8f9fa;
+  color: #2d3436;
+  font-size: 14px;
+}
+QLineEdit:focus {
+  border: 1px solid #6c5ce7;
+  background-color: white;
+}</string>
+          </property>
+         </widget>
+        </item>
+
+        <!-- Password Requirements Note -->
+        <item>
+         <widget class="QLabel" name="passwordRequirements">
+          <property name="styleSheet">
+           <string notr="true">font-size: 12px; color: #636e72; margin-top: 5px;</string>
+          </property>
+          <property name="text">
+           <string>Password must be between 8 and 64 characters</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </item>
+
+     <!-- Bottom Spacer -->
      <item>
-      <layout class="QHBoxLayout" name="bottomLayout">
+      <spacer name="bottomSpacer">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+
+     <!-- Buttons -->
+     <item>
+      <layout class="QHBoxLayout" name="buttonLayout">
        <item>
         <spacer name="horizontalSpacer">
          <property name="orientation">
@@ -340,7 +496,36 @@ QScrollBar::sub-page:vertical {
         </spacer>
        </item>
        <item>
-        <widget class="QPushButton" name="sendButton">
+        <widget class="QPushButton" name="cancelButton">
+         <property name="minimumSize">
+          <size>
+           <width>130</width>
+           <height>44</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton {
+  font-size: 14px;
+  font-weight: bold;
+  color: #2d3436;
+  background-color: #dfe6e9;
+  border-radius: 10px;
+  padding: 0 20px;
+}
+QPushButton:hover {
+  background-color: #b2bec3;
+}
+QPushButton:pressed {
+  background-color: #a4b0be;
+}</string>
+         </property>
+         <property name="text">
+          <string>Cancel</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="saveButton">
          <property name="minimumSize">
           <size>
            <width>130</width>
@@ -364,7 +549,7 @@ QPushButton:pressed {
 }</string>
          </property>
          <property name="text">
-          <string>Send File</string>
+          <string>Save Changes</string>
          </property>
         </widget>
        </item>

@@ -13,7 +13,7 @@ class SendFile : public QWidget
     Q_OBJECT
 
 public:
-    explicit SendFile(QWidget *parent = nullptr, QWidget* receivedWindow = nullptr);
+    explicit SendFile(QWidget *parent = nullptr, QWidget* receivedWindow = nullptr, QWidget* sentWindow = nullptr);
     ~SendFile();
 
 private slots:
@@ -28,10 +28,12 @@ private slots:
 private:
     Ui::SendFile *ui;
     QWidget* m_receivedWindow;
+    QWidget* m_sentWindow;
 
     void setupUI();
     void setupConnections();
     void updateFileDetails(const QString &filePath);
+    void navigateTo(QWidget* newWindow);
 };
 
 #endif

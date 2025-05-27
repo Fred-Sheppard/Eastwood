@@ -12,7 +12,9 @@ int main(int argc, char *argv[]) {
     // std::string res = httpclient.post("webhook.site", "/86b5bc32-daa9-4f09-88eb-c658b71ae426", headers, body );
     // std::cout << res << std::endl;
     QApplication app(argc, argv);
-    Sent sentDashboard;
-    sentDashboard.show();
+    Received receivedDashboard;
+    receivedDashboard.show();
+    // Sent sentDashboard;
+    // sentDashboard.show();
     return app.exec();
 }

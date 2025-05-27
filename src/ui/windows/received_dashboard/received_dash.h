@@ -13,20 +13,21 @@ class Received : public QWidget {
     Q_OBJECT
 
 public:
-    explicit Received(QWidget *parent = nullptr);
+    explicit Received(QWidget *parent = nullptr, QWidget* sendFileWindow = nullptr);
     ~Received() override;
 
 private slots:
     void onSendButtonClicked();
     void onFileItemClicked(FileItemWidget* widget);
-    void onRevokeAccessClicked(FileItemWidget* widget);
     void onDeleteFileClicked(FileItemWidget* widget);
     void onSentButtonClicked();
     void onSettingsButtonClicked();
     void refreshFileList();
+    void onSendFileButtonClicked();
 
 private:
     Ui::Received *ui;
+    QWidget* m_sendFileWindow;
     void setupConnections();
     void setupFileList();
     void showFileMetadata(FileItemWidget* widget);
@@ -35,6 +36,7 @@ private:
                     const QString& fileSize, 
                     const QString& timestamp,
                     const QString& owner);
+    void navigateTo(QWidget* newWindow);
 };
 
 #endif // RECEIVED_DASH_H

@@ -25,7 +25,7 @@ class Ui_SendFile(object):
             SendFile.setObjectName(u"SendFile")
         SendFile.resize(1000, 700)
         SendFile.setMinimumSize(QSize(1000, 700))
-        SendFile.setStyleSheet(u"background-color: #f5f6fa;")
+        SendFile.setStyleSheet(u"background-color: white;")
         self.mainLayout = QHBoxLayout(SendFile)
         self.mainLayout.setSpacing(0)
         self.mainLayout.setObjectName(u"mainLayout")
