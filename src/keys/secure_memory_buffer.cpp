@@ -1,4 +1,4 @@
-#include "SecureMemoryBuffer.h"
+#include "secure_memory_buffer.h"
 #include <sodium.h>
 #include <cstring>
 #include <stdexcept>

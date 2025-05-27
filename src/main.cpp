@@ -49,6 +49,6 @@ int main(int argc, char *argv[]) {
     //     reinterpret_cast<unsigned char *>(nonce.data()),
     //     std::move(master_key)
     // );
-    // KEKManager::instance().setKEK(std::move(kek));
+    // KekManager::instance().setKEK(std::move(kek));
     return 0;
 }

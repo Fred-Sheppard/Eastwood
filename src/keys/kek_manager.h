@@ -1,19 +1,19 @@
 #pragma once
 #include <memory>
-#include "SecureMemoryBuffer.h"
+#include "secure_memory_buffer.h"
 
-class KEKManager {
+class KekManager {
 public:
-    static KEKManager& instance();
+    static KekManager& instance();
 
     void setKEK(std::unique_ptr<SecureMemoryBuffer> kek);
     SecureMemoryBuffer* getKEK() const;
     bool isLoaded() const;
 
     // Non-copyable
-    KEKManager(const KEKManager&) = delete;
-    KEKManager& operator=(const KEKManager&) = delete;
+    KekManager(const KekManager&) = delete;
+    KekManager& operator=(const KekManager&) = delete;
 private:
-    KEKManager() = default;
+    KekManager() = default;
     std::unique_ptr<SecureMemoryBuffer> kek_;
 }; 

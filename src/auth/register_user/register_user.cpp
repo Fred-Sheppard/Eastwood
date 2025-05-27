@@ -29,7 +29,7 @@ int register_user(const std::string &username, const std::unique_ptr<const std::
     randombytes_buf(nonce_kek, sizeof(nonce_kek));
 
     const auto encrypted_kek = encrypt_kek(kek, nonce_kek, std::move(master_key));
-    KEKManager::instance().setKEK(std::move(kek));
+    KekManager::instance().setKEK(std::move(kek));
 
     save_encrypted_key("kek", encrypted_kek, nonce_kek);
     // TODO: post_store_kek(kek, nonce_kek);

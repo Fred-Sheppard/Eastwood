@@ -9,8 +9,8 @@
 #include "src/algorithms/constants.h"
 
 #include "src/database/database.h"
-#include "src/keys/SecureMemoryBuffer.h"
-#include "src/keys/KEKManager.h"
+#include "src/keys/secure_memory_buffer.h"
+#include "src/keys/kek_manager.h"
 #include "src/algorithms/algorithms.h"
 #include <memory>
 
@@ -111,7 +111,7 @@ inline std::unique_ptr<SecureMemoryBuffer> get_decrypted_symmetric_key(const std
         throw std::runtime_error("Invalid encrypted key or nonce size");
     }
     auto buf = SecureMemoryBuffer::create(SYM_KEY_LEN);
-    auto *kek = KEKManager::instance().getKEK();
+    auto *kek = KekManager::instance().getKEK();
     // if (decrypt_secret_key(buf->data(), reinterpret_cast<const unsigned char*>(encryptedKey.constData()), reinterpret_cast<const unsigned char*>(nonce.constData()), kek->data()) != 0) {
     //     throw std::runtime_error("Failed to decrypt symmetric key");
     // }

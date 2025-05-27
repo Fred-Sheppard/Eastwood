@@ -1,6 +1,6 @@
 #include "algorithms.h"
 
-#include "src/keys/KEKManager.h"
+#include "src/keys/kek_manager.h"
 #include "src/utils/ConversionUtils.h"
 
 std::unique_ptr<SecureMemoryBuffer> derive_master_key(
@@ -64,7 +64,7 @@ std::unique_ptr<SecureMemoryBuffer> decrypt_key(
     const unsigned char encrypted_key[ENC_SYM_KEY_LEN],
     const unsigned char nonce[CHA_CHA_NONCE_LEN]
 ) {
-    const auto kek = KEKManager::instance().getKEK();
+    const auto kek = KekManager::instance().getKEK();
     auto key = SecureMemoryBuffer::create(SYM_KEY_LEN);
     if (crypto_aead_xchacha20poly1305_ietf_decrypt(
             key->data(), nullptr,
@@ -90,7 +90,7 @@ std::unique_ptr<SecureMemoryBuffer> encrypt_secret_key(
     unsigned char nonce[CHA_CHA_NONCE_LEN]
 ) {
     auto buf = SecureMemoryBuffer::create(ENC_SECRET_KEY_LEN);
-    const auto kek = KEKManager::instance().getKEK();
+    const auto kek = KekManager::instance().getKEK();
     if (crypto_aead_xchacha20poly1305_ietf_encrypt(
             buf->data(), nullptr,
             sk->data(), crypto_sign_SECRETKEYBYTES,
@@ -108,7 +108,7 @@ std::unique_ptr<SecureMemoryBuffer> decrypt_secret_key(
     const unsigned char nonce[CHA_CHA_NONCE_LEN]
 ) {
     auto buf = SecureMemoryBuffer::create(crypto_sign_SECRETKEYBYTES);
-    const auto kek = KEKManager::instance().getKEK();
+    const auto kek = KekManager::instance().getKEK();
     if (crypto_aead_xchacha20poly1305_ietf_decrypt(
             buf->data(), nullptr,
             nullptr, // Secret nonce is always null for this algorithm

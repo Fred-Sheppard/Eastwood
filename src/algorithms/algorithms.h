@@ -6,7 +6,7 @@
 #define ALGORITHMS_H
 #include "constants.h"
 #include <sodium.h>
-#include "src/keys/SecureMemoryBuffer.h"
+#include "src/keys/secure_memory_buffer.h"
 #include <memory>
 #include <QByteArray>
 
