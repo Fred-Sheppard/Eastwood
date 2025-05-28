@@ -14,6 +14,8 @@ namespace webwood {
         int status_code_;
     };
 
+
+    int parse_status_code(const std::string& first_line);
     nlohmann::json parse_json_response(const std::string& response);
 }
 
