@@ -33,7 +33,7 @@ void post_register_user(
     std::cout << body << std::endl;
 
     post_unauth(body, "/registerUser");
-}
+};
 
 void post_register_device(
     const unsigned char pk_id[crypto_sign_PUBLICKEYBYTES],
