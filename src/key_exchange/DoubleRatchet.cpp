@@ -16,6 +16,25 @@ const char* const CHAIN_CTX = "DRCHAIN1";
 const char* const MSG_CTX = "DRMSG001";
 
 DoubleRatchet::DoubleRatchet(KeyBundle* bundle) {
+    // Set ratchet ID by concatenating device keys
+    size_t out_len;
+    unsigned char* concatenated;
+    if (bundle->get_role() == Role::Initiator) {
+        auto* sender = dynamic_cast<SendingKeyBundle*>(bundle);
+        if (!sender) throw std::runtime_error("Invalid bundle type for Initiator");
+        concatenated = concat_ordered(sender->get_my_device_public(), crypto_box_PUBLICKEYBYTES,
+                                    sender->get_their_device_public(), crypto_box_PUBLICKEYBYTES,
+                                    out_len);
+    } else {
+        auto* receiver = dynamic_cast<ReceivingKeyBundle*>(bundle);
+        if (!receiver) throw std::runtime_error("Invalid bundle type for Responder");
+        concatenated = concat_ordered(receiver->get_their_device_public(), crypto_box_PUBLICKEYBYTES,
+                                    receiver->get_my_device_public(), crypto_box_PUBLICKEYBYTES,
+                                    out_len);
+    }
+    memcpy(ratchet_id, concatenated, out_len);
+    delete[] concatenated;
+
     send_chain.index = 0;
     recv_chain.index = 0;
     prev_send_chain_length = 0;
@@ -287,6 +306,7 @@ const unsigned char* DoubleRatchet::get_public_key() const {
 }
 
 void DoubleRatchet::print_state() const {
+    std::cout << "Ratchet ID: " << bin2hex(ratchet_id, crypto_box_PUBLICKEYBYTES * 2) << std::endl;
     std::cout << "Root key: " << bin2hex(root_key, crypto_kdf_KEYBYTES) << std::endl;
     std::cout << "Send chain (index " << send_chain.index << "): " 
               << bin2hex(send_chain.chain_key, crypto_kdf_KEYBYTES) << std::endl;

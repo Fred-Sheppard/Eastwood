@@ -148,6 +148,7 @@ public:
     void print_state() const;
 
 private:
+    unsigned char ratchet_id[crypto_box_PUBLICKEYBYTES * 2];  // Changed from pointer to array
     // Performs a Diffie-Hellman ratchet step and updates the root key and chain key
     void dh_ratchet(const unsigned char* remote_public_key, bool is_sending);
     

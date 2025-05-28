@@ -69,6 +69,7 @@ void test_double_ratchet_shared_secret() {
         auto bob_bundle = std::make_unique<ReceivingKeyBundle>(
             alice_id_public,
             alice_ephemeral_public,
+            bob_id_public,
             bob_id_private,
             bob_signed_private,
             bob_onetime_private
