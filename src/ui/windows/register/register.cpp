@@ -5,6 +5,8 @@
 #include "src/auth/register_user/register_user.h"
 #include <iostream>
 
+#include "src/auth/register_device/register_device.h"
+
 
 Register::Register(QWidget *parent)
     : QWidget(parent)
@@ -75,6 +77,7 @@ void Register::onRegisterButtonClicked()
     }
 
     register_user(username.toStdString(), std::make_unique<std::string>(passphrase.toStdString()));
+    register_first_device();
 }
 
 void Register::onLoginButtonClicked()
