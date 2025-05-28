@@ -7,24 +7,42 @@
 #define SQLITE_HAS_CODEC 1
 #include <QFile>
 #include <QApplication>
+#include "auth/register_device/register_device.h"
 #include "auth/register_user/register_user.h"
 #include "database/database.h"
 #include "database/schema.h"
+#include "endpoints/endpoints.h"
+#include "sql/queries.h"
+#include "utils/ConversionUtils.h"
 
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
+    constexpr bool encrypted = false;
+    constexpr bool refresh_database = true;
 
     constexpr bool encrypted = false;
     auto &db = Database::get();
     if (db.initialize("master key", encrypted)) {
-        std::cout << "Database initialized successfully." << std::endl;
+        qDebug() << "Database initialized successfully.";
     } else {
-        std::cout << "Failed to initialize database." << std::endl;
+        qDebug() << "Failed to initialize database.";
         return 1;
     }
 
-    drop_all_tables();
+    auto master_password = std::make_unique<std::string>("correct horse battery stapler");
+
+    // TODO: Debugging only
+    if (refresh_database) drop_all_tables();
+
     init_schema();
+
+    // TODO - This will go in login_user
+    // auto kek = decrypt_kek(
+    //     reinterpret_cast<unsigned char *>(encrypted_kek.data()),
+    //     reinterpret_cast<unsigned char *>(nonce.data()),
+    //     std::move(master_key)
+    // );
+    // KekManager::instance().setKEK(std::move(kek));
 
     WindowManager::instance().showLogin();
     return app.exec();

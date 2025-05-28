@@ -2,6 +2,7 @@
 #include "ui_register.h"
 #include "../../utils/messagebox.h"
 #include "../../utils/window_manager/window_manager.h"
+#include "src/auth/register_user/register_user.h"
 
 
 Register::Register(QWidget *parent)
@@ -27,29 +28,29 @@ void Register::onRegisterButtonClicked()
 {
     // passphrase requirements as per NIST SP 800-63B guidelines
     const int MAX_PASSPHRASE_LENGTH = 64;
-    const int MIN_PASSPHRASE_LENGTH = 20; 
+    const int MIN_PASSPHRASE_LENGTH = 20;
     const int MAX_INPUT_LENGTH = 64;
 
     QString fullName = ui->fullNameEdit->text().left(MAX_INPUT_LENGTH);
     QString username = ui->usernameEdit->text().left(MAX_INPUT_LENGTH);
     QString passphrase = ui->passphraseEdit->text().left(MAX_PASSPHRASE_LENGTH);
     QString confirmPassphrase = ui->confirmPassphraseEdit->text().left(MAX_PASSPHRASE_LENGTH);
-    
+
     ui->fullNameEdit->setText(fullName);
     ui->usernameEdit->setText(username);
     ui->passphraseEdit->setText(passphrase);
     ui->confirmPassphraseEdit->setText(confirmPassphrase);
-    
+
     if (fullName.isEmpty() || username.isEmpty() || passphrase.isEmpty() || confirmPassphrase.isEmpty()) {
         StyledMessageBox::warning(this, "Error", "Please fill in all fields");
         return;
     }
-    
+
     if (username.length() < 3) {
         StyledMessageBox::warning(this, "Error", "Username must be at least 3 characters long");
         return;
     }
-    
+
     if (fullName.length() > MAX_INPUT_LENGTH || username.length() > MAX_INPUT_LENGTH) {
         StyledMessageBox::warning(this, "Error", "Input too long");
         return;
@@ -71,7 +72,7 @@ void Register::onRegisterButtonClicked()
         return;
     }
 
-    // TODO: Implement actual registration logic here
+    register_user(username.toStdString(), std::make_unique<std::string>(passphrase.toStdString()));
     StyledMessageBox::info(this, "Success", "Registration functionality here");
 }
 
