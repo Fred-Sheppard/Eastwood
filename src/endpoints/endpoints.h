@@ -52,4 +52,6 @@ void get_keybundles(
     std::string username
 );
 
+void post_new_keybundles();
+
 #endif //ENDPOINTS_H
