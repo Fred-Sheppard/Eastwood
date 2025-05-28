@@ -15,7 +15,9 @@ class KeyBundle {
     public:
     virtual ~KeyBundle() = default;
 
-    KeyBundle();
+    KeyBundle(){
+        
+    };
 
     virtual Role get_role() const = 0;
 

@@ -153,9 +153,11 @@ target_link_libraries(Eastwood PRIVATE
 
 # Create test executable
 add_executable(EastwoodTests
-        test/identity_session_message_test.cpp
+        test/identity_communication_session_test.cpp
         ${CRYPTO_SOURCES}
         src/database/database.cpp
+        src/sessions/KeyBundle.h
+        src/keys/session_token_manager.h
 )
 
 # Configure test target
@@ -165,6 +167,8 @@ target_include_directories(EastwoodTests PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/src/key_exchange
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/sessions
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/keys
         ${CMAKE_CURRENT_SOURCE_DIR}/external/cereal/include
         ${CMAKE_CURRENT_BINARY_DIR}/_deps/googletest-src/googletest/include
 )

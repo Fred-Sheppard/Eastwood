@@ -157,6 +157,9 @@ private:
     // Derive a message key from a chain key and updates the chain key
     unsigned char* derive_message_key(unsigned char* chain_key);
 
+    // Advance a chain key to the next state
+    void advance_chain_key(unsigned char* chain_key);
+
     unsigned char root_key[crypto_kdf_KEYBYTES]{};
 
     Chain send_chain{};
@@ -174,6 +177,8 @@ private:
     
     // Maximum number of skipped message keys to keep in memory
     static const int MAX_SKIPPED_MESSAGE_KEYS = 100;
+
+    bool needs_dh_ratchet_on_send = false;
 
 };
 
