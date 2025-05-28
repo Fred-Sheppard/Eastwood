@@ -50,6 +50,7 @@ void WindowManager::showReceived()
 {
     if (!m_received) {
         m_received = new Received();
+        m_received->setAttribute(Qt::WA_DeleteOnClose);
         m_windows.append(m_received);
         connect(m_received, &Received::destroyed, this, [this]() {
             m_received = nullptr;
@@ -64,6 +65,7 @@ void WindowManager::showSent()
 {
     if (!m_sent) {
         m_sent = new Sent();
+        m_sent->setAttribute(Qt::WA_DeleteOnClose);
         m_windows.append(m_sent);
         connect(m_sent, &Sent::destroyed, this, [this]() {
             m_sent = nullptr;
@@ -78,6 +80,7 @@ void WindowManager::showSendFile()
 {
     if (!m_sendFile) {
         m_sendFile = new SendFile();
+        m_sendFile->setAttribute(Qt::WA_DeleteOnClose);
         m_windows.append(m_sendFile);
         connect(m_sendFile, &SendFile::destroyed, this, [this]() {
             m_sendFile = nullptr;
@@ -92,6 +95,7 @@ void WindowManager::showSettings()
 {
     if (!m_settings) {
         m_settings = new Settings();
+        m_settings->setAttribute(Qt::WA_DeleteOnClose);
         m_windows.append(m_settings);
         connect(m_settings, &Settings::destroyed, this, [this]() {
             m_settings = nullptr;
@@ -112,6 +116,7 @@ void WindowManager::showLogin()
 
     if (!m_login) {
         m_login = new Login();
+        m_login->setAttribute(Qt::WA_DeleteOnClose);
         m_windows.append(m_login);
         connect(m_login, &Login::destroyed, this, [this]() {
             m_login = nullptr;
@@ -132,6 +137,7 @@ void WindowManager::showRegister()
 
     if (!m_register) {
         m_register = new Register();
+        m_register->setAttribute(Qt::WA_DeleteOnClose);
         m_windows.append(m_register);
         connect(m_register, &Register::destroyed, this, [this]() {
             m_register = nullptr;
