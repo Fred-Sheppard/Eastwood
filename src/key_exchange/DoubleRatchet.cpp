@@ -175,13 +175,7 @@ void DoubleRatchet::advance_chain_key(unsigned char* chain_key) {
 
 DeviceMessage DoubleRatchet::message_send(unsigned char* message, const unsigned char* device_id) {
     // Check if send chain is uninitialized (all zeros)
-    bool send_chain_uninitialized = true;
-    for (size_t i = 0; i < crypto_kdf_KEYBYTES; i++) {
-        if (send_chain.chain_key[i] != 0) {
-            send_chain_uninitialized = false;
-            break;
-        }
-    }
+    bool send_chain_uninitialized = sodium_is_zero(send_chain.chain_key, crypto_kdf_KEYBYTES) == 1;
 
     // If send chain is uninitialized or needs DH ratchet, perform it
     if (send_chain_uninitialized || needs_dh_ratchet_on_send) {
