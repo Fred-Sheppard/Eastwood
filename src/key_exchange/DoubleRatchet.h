@@ -5,9 +5,7 @@
 #include <sodium.h>
 #include <stdexcept>
 #include <iostream>
-#include <string>
 #include <map>
-#include <unordered_map>
 #include <vector>
 
 #include "src/sessions/KeyBundle.h"
@@ -156,10 +154,13 @@ private:
     void kdf_ratchet(const unsigned char* shared_secret, unsigned char* chain_key, bool is_sending);
     
     // Derive a message key from a chain key and updates the chain key
-    unsigned char* derive_message_key(unsigned char* chain_key);
+    static unsigned char* derive_message_key(const unsigned char* chain_key);
 
     // Advance a chain key to the next state
-    void advance_chain_key(unsigned char* chain_key);
+    static void advance_chain_key(unsigned char* chain_key);
+
+    void set_ratchet_id_and_initial_keys(KeyBundle* bundle);
+    void derive_keys_from_dh_output(const unsigned char* dh_output, bool is_initiator);
 
     unsigned char root_key[crypto_kdf_KEYBYTES]{};
 
@@ -177,7 +178,7 @@ private:
     std::map<SkippedMessageKey, unsigned char*> skipped_message_keys;
     
     // Maximum number of skipped message keys to keep in memory
-    static const int MAX_SKIPPED_MESSAGE_KEYS = 100;
+    static constexpr int MAX_SKIPPED_MESSAGE_KEYS = 100;
 
     bool needs_dh_ratchet_on_send = false;
 

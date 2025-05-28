@@ -15,25 +15,39 @@ const char* const ROOT_CTX = "DRROOT01";
 const char* const CHAIN_CTX = "DRCHAIN1";
 const char* const MSG_CTX = "DRMSG001";
 
+void DoubleRatchet::derive_keys_from_dh_output(const unsigned char* dh_output, bool is_initiator) {
+    // Combine root_key and dh_output for KDF
+    unsigned char kdf_input[crypto_kdf_KEYBYTES + crypto_scalarmult_BYTES];
+    memcpy(kdf_input, root_key, crypto_kdf_KEYBYTES);
+    memcpy(kdf_input + crypto_kdf_KEYBYTES, dh_output, crypto_scalarmult_BYTES);
+    std::cout << "KDF input: ";
+    for (size_t i = 0; i < sizeof(kdf_input); ++i) std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(kdf_input[i]);
+    std::cout << std::endl;
+
+    unsigned char kdf_output[crypto_kdf_KEYBYTES * 2];
+    crypto_generichash(kdf_output, sizeof(kdf_output), kdf_input, sizeof(kdf_input), nullptr, 0);
+
+    // Assign the derived keys
+    memcpy(root_key, kdf_output, crypto_kdf_KEYBYTES);
+    if (is_initiator) {
+        memcpy(send_chain.chain_key, kdf_output + crypto_kdf_KEYBYTES, crypto_kdf_KEYBYTES);
+        std::cout << "Derived send_chain: ";
+        for (size_t i = 0; i < crypto_kdf_KEYBYTES; ++i) std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>((kdf_output + crypto_kdf_KEYBYTES)[i]);
+        std::cout << std::endl;
+    } else {
+        memcpy(recv_chain.chain_key, kdf_output + crypto_kdf_KEYBYTES, crypto_kdf_KEYBYTES);
+        std::cout << "Derived recv_chain: ";
+        for (size_t i = 0; i < crypto_kdf_KEYBYTES; ++i) std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>((kdf_output + crypto_kdf_KEYBYTES)[i]);
+        std::cout << std::endl;
+    }
+    std::cout << "Derived root_key: ";
+    for (size_t i = 0; i < crypto_kdf_KEYBYTES; ++i) std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(root_key[i]);
+    std::cout << std::endl;
+}
+
 DoubleRatchet::DoubleRatchet(KeyBundle* bundle) {
     // Set ratchet ID by concatenating device keys
-    size_t out_len;
-    unsigned char* concatenated;
-    if (bundle->get_role() == Role::Initiator) {
-        auto* sender = dynamic_cast<SendingKeyBundle*>(bundle);
-        if (!sender) throw std::runtime_error("Invalid bundle type for Initiator");
-        concatenated = concat_ordered(sender->get_my_device_public(), crypto_box_PUBLICKEYBYTES,
-                                    sender->get_their_device_public(), crypto_box_PUBLICKEYBYTES,
-                                    out_len);
-    } else {
-        auto* receiver = dynamic_cast<ReceivingKeyBundle*>(bundle);
-        if (!receiver) throw std::runtime_error("Invalid bundle type for Responder");
-        concatenated = concat_ordered(receiver->get_their_device_public(), crypto_box_PUBLICKEYBYTES,
-                                    receiver->get_my_device_public(), crypto_box_PUBLICKEYBYTES,
-                                    out_len);
-    }
-    memcpy(ratchet_id, concatenated, out_len);
-    delete[] concatenated;
+    set_ratchet_id_and_initial_keys(bundle);
 
     send_chain.index = 0;
     recv_chain.index = 0;
@@ -43,60 +57,17 @@ DoubleRatchet::DoubleRatchet(KeyBundle* bundle) {
     memset(send_chain.chain_key, 0, crypto_kdf_KEYBYTES);
     memset(recv_chain.chain_key, 0, crypto_kdf_KEYBYTES);
 
-    // 1. Copy the X3DH shared secret as the initial root key
-    if (bundle->get_role() == Role::Initiator) {
-        auto* sender = dynamic_cast<SendingKeyBundle*>(bundle);
-        if (!sender) throw std::runtime_error("Invalid bundle type for Initiator");
-        memcpy(local_dh_public, sender->get_my_ephemeral_public(), crypto_box_PUBLICKEYBYTES);
-        memcpy(local_dh_private, sender->get_my_ephemeral_private(), crypto_box_SECRETKEYBYTES);
-        memcpy(remote_dh_public, sender->get_their_signed_public(), crypto_box_PUBLICKEYBYTES);
-        memcpy(root_key, sender->get_shared_secret(), crypto_box_SECRETKEYBYTES);
-    } else {
-        auto* receiver = dynamic_cast<ReceivingKeyBundle*>(bundle);
-        if (!receiver) throw std::runtime_error("Invalid bundle type for Responder");
-        // For responder, use Bob's signed prekey private and Alice's ephemeral public
-        memcpy(local_dh_private, receiver->get_my_signed_private(), crypto_box_SECRETKEYBYTES);
-        memcpy(remote_dh_public, receiver->get_their_ephemeral_public(), crypto_box_PUBLICKEYBYTES);
-        memcpy(root_key, receiver->get_shared_secret(), crypto_box_SECRETKEYBYTES);
-    }
-
-    // 2. Compute the initial DH output
+    // Compute the initial DH output
     unsigned char dh_output[crypto_scalarmult_BYTES];
     if (crypto_scalarmult(dh_output, local_dh_private, remote_dh_public) != 0) {
         throw std::runtime_error("Failed to compute initial DH");
     }
     std::cout << "DH output: ";
-    for (size_t i = 0; i < sizeof(dh_output); ++i) std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)dh_output[i];
+    for (size_t i = 0; i < sizeof(dh_output); ++i) std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(dh_output[i]);
     std::cout << std::endl;
 
-    // 3. Use a KDF to derive a new root key and a chain key from the previous root key and the DH output
-    //    Both parties must use the same context and subkey indices
-    unsigned char kdf_input[crypto_kdf_KEYBYTES + crypto_scalarmult_BYTES];
-    memcpy(kdf_input, root_key, crypto_kdf_KEYBYTES);
-    memcpy(kdf_input + crypto_kdf_KEYBYTES, dh_output, crypto_scalarmult_BYTES);
-    std::cout << "KDF input: ";
-    for (size_t i = 0; i < sizeof(kdf_input); ++i) std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)kdf_input[i];
-    std::cout << std::endl;
-
-    unsigned char kdf_output[crypto_kdf_KEYBYTES * 2];
-    crypto_generichash(kdf_output, sizeof(kdf_output), kdf_input, sizeof(kdf_input), nullptr, 0);
-
-    // 4. Assign the derived keys
-    memcpy(root_key, kdf_output, crypto_kdf_KEYBYTES);
-    if (bundle->get_role() == Role::Initiator) {
-        memcpy(send_chain.chain_key, kdf_output + crypto_kdf_KEYBYTES, crypto_kdf_KEYBYTES);
-        std::cout << "Derived send_chain: ";
-        for (size_t i = 0; i < crypto_kdf_KEYBYTES; ++i) std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)(kdf_output + crypto_kdf_KEYBYTES)[i];
-        std::cout << std::endl;
-    } else {
-        memcpy(recv_chain.chain_key, kdf_output + crypto_kdf_KEYBYTES, crypto_kdf_KEYBYTES);
-        std::cout << "Derived recv_chain: ";
-        for (size_t i = 0; i < crypto_kdf_KEYBYTES; ++i) std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)(kdf_output + crypto_kdf_KEYBYTES)[i];
-        std::cout << std::endl;
-    }
-    std::cout << "Derived root_key: ";
-    for (size_t i = 0; i < crypto_kdf_KEYBYTES; ++i) std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)root_key[i];
-    std::cout << std::endl;
+    // Derive keys from DH output
+    derive_keys_from_dh_output(dh_output, bundle->get_role() == Role::Initiator);
 
     std::cout << "DoubleRatchet initialized with root key: ";
     for (unsigned char i : root_key)
@@ -135,7 +106,7 @@ void DoubleRatchet::dh_ratchet(const unsigned char* remote_public_key, bool is_s
         memcpy(root_key, kdf_output, crypto_kdf_KEYBYTES);
         memcpy(send_chain.chain_key, kdf_output + crypto_kdf_KEYBYTES, crypto_kdf_KEYBYTES);
         send_chain.index = 0;
-    } else if (remote_public_key) {
+    } else {
         // When receiving, store the length of the current sending chain
         prev_send_chain_length = send_chain.index;
         
@@ -185,7 +156,7 @@ void DoubleRatchet::kdf_ratchet(const unsigned char* shared_secret, unsigned cha
     }
 }
 
-unsigned char* DoubleRatchet::derive_message_key(unsigned char* chain_key) {
+unsigned char* DoubleRatchet::derive_message_key(const unsigned char* chain_key) {
     // Derive message key from chain key
     auto* message_key = new unsigned char[crypto_kdf_KEYBYTES];
     if (crypto_kdf_derive_from_key(message_key, crypto_kdf_KEYBYTES, 0, MSG_CTX, chain_key) != 0) {
@@ -335,4 +306,34 @@ void DoubleRatchet::print_state() const {
               << bin2hex(recv_chain.chain_key, crypto_kdf_KEYBYTES) << std::endl;
     std::cout << "Previous send chain length: " << prev_send_chain_length << std::endl;
     std::cout << "Skipped message keys in cache: " << skipped_message_keys.size() << std::endl;
+}
+
+void DoubleRatchet::set_ratchet_id_and_initial_keys(KeyBundle *bundle) {
+    size_t out_len;
+    unsigned char* concatenated;
+    if (bundle->get_role() == Role::Initiator) {
+        auto* sender = dynamic_cast<SendingKeyBundle*>(bundle);
+        if (!sender) throw std::runtime_error("Invalid bundle type for Initiator");
+        concatenated = concat_ordered(sender->get_my_device_public(), crypto_box_PUBLICKEYBYTES,
+                                    sender->get_their_device_public(), crypto_box_PUBLICKEYBYTES,
+                                    out_len);
+
+        memcpy(local_dh_public, sender->get_my_ephemeral_public(), crypto_box_PUBLICKEYBYTES);
+        memcpy(local_dh_private, sender->get_my_ephemeral_private(), crypto_box_SECRETKEYBYTES);
+        memcpy(remote_dh_public, sender->get_their_signed_public(), crypto_box_PUBLICKEYBYTES);
+        memcpy(root_key, sender->get_shared_secret(), crypto_box_SECRETKEYBYTES);
+    } else {
+        auto* receiver = dynamic_cast<ReceivingKeyBundle*>(bundle);
+        if (!receiver) throw std::runtime_error("Invalid bundle type for Responder");
+        concatenated = concat_ordered(receiver->get_their_device_public(), crypto_box_PUBLICKEYBYTES,
+                                    receiver->get_my_device_public(), crypto_box_PUBLICKEYBYTES,
+                                    out_len);
+
+        // For responder, use Bob's signed prekey private and Alice's ephemeral public
+        memcpy(local_dh_private, receiver->get_my_signed_private(), crypto_box_SECRETKEYBYTES);
+        memcpy(remote_dh_public, receiver->get_their_ephemeral_public(), crypto_box_PUBLICKEYBYTES);
+        memcpy(root_key, receiver->get_shared_secret(), crypto_box_SECRETKEYBYTES);
+    }
+    memcpy(ratchet_id, concatenated, out_len);
+    delete[] concatenated;
 }
