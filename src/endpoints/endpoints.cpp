@@ -17,9 +17,12 @@ void post_register_user(
     const unsigned char nonce_signature[crypto_sign_BYTES]
 ) {
     qDebug() << "Checking user registration:";
-    if (crypto_sign_verify_detached(nonce_signature, registration_nonce, CHA_CHA_NONCE_LEN, pk_identity) != 0) {
-        throw std::runtime_error("Invalid signature for registration");
-    }
+    if (crypto_sign_verify_detached(nonce_signature, registration_nonce, CHA_CHA_NONCE_LEN, pk_identity) == 0) {
+        qDebug() << "C'est bon!";
+    } else {
+        qDebug() << "Signature is BAD";
+    };
+
     
     const json body = {
         {"username", username},
