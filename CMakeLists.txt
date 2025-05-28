@@ -114,6 +114,7 @@ set(CRYPTO_SOURCES
         src/endpoints/endpoints.cpp
         src/keys/kek_manager.cpp
         src/keys/secure_memory_buffer.cpp
+        src/keys/session_token_manager.cpp
         src/algorithms/algorithms.cpp
 )
 
