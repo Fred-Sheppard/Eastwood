@@ -42,14 +42,14 @@ unsigned char* x3dh_initiator(
     
     // DH1: my_identity_private * their_signed_prekey_public
     unsigned char my_id_x25519_sk[KEY_LEN];
-    if (!crypto_sign_ed25519_sk_to_curve25519(my_id_x25519_sk, my_identity_key_private))
+    if (crypto_sign_ed25519_sk_to_curve25519(my_id_x25519_sk, my_identity_key_private) != 0)
         throw std::runtime_error("Failed to convert my identity private key to X25519");
     if (crypto_scalarmult(dh1, my_id_x25519_sk, recipient_signed_prekey_public) != 0)
         throw std::runtime_error("DH1 failed");
     
     // DH2: my_ephemeral_private * their_identity_public
     unsigned char their_id_x25519_pk[KEY_LEN];
-    if (!crypto_sign_ed25519_pk_to_curve25519(their_id_x25519_pk, recipient_identity_key_public))
+    if (crypto_sign_ed25519_pk_to_curve25519(their_id_x25519_pk, recipient_identity_key_public) != 0)
         throw std::runtime_error("Failed to convert recipient identity public key to X25519");
     if (crypto_scalarmult(dh2, my_ephemeral_key_private, their_id_x25519_pk) != 0)
         throw std::runtime_error("DH2 failed");
@@ -101,14 +101,14 @@ unsigned char* x3dh_responder(
     
     // DH1: my_signed_prekey_private * their_identity_public
     unsigned char their_id_x25519_pk[KEY_LEN];
-    if (!crypto_sign_ed25519_pk_to_curve25519(their_id_x25519_pk, initiator_identity_key_public))
+    if (crypto_sign_ed25519_pk_to_curve25519(their_id_x25519_pk, initiator_identity_key_public) != 0)
         throw std::runtime_error("Failed to convert initiator identity public key to X25519");
     if (crypto_scalarmult(dh1, my_signed_prekey_private, their_id_x25519_pk) != 0)
         throw std::runtime_error("DH1 failed");
     
     // DH2: my_identity_private * their_ephemeral_public
     unsigned char my_id_x25519_sk[KEY_LEN];
-    if (!crypto_sign_ed25519_sk_to_curve25519(my_id_x25519_sk, my_identity_key_private))
+    if (crypto_sign_ed25519_sk_to_curve25519(my_id_x25519_sk, my_identity_key_private) != 0)
         throw std::runtime_error("Failed to convert my identity private key to X25519");
     if (crypto_scalarmult(dh2, my_id_x25519_sk, initiator_ephemeral_key_public) != 0)
         throw std::runtime_error("DH2 failed");
