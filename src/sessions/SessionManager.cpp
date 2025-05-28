@@ -27,6 +27,7 @@ void SessionManager::import_sending_key_bundles(std::vector<SendingKeyBundle> re
             my_identity_public,
             their_identity_public
         );
+ 
     } else {
         // Update existing session with new sending key bundles
         identity_sessions[identity_session_id]->updateSendingSessionsFromKeyBundles(request);
@@ -34,8 +35,7 @@ void SessionManager::import_sending_key_bundles(std::vector<SendingKeyBundle> re
 }
 
 void SessionManager::routeToIdentity(DeviceMessage message, unsigned char* other_identity) {
-    std::tuple<QByteArray, QByteArray> keypair = get_keypair("identity");
-    QByteArray identity_key_ba = std::get<0>(keypair);
+    auto identity_key_ba = get_public_key("identity");
     unsigned char* identity_key = new unsigned char[identity_key_ba.size()];
     memcpy(identity_key, identity_key_ba.data(), identity_key_ba.size());
 

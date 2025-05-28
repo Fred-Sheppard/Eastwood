@@ -1,6 +1,5 @@
 #include "endpoints.h"
 
-#include <sqlite3.h>
 #include <nlohmann/json.hpp>
 
 #include "src/key_exchange/utils.h"
@@ -14,14 +13,20 @@ using json = nlohmann::json;
 
 void post_register_user(
     const std::string &username,
-    unsigned char pk_identity[crypto_sign_PUBLICKEYBYTES],
-    unsigned char registration_nonce[NONCE_LEN],
-    unsigned char nonce_signature[crypto_sign_BYTES]
+    const unsigned char pk_identity[crypto_sign_PUBLICKEYBYTES],
+    const unsigned char registration_nonce[CHA_CHA_NONCE_LEN],
+    const unsigned char nonce_signature[crypto_sign_BYTES]
 ) {
-    json body = {
+    qDebug() << "Checking user registration:";
+    if (crypto_sign_verify_detached(nonce_signature, registration_nonce, CHA_CHA_NONCE_LEN, pk_identity) == 0) {
+        qDebug() << "C'est bon!";
+    } else {
+        qDebug() << "Signature is BAD";
+    };
+    const json body = {
         {"username", username},
         {"identity_public", bin2hex(pk_identity, crypto_sign_PUBLICKEYBYTES)},
-        {"nonce", bin2hex(registration_nonce, NONCE_LEN)},
+        {"nonce", bin2hex(registration_nonce, CHA_CHA_NONCE_LEN)},
         {"nonce_signature", bin2hex(nonce_signature, crypto_sign_BYTES)}
     };
     std::cout << body << std::endl;
@@ -30,11 +35,17 @@ void post_register_user(
 };
 
 void post_register_device(
-    unsigned char pk_id[crypto_sign_PUBLICKEYBYTES],
-    unsigned char pk_device[crypto_sign_PUBLICKEYBYTES],
-    unsigned char pk_signature[crypto_sign_BYTES]
+    const unsigned char pk_id[crypto_sign_PUBLICKEYBYTES],
+    const unsigned char pk_device[crypto_sign_PUBLICKEYBYTES],
+    const unsigned char pk_signature[crypto_sign_BYTES]
 ) {
-    json body = {
+    qDebug() << "Checking device registration:";
+    if (crypto_sign_verify_detached(pk_signature, pk_device, crypto_sign_PUBLICKEYBYTES, pk_id) == 0) {
+        qDebug() << "C'est bon!";
+    } else {
+        qDebug() << "Signature is BAD";
+    };
+    const json body = {
         {"identity_public", bin2hex(pk_id, crypto_sign_PUBLICKEYBYTES)},
         {"device_public", bin2hex(pk_device, crypto_sign_PUBLICKEYBYTES)},
         {"signature", bin2hex(pk_signature, crypto_sign_BYTES)}
@@ -43,10 +54,10 @@ void post_register_device(
 };
 
 void get_messages(SessionManager manager) {
-    std::tuple<QByteArray, QByteArray> keypair = get_keypair("device");
-    std::string device_key = std::get<0>(keypair).toStdString();
+    auto device_key = get_public_key("device");
+    std::string device_key_str = device_key.toStdString();
     //TODO: get vector of messages and parse individually and send on through identity
-    json response = get("/getMessages/"+device_key);
+    json response = get("/getMessages/" + device_key_str);
 
     DeviceMessage msg;
     msg.header = new MessageHeader();
@@ -59,24 +70,24 @@ void get_messages(SessionManager manager) {
     std::copy(dh_public.begin(), dh_public.end(), msg.header->dh_public);
     msg.header->prev_chain_length = response["prev_chain_length"];
     msg.header->message_index = response["message_index"];
-    
+
     // Allocate and copy ciphertext
     msg.ciphertext = new unsigned char[ciphertext.size()];
     std::copy(ciphertext.begin(), ciphertext.end(), msg.ciphertext);
     msg.length = ciphertext.size();
-    
+
     // Get the other identity key from the response
     std::vector<uint8_t> other_identity = hex_string_to_binary(response["other_identity"]);
-    unsigned char* other_pk = new unsigned char[other_identity.size()];
+    unsigned char *other_pk = new unsigned char[other_identity.size()];
     std::copy(other_identity.begin(), other_identity.end(), other_pk);
 
     // Route the message to the identity session
     manager.routeToIdentity(msg, other_pk);
-    
+
     delete[] other_pk;
 }
 
-void post_ratchet_message(const DeviceMessage* msg) {
+void post_ratchet_message(const DeviceMessage *msg) {
     json body = {
         {"device_id", bin_to_hex(msg->header->device_id, sizeof(msg->header->device_id))},
         {"dh_public", bin_to_hex(msg->header->dh_public, sizeof(msg->header->dh_public))},
@@ -89,7 +100,7 @@ void post_ratchet_message(const DeviceMessage* msg) {
     post(body, "/sendMessage");
 };
 
-void get_keybundles(unsigned char pk_identity[crypto_sign_PUBLICKEYBYTES], SessionManager& manager) {
+void get_keybundles(unsigned char pk_identity[crypto_sign_PUBLICKEYBYTES], SessionManager &manager) {
     char hex_pk_identity[crypto_sign_PUBLICKEYBYTES * 2 + 1];
     sodium_bin2hex(hex_pk_identity, sizeof(hex_pk_identity), pk_identity, crypto_sign_PUBLICKEYBYTES);
 
@@ -121,7 +132,7 @@ void get_keybundles(unsigned char pk_identity[crypto_sign_PUBLICKEYBYTES], Sessi
         } else {
             kb.their_device_public = nullptr;
         }
-        
+
         // Allocate and copy one-time prekey public key if present
         if (!bundle["one_time_key"].is_null() && !bundle["one_time_key"].empty()) {
             std::vector<uint8_t> one_time_prekey = hex_string_to_binary(bundle["one_time_key"]);
@@ -150,11 +161,11 @@ void get_keybundles(unsigned char pk_identity[crypto_sign_PUBLICKEYBYTES], Sessi
 
 
 void post_handshake_device(
-    const unsigned char* recipient_device_key_public,
-    const unsigned char* recipient_signed_prekey_public,
-    const unsigned char* recipient_onetime_prekey_public,
-    const unsigned char* my_device_key_public,
-    const unsigned char* my_ephemeral_key_public
+    const unsigned char *recipient_device_key_public,
+    const unsigned char *recipient_signed_prekey_public,
+    const unsigned char *recipient_onetime_prekey_public,
+    const unsigned char *my_device_key_public,
+    const unsigned char *my_ephemeral_key_public
 ) {
     json body = {
         {"recipient_device_key", bin2hex(recipient_device_key_public, crypto_box_PUBLICKEYBYTES)},

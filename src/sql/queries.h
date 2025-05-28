@@ -6,7 +6,6 @@
 #define QUERIES_H
 
 #include <tuple>
-#include <sodium.h>
 #include "src/algorithms/constants.h"
 #include "src/database/database.h"
 #include <QByteArray>

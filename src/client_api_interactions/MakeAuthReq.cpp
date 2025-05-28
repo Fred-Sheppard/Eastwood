@@ -6,6 +6,7 @@
 #include "../algorithms/algorithms.h"
 #include "../utils/ConversionUtils.h"
 #include "../utils/JsonParser.h"
+#include "../sql/queries.h"
 
 using json = nlohmann::json;
 json post(const json& data, const std::string& endpoint = "/") {
@@ -13,15 +14,15 @@ json post(const json& data, const std::string& endpoint = "/") {
     unsigned char private_key[crypto_box_SECRETKEYBYTES];
     unsigned char session_token[crypto_aead_xchacha20poly1305_ietf_KEYBYTES];
 
-    // TODO - this should be pulled from db
+    // Get keys from database
+    auto public_key_encrypted = get_public_key("auth");
+    auto decrypted_private_key = get_decrypted_sk("auth");
+    auto decrypted_session_key = get_decrypted_key("session");
 
-    // std::string pub_key_hex = db.get_public_key();
-    // std::string priv_key_hex = db.get_private_key();
-    // std::string sess_key_hex = db.get_session_token();
-
-    std::string pub_key_hex = "AA6AC815B5859DFE390C7036BBAD44CDFD786CFAD51DC5805ECDC42F150CFD2D";
-    std::string priv_key_hex = "68184CD166663D8C78803C8F8DF4311FCD8F0B69EAADC7C124F1B492ADE8832D";
-    std::string sess_key_hex = "3132333435363738393031323334353637383930313233343536373839303132";
+    // Convert QByteArray to hex strings
+    std::string pub_key_hex = bin_to_hex(reinterpret_cast<const unsigned char*>(public_key_encrypted.data()), public_key_encrypted.size());
+    std::string priv_key_hex = bin_to_hex(decrypted_private_key->data(), decrypted_private_key->size());
+    std::string sess_key_hex = bin_to_hex(decrypted_session_key->data(), decrypted_session_key->size());
     
     // Convert hex strings to bytes using the utility function
     if (!hex_to_bin(pub_key_hex, public_key, crypto_box_PUBLICKEYBYTES)) {
@@ -47,11 +48,11 @@ json post(const json& data, const std::string& endpoint = "/") {
     }
 
     // Generate nonce
-    unsigned char nonce[NONCE_LEN];
+    unsigned char nonce[CHA_CHA_NONCE_LEN];
     randombytes_buf(nonce, sizeof nonce);
 
 
-    char b64_nonce[NONCE_LEN * 2];
+    char b64_nonce[CHA_CHA_NONCE_LEN * 2];
     sodium_bin2base64(b64_nonce, sizeof(b64_nonce),
                     nonce, sizeof(nonce),
                     sodium_base64_VARIANT_URLSAFE_NO_PADDING);
@@ -74,6 +75,7 @@ json post(const json& data, const std::string& endpoint = "/") {
     char hex_signature[crypto_sign_BYTES * 2];
     char hex_session_token[crypto_aead_xchacha20poly1305_ietf_KEYBYTES * 2];
 
+    // TODO - This SIGABRTS?
     sodium_bin2hex(hex_public_key, sizeof(hex_public_key),
                     public_key, crypto_sign_PUBLICKEYBYTES);
 
@@ -117,15 +119,14 @@ json get(const std::string& endpoint = "/") {
     unsigned char private_key[crypto_box_SECRETKEYBYTES];
     unsigned char session_token[crypto_aead_xchacha20poly1305_ietf_KEYBYTES];
 
-    // TODO - this should be pulled from db
+    // Get keys from database
+    auto public_key_encrypted = get_public_key("auth");
+    auto decrypted_private_key = get_decrypted_sk("auth");
+    auto decrypted_session_key = get_decrypted_key("session");
 
-    // std::string pub_key_hex = db.get_public_key();
-    // std::string priv_key_hex = db.get_private_key();
-    // std::string sess_key_hex = db.get_session_token();
-
-    std::string pub_key_hex = "AA6AC815B5859DFE390C7036BBAD44CDFD786CFAD51DC5805ECDC42F150CFD2D";
-    std::string priv_key_hex = "68184CD166663D8C78803C8F8DF4311FCD8F0B69EAADC7C124F1B492ADE8832D";
-    std::string sess_key_hex = "3132333435363738393031323334353637383930313233343536373839303132";
+    std::string pub_key_hex = bin_to_hex(reinterpret_cast<const unsigned char*>(public_key_encrypted.data()), public_key_encrypted.size());
+    std::string priv_key_hex = bin_to_hex(decrypted_private_key->data(), decrypted_private_key->size());
+    std::string sess_key_hex = bin_to_hex(decrypted_session_key->data(), decrypted_session_key->size());
     
     // Convert hex strings to bytes
     if (!hex_to_bin(pub_key_hex, public_key, crypto_box_PUBLICKEYBYTES)) {
@@ -152,7 +153,7 @@ json get(const std::string& endpoint = "/") {
     }
 
     // Generate nonce
-    unsigned char nonce[NONCE_LEN];
+    unsigned char nonce[CHA_CHA_NONCE_LEN];
     randombytes_buf(nonce, sizeof nonce);
 
     // Create nonce signed with private key
