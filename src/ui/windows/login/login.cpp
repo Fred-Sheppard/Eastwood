@@ -20,6 +20,7 @@ void Login::setupConnections()
 {
     connect(ui->loginButton, &QPushButton::clicked, this, &Login::onLoginButtonClicked);
     connect(ui->registerButton, &QPushButton::clicked, this, &Login::onRegisterButtonClicked);
+    connect(ui->togglePassphraseButton, &QPushButton::clicked, this, &Login::onTogglePassphraseClicked);
 }
 
 void Login::onLoginButtonClicked()
@@ -58,4 +59,11 @@ void Login::onRegisterButtonClicked()
 {
     WindowManager::instance().showRegister();
     hide();
+}
+
+void Login::onTogglePassphraseClicked()
+{
+    m_passphraseVisible = !m_passphraseVisible;
+    ui->passphraseEdit->setEchoMode(m_passphraseVisible ? QLineEdit::Normal : QLineEdit::Password);
+    ui->togglePassphraseButton->setText(m_passphraseVisible ? "Hide" : "Show");
 } 

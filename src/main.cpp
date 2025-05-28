@@ -26,6 +26,6 @@ int main(int argc, char *argv[]) {
     drop_all_tables();
     init_schema();
 
-    WindowManager::instance().showReceived();
+    WindowManager::instance().showLogin();
     return app.exec();
 }
