@@ -136,7 +136,7 @@ public:
     ~DoubleRatchet();
     
     // Creates a message key and header for sending
-    DeviceMessage message_send(unsigned char* message, const unsigned char* device_id);
+    DeviceMessage message_send(const unsigned char* message, const unsigned char* device_id);
 
     // Processes a received message with header and returns the decrypted plaintext
     std::vector<unsigned char> message_receive(const DeviceMessage& encrypted_message);
@@ -144,7 +144,7 @@ public:
     void print_state() const;
 
 private:
-    unsigned char ratchet_id[crypto_box_PUBLICKEYBYTES * 2];  // Changed from pointer to array
+    unsigned char ratchet_id[crypto_box_PUBLICKEYBYTES * 2]{};  // Changed from pointer to array
     // Performs a Diffie-Hellman ratchet step and updates the root key and chain key
     void dh_ratchet(const unsigned char* remote_public_key, bool is_sending);
     

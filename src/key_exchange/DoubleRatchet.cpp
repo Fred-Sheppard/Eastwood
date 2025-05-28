@@ -21,7 +21,7 @@ void DoubleRatchet::derive_keys_from_dh_output(const unsigned char* dh_output, b
     memcpy(kdf_input, root_key, crypto_kdf_KEYBYTES);
     memcpy(kdf_input + crypto_kdf_KEYBYTES, dh_output, crypto_scalarmult_BYTES);
     std::cout << "KDF input: ";
-    for (size_t i = 0; i < sizeof(kdf_input); ++i) std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(kdf_input[i]);
+    for (unsigned char i : kdf_input) std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(i);
     std::cout << std::endl;
 
     unsigned char kdf_output[crypto_kdf_KEYBYTES * 2];
@@ -41,7 +41,7 @@ void DoubleRatchet::derive_keys_from_dh_output(const unsigned char* dh_output, b
         std::cout << std::endl;
     }
     std::cout << "Derived root_key: ";
-    for (size_t i = 0; i < crypto_kdf_KEYBYTES; ++i) std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(root_key[i]);
+    for (unsigned char i : root_key) std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(i);
     std::cout << std::endl;
 }
 
@@ -63,22 +63,22 @@ DoubleRatchet::DoubleRatchet(KeyBundle* bundle) {
         throw std::runtime_error("Failed to compute initial DH");
     }
     std::cout << "DH output: ";
-    for (size_t i = 0; i < sizeof(dh_output); ++i) std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(dh_output[i]);
+    for (const unsigned char i : dh_output) std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(i);
     std::cout << std::endl;
 
     // Derive keys from DH output
     derive_keys_from_dh_output(dh_output, bundle->get_role() == Role::Initiator);
 
     std::cout << "DoubleRatchet initialized with root key: ";
-    for (unsigned char i : root_key)
+    for (const unsigned char i : root_key)
         std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(i);
     std::cout << std::endl;
 }
 
 DoubleRatchet::~DoubleRatchet() {
     // clean up any remaining cached message keys
-    for (auto& pair : skipped_message_keys) {
-        delete[] pair.second;
+    for (auto&[_, snd] : skipped_message_keys) {
+        delete[] snd;
     }
     skipped_message_keys.clear();
 }
@@ -178,7 +178,7 @@ void DoubleRatchet::advance_chain_key(unsigned char* chain_key) {
     }
 }
 
-DeviceMessage DoubleRatchet::message_send(unsigned char* message, const unsigned char* device_id) {
+DeviceMessage DoubleRatchet::message_send(const unsigned char* message, const unsigned char* device_id) {
     // Check if send chain is uninitialized (all zeros)
     bool send_chain_uninitialized = sodium_is_zero(send_chain.chain_key, crypto_kdf_KEYBYTES) == 1;
 
