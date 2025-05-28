@@ -95,7 +95,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QWidget" name="passwordWidget" native="true">
+      <widget class="QWidget" name="passphraseWidget" native="true">
        <property name="minimumSize">
         <size>
          <width>0</width>
@@ -103,14 +103,14 @@
         </size>
        </property>
        <property name="styleSheet">
-        <string notr="true">QWidget#passwordWidget {
+        <string notr="true">QWidget#passphraseWidget {
   background-color: white;
   border: 1px solid #dfe6e9;
   border-radius: 12px;
   padding: 30px;
 }</string>
        </property>
-       <layout class="QVBoxLayout" name="passwordLayout">
+       <layout class="QVBoxLayout" name="passphraseLayout">
         <property name="spacing">
          <number>20</number>
         </property>
@@ -121,27 +121,27 @@
          <number>20</number>
         </property>
         <item>
-         <widget class="QLabel" name="passwordSectionTitle">
+         <widget class="QLabel" name="passphraseSectionTitle">
           <property name="styleSheet">
            <string notr="true">font-size: 18px; font-weight: bold; color: #2d3436; margin-bottom: 10px;</string>
           </property>
           <property name="text">
-           <string>Change Password</string>
+           <string>Change Passphrase</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="currentPasswordLabel">
+         <widget class="QLabel" name="currentPassphraseLabel">
           <property name="styleSheet">
            <string notr="true">font-size: 14px; color: #2d3436; font-weight: 500; margin-bottom: 5px;</string>
           </property>
           <property name="text">
-           <string>Current Password</string>
+           <string>Current Passphrase</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="currentPassword">
+         <widget class="QLineEdit" name="currentPassphrase">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -168,17 +168,17 @@ QLineEdit:focus {
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="newPasswordLabel">
+         <widget class="QLabel" name="newPassphraseLabel">
           <property name="styleSheet">
            <string notr="true">font-size: 14px; color: #2d3436; font-weight: 500; margin-bottom: 5px;</string>
           </property>
           <property name="text">
-           <string>New Password</string>
+           <string>New Passphrase</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="newPassword">
+         <widget class="QLineEdit" name="newPassphrase">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -205,17 +205,17 @@ QLineEdit:focus {
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="confirmPasswordLabel">
+         <widget class="QLabel" name="confirmPassphraseLabel">
           <property name="styleSheet">
            <string notr="true">font-size: 14px; color: #2d3436; font-weight: 500; margin-bottom: 5px;</string>
           </property>
           <property name="text">
-           <string>Confirm New Password</string>
+           <string>Confirm New Passphrase</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="confirmPassword">
+         <widget class="QLineEdit" name="confirmPassphrase">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -242,12 +242,12 @@ QLineEdit:focus {
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="passwordRequirements">
+         <widget class="QLabel" name="passphraseRequirements">
           <property name="styleSheet">
            <string notr="true">font-size: 12px; color: #636e72; margin-top: 5px;</string>
           </property>
           <property name="text">
-           <string>Password must be between 8 and 64 characters</string>
+           <string>Passphrase must be between 20 and 64 characters</string>
           </property>
          </widget>
         </item>

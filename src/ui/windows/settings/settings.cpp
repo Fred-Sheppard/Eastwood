@@ -32,10 +32,10 @@ Settings::~Settings()
 
 void Settings::setupConnections()
 {
-    // Connect password fields to validation
-    connect(ui->currentPassword, &QLineEdit::textChanged, this, &Settings::validatePassword);
-    connect(ui->newPassword, &QLineEdit::textChanged, this, &Settings::validatePassword);
-    connect(ui->confirmPassword, &QLineEdit::textChanged, this, &Settings::validatePassword);
+    // Connect passphrase fields to validation
+    connect(ui->currentPassphrase, &QLineEdit::textChanged, this, &Settings::validatePassphrase);
+    connect(ui->newPassphrase, &QLineEdit::textChanged, this, &Settings::validatePassphrase);
+    connect(ui->confirmPassphrase, &QLineEdit::textChanged, this, &Settings::validatePassphrase);
 
     // Connect buttons
     connect(ui->cancelButton, &QPushButton::clicked, this, &Settings::onCancelClicked);
@@ -51,23 +51,23 @@ void Settings::setupConnections()
     }
 }
 
-void Settings::validatePassword()
+void Settings::validatePassphrase()
 {
-    QString newPassword = ui->newPassword->text();
-    QString confirmPassword = ui->confirmPassword->text();
+    QString newPassphrase = ui->newPassphrase->text();
+    QString confirmPassphrase = ui->confirmPassphrase->text();
 
-    if (newPassword.isEmpty() && confirmPassword.isEmpty()) {
-        ui->passwordRequirements->setText("Password must be between 8 and 64 characters");
-        ui->passwordRequirements->setStyleSheet("font-size: 12px; color: #636e72; margin-top: 5px;");
+    if (newPassphrase.isEmpty() && confirmPassphrase.isEmpty()) {
+        ui->passphraseRequirements->setText("Passphrase must be between 20 and 64 characters");
+        ui->passphraseRequirements->setStyleSheet("font-size: 12px; color: #636e72; margin-top: 5px;");
         return;
     }
 
-    if (newPassword == confirmPassword) {
-        ui->passwordRequirements->setText("Passwords match");
-        ui->passwordRequirements->setStyleSheet("font-size: 12px; color: #27ae60; margin-top: 5px;");
+    if (newPassphrase == confirmPassphrase) {
+        ui->passphraseRequirements->setText("Passphrases match");
+        ui->passphraseRequirements->setStyleSheet("font-size: 12px; color: #27ae60; margin-top: 5px;");
     } else {
-        ui->passwordRequirements->setText("Passwords do not match");
-        ui->passwordRequirements->setStyleSheet("font-size: 12px; color: #e74c3c; margin-top: 5px;");
+        ui->passphraseRequirements->setText("Passphrases do not match");
+        ui->passphraseRequirements->setStyleSheet("font-size: 12px; color: #e74c3c; margin-top: 5px;");
     }
 }
 
@@ -81,36 +81,36 @@ void Settings::navigateTo(QWidget* newWindow)
 
 void Settings::onReceivedButtonClicked()
 {
-    ui->currentPassword->clear();
-    ui->newPassword->clear();
-    ui->confirmPassword->clear();
+    ui->currentPassphrase->clear();
+    ui->newPassphrase->clear();
+    ui->confirmPassphrase->clear();
     WindowManager::instance().showReceived();
     hide();
 }
 
 void Settings::onSentButtonClicked()
 {
-    ui->currentPassword->clear();
-    ui->newPassword->clear();
-    ui->confirmPassword->clear();
+    ui->currentPassphrase->clear();
+    ui->newPassphrase->clear();
+    ui->confirmPassphrase->clear();
     WindowManager::instance().showSent();
     hide();
 }
 
 void Settings::onSendFileButtonClicked()
 {   
-    ui->currentPassword->clear();
-    ui->newPassword->clear();
-    ui->confirmPassword->clear();
+    ui->currentPassphrase->clear();
+    ui->newPassphrase->clear();
+    ui->confirmPassphrase->clear();
     WindowManager::instance().showSendFile();
     hide();
 }
 
 void Settings::onSettingsButtonClicked()
 {   
-    ui->currentPassword->clear();
-    ui->newPassword->clear();
-    ui->confirmPassword->clear();
+    ui->currentPassphrase->clear();
+    ui->newPassphrase->clear();
+    ui->confirmPassphrase->clear();
 }
 
 void Settings::onWindowShown(const QString& windowName)
@@ -124,14 +124,10 @@ void Settings::onWindowShown(const QString& windowName)
 
 void Settings::onCancelClicked()
 {
-    // Clear all password fields
-    ui->currentPassword->clear();
-    ui->newPassword->clear();
-    ui->confirmPassword->clear();
-    
-    // Reset password requirements text
-    ui->passwordRequirements->setText("Password must be between 8 and 64 characters");
-    ui->passwordRequirements->setStyleSheet("font-size: 12px; color: #636e72; margin-top: 5px;");
+    // Clear all passphrase fields
+    ui->currentPassphrase->clear();
+    ui->newPassphrase->clear();
+    ui->confirmPassphrase->clear();
     
     // Navigate back to the previous window
     WindowManager::instance().showReceived();
