@@ -272,32 +272,53 @@ std::vector<unsigned char> DoubleRatchet::message_receive(const DeviceMessage& m
         needs_dh_ratchet_on_send = true;
         // Generate a new local DH keypair for the next sending chain
         crypto_kx_keypair(local_dh_public, local_dh_private);
-        // Do NOT immediately perform a DH ratchet for the new sending chain; let it be initialized on the next DH ratchet event.
-        // The send_chain will remain uninitialized (all zeros) until the next DH ratchet, as per the Double Ratchet spec.
         send_chain.index = 0;
     }
+
     // Skip ahead in receive chain if needed
     if (message.header->message_index > recv_chain.index) {
         std::cout << "Skipping ahead in receive chain from " << recv_chain.index << " to " << message.header->message_index << std::endl;
+        
+        // Cache message keys for all skipped messages
         for (uint32_t i = recv_chain.index; i < message.header->message_index; i++) {
             unsigned char* message_key = derive_message_key(recv_chain.chain_key);
             SkippedMessageKey key_id = {{0}, static_cast<int>(i)};
             memcpy(key_id.dh_public, message.header->dh_public, crypto_kx_PUBLICKEYBYTES);
             skipped_message_keys[key_id] = message_key;
-            // Advance chain key
             advance_chain_key(recv_chain.chain_key);
         }
         recv_chain.index = message.header->message_index;
     }
-    // Derive message key
-    unsigned char* message_key = derive_message_key(recv_chain.chain_key);
+
+    // Check if we have a cached message key for this message
+    SkippedMessageKey key_id = {{0}, static_cast<int>(message.header->message_index)};
+    memcpy(key_id.dh_public, message.header->dh_public, crypto_kx_PUBLICKEYBYTES);
+    auto it = skipped_message_keys.find(key_id);
+    
+    unsigned char* message_key;
+    if (it != skipped_message_keys.end()) {
+        // Use cached message key
+        message_key = it->second;
+        skipped_message_keys.erase(it);
+    } else {
+        // Derive new message key
+        message_key = derive_message_key(recv_chain.chain_key);
+    }
+
     std::cout << "[DEBUG] Receiver derived message key: " << bin2hex(message_key, crypto_kdf_KEYBYTES) << std::endl;
+
     // Decrypt message
     std::vector<unsigned char> decrypted_message = decrypt_message_given_key(message.ciphertext, message.length, message_key);
+    
+    // Clean up message key
     delete[] message_key;
-    // Advance chain key
-    advance_chain_key(recv_chain.chain_key);
-    recv_chain.index++;
+
+    // Only advance chain key and index if this wasn't a skipped message
+    if (it == skipped_message_keys.end()) {
+        advance_chain_key(recv_chain.chain_key);
+        recv_chain.index++;
+    }
+
     return decrypted_message;
 }
 
