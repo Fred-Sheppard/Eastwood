@@ -3,6 +3,9 @@
 #include "../../utils/messagebox.h"
 #include "../../utils/window_manager/window_manager.h"
 #include "src/auth/register_user/register_user.h"
+#include <iostream>
+#include "src/auth/register_device/register_device.h"
+#include "src/utils/JsonParser.h"
 
 
 Register::Register(QWidget *parent)
@@ -22,6 +25,7 @@ void Register::setupConnections()
 {
     connect(ui->loginButton, &QPushButton::clicked, this, &Register::onLoginButtonClicked);
     connect(ui->togglePassphraseButton, &QPushButton::clicked, this, &Register::onTogglePassphraseClicked);
+    connect(ui->registerButton, &QPushButton::clicked, this, &Register::onRegisterButtonClicked);
 }
 
 void Register::onRegisterButtonClicked()
@@ -72,8 +76,21 @@ void Register::onRegisterButtonClicked()
         return;
     }
 
-    register_user(username.toStdString(), std::make_unique<std::string>(passphrase.toStdString()));
-    StyledMessageBox::info(this, "Success", "Registration functionality here");
+    try {
+        register_user(username.toStdString(), std::make_unique<std::string>(passphrase.toStdString()));
+        register_first_device();
+        StyledMessageBox::info(this, "Success", "Registration successful!");
+        WindowManager::instance().showLogin();
+        hide();
+    } catch (const webwood::HttpError& e) {
+        // Extract the error body from the response
+        std::string errorBody = e.what();
+        StyledMessageBox::error(this, "Registration Failed", 
+            QString("Registration failed: %1").arg(QString::fromStdString(errorBody)));
+    } catch (const std::exception& e) {
+        StyledMessageBox::error(this, "Registration Failed", 
+            QString("An error occurred: %1").arg(e.what()));
+    }
 }
 
 void Register::onLoginButtonClicked()
