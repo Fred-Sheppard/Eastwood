@@ -43,6 +43,7 @@ void SendFile::setupConnections()
         connect(navbar, &NavBar::sentClicked, this, &SendFile::onSentButtonClicked);
         connect(navbar, &NavBar::settingsClicked, this, &SendFile::onSettingsButtonClicked);
         connect(navbar, &NavBar::logoutClicked, this, &SendFile::onLogoutButtonClicked);
+        connect(navbar, &NavBar::sendFileClicked, this, &SendFile::onSendFileButtonClicked);
     }
 }
 

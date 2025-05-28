@@ -47,6 +47,7 @@ void Settings::setupConnections()
         connect(navbar, &NavBar::sentClicked, this, &Settings::onSentButtonClicked);
         connect(navbar, &NavBar::sendFileClicked, this, &Settings::onSendFileButtonClicked);
         connect(navbar, &NavBar::logoutClicked, this, &Settings::onLogoutButtonClicked);
+        connect(navbar, &NavBar::settingsClicked, this, &Settings::onSettingsButtonClicked);
     }
 }
 
