@@ -40,4 +40,6 @@ void get_keybundles(
     SessionManager& manager
 );
 
+void post_new_keybundles();
+
 #endif //ENDPOINTS_H
