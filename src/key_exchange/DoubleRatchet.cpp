@@ -292,10 +292,6 @@ std::vector<unsigned char> DoubleRatchet::message_receive(const DeviceMessage& m
     return decrypted_message;
 }
 
-const unsigned char* DoubleRatchet::get_public_key() const {
-    return local_dh_public;
-}
-
 void DoubleRatchet::print_state() const {
     std::cout << "Ratchet ID: " << bin2hex(ratchet_id, crypto_box_PUBLICKEYBYTES * 2) << std::endl;
     std::cout << "Root key: " << bin2hex(root_key, crypto_kdf_KEYBYTES) << std::endl;

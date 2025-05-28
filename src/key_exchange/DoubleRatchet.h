@@ -141,8 +141,6 @@ public:
     // Processes a received message with header and returns the decrypted plaintext
     std::vector<unsigned char> message_receive(const DeviceMessage& encrypted_message);
 
-    const unsigned char* get_public_key() const;
-
     void print_state() const;
 
 private:
