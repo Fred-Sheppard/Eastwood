@@ -31,12 +31,14 @@ signals:
     void revokeAccessClicked(FileItemWidget* widget);
     void deleteFileClicked(FileItemWidget* widget);
     void fileClicked(FileItemWidget* widget);
+    void downloadFileClicked(FileItemWidget* widget);
 
 private:
     QLabel* fileNameLabel;
     QLabel* detailsLabel;
     QPushButton* revokeButton;
     QPushButton* deleteButton;
+    QPushButton* downloadButton;
     QString fileName;
     QString fileSize;
     QString timestamp;

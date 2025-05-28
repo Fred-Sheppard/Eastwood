@@ -2,6 +2,8 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QFileInfo>
+#include <QStyle>
+#include <QIcon>
 
 FileItemWidget::FileItemWidget(const QString& fileName,
                              const QString& fileSize,
@@ -64,6 +66,27 @@ void FileItemWidget::setupUI()
     buttonLayout->setSpacing(8);
     buttonLayout->addStretch();
 
+    // Add download button
+    downloadButton = new QPushButton(this);
+    downloadButton->setFixedSize(30, 30);
+    downloadButton->setCursor(Qt::PointingHandCursor);
+    downloadButton->setIcon(QIcon(":icons/logos/download.svg"));
+    downloadButton->setIconSize(QSize(16, 16));
+    downloadButton->setStyleSheet(R"(
+        QPushButton {
+            background-color: #6c5ce7;
+            border: none;
+            border-radius: 4px;
+        }
+        QPushButton:hover {
+            background-color: #5049c9;
+        }
+        QPushButton:pressed {
+            background-color: #4040b0;
+        }
+    )");
+    buttonLayout->addWidget(downloadButton);
+
     // Only create and show revoke button in Sent mode
     if (mode == Mode::Sent) {
         revokeButton = new QPushButton("Revoke", this);
@@ -120,6 +143,10 @@ void FileItemWidget::setupUI()
 
 void FileItemWidget::setupConnections()
 {
+    connect(downloadButton, &QPushButton::clicked, [this]() {
+        emit downloadFileClicked(this);
+    });
+
     if (mode == Mode::Sent) {
         connect(revokeButton, &QPushButton::clicked, [this]() {
             emit revokeAccessClicked(this);

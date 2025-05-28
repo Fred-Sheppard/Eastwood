@@ -21,6 +21,7 @@ private slots:
     void onFileItemClicked(FileItemWidget* widget);
     void onRevokeAccessClicked(FileItemWidget* widget);
     void onDeleteFileClicked(FileItemWidget* widget);
+    void onDownloadFileClicked(FileItemWidget* widget);
     void onWindowShown(const QString& windowName);
     void onReceivedButtonClicked();
     void onSendFileButtonClicked();

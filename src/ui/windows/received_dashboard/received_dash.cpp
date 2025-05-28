@@ -60,6 +60,7 @@ void Received::addFileItem(const QString& fileName,
 
     connect(widget, &FileItemWidget::deleteFileClicked, this, &Received::onDeleteFileClicked);
     connect(widget, &FileItemWidget::fileClicked, this, &Received::onFileItemClicked);
+    connect(widget, &FileItemWidget::downloadFileClicked, this, &Received::onDownloadFileClicked);
 
     item->setSizeHint(widget->sizeHint());
     ui->fileList->addItem(item);
@@ -152,4 +153,9 @@ void Received::onWindowShown(const QString& windowName)
 void Received::onLogoutButtonClicked()
 {
     StyledMessageBox::info(this, "Not Implemented", "Logout functionality is not yet implemented.");
+}
+
+void Received::onDownloadFileClicked(FileItemWidget* widget)
+{
+    StyledMessageBox::info(this, "Not Implemented", "Download functionality is not yet implemented.");
 }
