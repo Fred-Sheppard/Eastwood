@@ -159,11 +159,16 @@ void DoubleRatchet::kdf_ratchet(const unsigned char* shared_secret, unsigned cha
 unsigned char* DoubleRatchet::derive_message_key(const unsigned char* chain_key) {
     // Derive message key from chain key
     auto* message_key = new unsigned char[crypto_kdf_KEYBYTES];
-    if (crypto_kdf_derive_from_key(message_key, crypto_kdf_KEYBYTES, 0, MSG_CTX, chain_key) != 0) {
-        throw std::runtime_error("Failed to derive message key");
+    try {
+        if (crypto_kdf_derive_from_key(message_key, crypto_kdf_KEYBYTES, 0, MSG_CTX, chain_key) != 0) {
+            delete[] message_key;
+            throw std::runtime_error("Failed to derive message key");
+        }
+        return message_key;
+    } catch (...) {
+        delete[] message_key;
+        throw;
     }
-    
-    return message_key;
 }
 
 void DoubleRatchet::advance_chain_key(unsigned char* chain_key) {
