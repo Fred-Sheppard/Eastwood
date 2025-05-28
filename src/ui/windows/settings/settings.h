@@ -21,10 +21,10 @@ private slots:
     void onReceivedButtonClicked();
     void onSentButtonClicked();
     void onSendFileButtonClicked();
-    void onSettingsButtonClicked();
     void onLogoutButtonClicked();
     void validatePassword();
     void onCancelClicked();
+    void onSettingsButtonClicked();
 
 private:
     Ui::Settings *ui;

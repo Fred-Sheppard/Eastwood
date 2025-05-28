@@ -35,7 +35,6 @@ void Received::setupConnections()
     // Connect NavBar signals
     NavBar* navbar = findChild<NavBar*>();
     if (navbar) {
-        connect(navbar, &NavBar::receivedClicked, this, &Received::onReceivedButtonClicked);
         connect(navbar, &NavBar::sentClicked, this, &Received::onSentButtonClicked);
         connect(navbar, &NavBar::sendFileClicked, this, &Received::onSendFileButtonClicked);
         connect(navbar, &NavBar::settingsClicked, this, &Received::onSettingsButtonClicked);
@@ -148,12 +147,6 @@ void Received::onWindowShown(const QString& windowName)
     if (navbar) {
         navbar->setActiveButton(windowName);
     }
-}
-
-void Received::onReceivedButtonClicked()
-{
-    WindowManager::instance().showReceived();
-    hide();
 }
 
 void Received::onLogoutButtonClicked()

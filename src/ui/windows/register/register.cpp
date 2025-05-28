@@ -19,7 +19,6 @@ Register::~Register()
 
 void Register::setupConnections()
 {
-    connect(ui->registerButton, &QPushButton::clicked, this, &Register::onRegisterButtonClicked);
     connect(ui->loginButton, &QPushButton::clicked, this, &Register::onLoginButtonClicked);
 }
 

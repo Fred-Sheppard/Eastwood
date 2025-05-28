@@ -39,11 +39,10 @@ void Sent::setupConnections()
     // Connect NavBar signals
     NavBar* navbar = findChild<NavBar*>();
     if (navbar) {
-        connect(navbar, &NavBar::receivedClicked, this, &Sent::onReceivedButtonClicked);
-        connect(navbar, &NavBar::sentClicked, this, &Sent::onSentButtonClicked);
         connect(navbar, &NavBar::sendFileClicked, this, &Sent::onSendFileButtonClicked);
         connect(navbar, &NavBar::settingsClicked, this, &Sent::onSettingsButtonClicked);
         connect(navbar, &NavBar::logoutClicked, this, &Sent::onLogoutButtonClicked);
+        connect(navbar, &NavBar::receivedClicked, this, &Sent::onReceivedButtonClicked);
     }
     
     // Connect the send button
@@ -325,12 +324,6 @@ void Sent::navigateTo(QWidget* newWindow)
 void Sent::onReceivedButtonClicked()
 {
     WindowManager::instance().showReceived();
-    hide();
-}
-
-void Sent::onSentButtonClicked()
-{
-    WindowManager::instance().showSent();
     hide();
 }
 

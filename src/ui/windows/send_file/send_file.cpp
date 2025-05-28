@@ -41,7 +41,6 @@ void SendFile::setupConnections()
     if (navbar) {
         connect(navbar, &NavBar::receivedClicked, this, &SendFile::onReceivedButtonClicked);
         connect(navbar, &NavBar::sentClicked, this, &SendFile::onSentButtonClicked);
-        connect(navbar, &NavBar::sendFileClicked, this, &SendFile::onSendFileButtonClicked);
         connect(navbar, &NavBar::settingsClicked, this, &SendFile::onSettingsButtonClicked);
         connect(navbar, &NavBar::logoutClicked, this, &SendFile::onLogoutButtonClicked);
     }
@@ -128,8 +127,6 @@ void SendFile::onSendFileButtonClicked()
     ui->usernameInput->clear();
     ui->filePathInput->clear();
     ui->fileDetailsLabel->clear();
-    WindowManager::instance().showSendFile();
-    hide();
 }
 
 void SendFile::onSettingsButtonClicked()

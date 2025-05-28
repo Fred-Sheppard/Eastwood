@@ -23,7 +23,6 @@ private slots:
     void onDeleteFileClicked(FileItemWidget* widget);
     void onWindowShown(const QString& windowName);
     void onReceivedButtonClicked();
-    void onSentButtonClicked();
     void onSendFileButtonClicked();
     void onSettingsButtonClicked();
     void onLogoutButtonClicked();

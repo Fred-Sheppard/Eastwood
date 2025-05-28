@@ -46,7 +46,6 @@ void Settings::setupConnections()
         connect(navbar, &NavBar::receivedClicked, this, &Settings::onReceivedButtonClicked);
         connect(navbar, &NavBar::sentClicked, this, &Settings::onSentButtonClicked);
         connect(navbar, &NavBar::sendFileClicked, this, &Settings::onSendFileButtonClicked);
-        connect(navbar, &NavBar::settingsClicked, this, &Settings::onSettingsButtonClicked);
         connect(navbar, &NavBar::logoutClicked, this, &Settings::onLogoutButtonClicked);
     }
 }
@@ -111,8 +110,6 @@ void Settings::onSettingsButtonClicked()
     ui->currentPassword->clear();
     ui->newPassword->clear();
     ui->confirmPassword->clear();
-    WindowManager::instance().showSettings();
-    hide();
 }
 
 void Settings::onWindowShown(const QString& windowName)

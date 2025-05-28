@@ -21,7 +21,6 @@ private slots:
     void onSendButtonClicked();
     void onFileItemClicked(FileItemWidget* widget);
     void onDeleteFileClicked(FileItemWidget* widget);
-    void onReceivedButtonClicked();
     void onSentButtonClicked();
     void onSettingsButtonClicked();
     void refreshFileList();
