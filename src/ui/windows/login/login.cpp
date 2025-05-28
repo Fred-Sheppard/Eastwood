@@ -5,6 +5,7 @@
 #include "../../utils/messagebox.h"
 #include "../../utils/window_manager/window_manager.h"
 #include "build/_deps/json-src/include/nlohmann/detail/exceptions.hpp"
+#include "src/endpoints/endpoints.h"
 
 Login::Login(QWidget *parent)
     : QWidget(parent)
@@ -61,6 +62,8 @@ void Login::onLoginButtonClicked()
         StyledMessageBox::warning(this, "Error", e.what());
     }
 
+    std::string identity = "niall";
+    get_keybundles(identity);
     StyledMessageBox::info(this, "Success", "Login functionality here");
 }
 
