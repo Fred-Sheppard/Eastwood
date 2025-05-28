@@ -4,7 +4,7 @@
 #include <iostream>
 #include <QString>
 #include <sstream>
-#include <QDebug>
+#include "src/utils/utils.h"
 
 using namespace webwood;
 
@@ -156,6 +156,8 @@ std::string HTTPSClient::get(const std::string &host, const std::string &path, c
         response.append(buf, bytes);
     }
 
+    qDebug() << response;
+
     SSL_shutdown(ssl);
     SSL_free(ssl);
     close(sock_fd);
@@ -208,6 +210,8 @@ std::string HTTPSClient::post(const std::string &host, const std::string &path, 
     while ((bytes = SSL_read(ssl, buf, sizeof(buf))) > 0) {
         response.append(buf, bytes);
     }
+
+    qDebug() << response;
 
     SSL_shutdown(ssl);
     SSL_free(ssl);
