@@ -101,9 +101,6 @@ set(DATABASE_SOURCES
 set(CRYPTO_SOURCES
         src/key_exchange/DoubleRatchet.cpp
         src/key_exchange/x3dh.cpp
-        src/sessions/DeviceCommunicationSession.cpp
-        src/sessions/IdentityCommunicationSession.cpp
-        src/sessions/SessionManager.cpp
         src/key_exchange/XChaCha20-Poly1305.cpp
         src/utils/ConversionUtils.cpp
         src/utils/JsonParser.cpp
@@ -122,6 +119,7 @@ set(AUTH_SOURCES
         src/auth/register_user/register_user.cpp
         src/auth/register_device/register_device.cpp
         src/auth/login/login.cpp
+        src/sessions/KeyBundle.h
 )
 
 

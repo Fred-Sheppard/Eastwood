@@ -10,6 +10,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "src/sessions/KeyBundle.h"
+
 struct Chain {
     unsigned char chain_key[crypto_kdf_KEYBYTES];
     int index;
@@ -131,10 +133,7 @@ public:
 
 class DoubleRatchet {
 public:
-    DoubleRatchet(const unsigned char* x3dh_root_key,
-                  const unsigned char* remote_public_signed_prekey,
-                  const unsigned char* local_public_ephemeral,
-                  const unsigned char* local_private_ephemeral);
+    DoubleRatchet(KeyBundle* bundle);
     
     ~DoubleRatchet();
     

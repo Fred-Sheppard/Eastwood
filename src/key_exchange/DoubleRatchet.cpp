@@ -8,17 +8,14 @@
 #include <sstream>
 #include "XChaCha20-Poly1305.h"
 #include "src/endpoints/endpoints.h"
+#include "src/sessions/KeyBundle.h"
 
 // Context strings for key derivation - must be exactly 8 bytes
 const char* const ROOT_CTX = "DRROOT01";
 const char* const CHAIN_CTX = "DRCHAIN1";
 const char* const MSG_CTX = "DRMSG001";
 
-DoubleRatchet::DoubleRatchet(const unsigned char* x3dh_root_key,
-              const unsigned char* remote_public_signed_prekey,
-              const unsigned char* local_public_ephemeral,
-              const unsigned char* local_private_ephemeral) {
-
+DoubleRatchet::DoubleRatchet(KeyBundle* bundle) {
     send_chain.index = 0;
     recv_chain.index = 0;
     prev_send_chain_length = 0;
@@ -26,12 +23,33 @@ DoubleRatchet::DoubleRatchet(const unsigned char* x3dh_root_key,
     // Initialize keys
     memset(send_chain.chain_key, 0, crypto_kdf_KEYBYTES);
     memset(recv_chain.chain_key, 0, crypto_kdf_KEYBYTES);
-    
-    memcpy(local_dh_public, local_public_ephemeral, crypto_box_PUBLICKEYBYTES);
-    memcpy(local_dh_private, local_private_ephemeral, crypto_box_PUBLICKEYBYTES);
-    memcpy(root_key, x3dh_root_key, crypto_box_PUBLICKEYBYTES);
-    memcpy(remote_dh_public, remote_public_signed_prekey, crypto_box_PUBLICKEYBYTES);
-    
+
+
+    if (bundle->get_role() == Role::Initiator) {
+        auto* sender = dynamic_cast<SendingKeyBundle*>(bundle);
+        if (!sender) throw std::runtime_error("Invalid bundle type for Initiator");
+
+        // Copy keys
+        memcpy(local_dh_public, sender->get_my_ephemeral_public(), crypto_box_PUBLICKEYBYTES);
+        memcpy(local_dh_private, sender->get_my_ephemeral_private(), crypto_box_SECRETKEYBYTES);
+        memcpy(remote_dh_public, sender->get_their_signed_public(), crypto_box_PUBLICKEYBYTES);
+        memcpy(root_key, sender->get_shared_secret(), crypto_box_SECRETKEYBYTES);
+
+    } else if (bundle->get_role() == Role::Responder) {
+        auto* receiver = dynamic_cast<ReceivingKeyBundle*>(bundle);
+        if (!receiver) throw std::runtime_error("Invalid bundle type for Responder");
+
+        // You need to compute public ephemeral from the private onetime key
+        unsigned char my_ephemeral_public[crypto_box_PUBLICKEYBYTES];
+        crypto_scalarmult_base(my_ephemeral_public, receiver->get_my_onetime_private());
+
+        // Copy keys
+        memcpy(local_dh_public, my_ephemeral_public, crypto_box_PUBLICKEYBYTES);
+        memcpy(local_dh_private, receiver->get_my_onetime_private(), crypto_box_SECRETKEYBYTES);
+        memcpy(remote_dh_public, receiver->get_their_device_public(), crypto_box_PUBLICKEYBYTES);
+        memcpy(root_key, receiver->get_shared_secret(), crypto_box_SECRETKEYBYTES);
+    };
+
     std::cout << "DoubleRatchet initialized with root key: ";
     for (unsigned char i : root_key)
         std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(i);

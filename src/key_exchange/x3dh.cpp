@@ -19,17 +19,16 @@ unsigned char* x3dh_initiator(
     const unsigned char* recipient_identity_key_public,
     const unsigned char* recipient_signed_prekey_public,
     const unsigned char* recipient_onetime_prekey_public,
-    const unsigned char* recipient_signed_prekey_signature,
-    const unsigned char* recipient_ed25519_identity_key_public) {
+    const unsigned char* recipient_signed_prekey_signature) {
     
     std::cout << "\n===== INITIATOR X3DH =====" << std::endl;
     
-    if (recipient_signed_prekey_signature && recipient_ed25519_identity_key_public) {
+    if (recipient_signed_prekey_signature && recipient_identity_key_public) {
         if (crypto_sign_verify_detached(
                 recipient_signed_prekey_signature, 
                 recipient_signed_prekey_public, 
                 crypto_box_PUBLICKEYBYTES, 
-                recipient_ed25519_identity_key_public) != 0) {
+                recipient_identity_key_public) != 0) {
             throw std::runtime_error("Signature verification failed");
         }
         std::cout << "Signature verification successful" << std::endl;
