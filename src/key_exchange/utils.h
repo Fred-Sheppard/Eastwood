@@ -6,6 +6,9 @@
 #include <iomanip>
 #include <vector>
 #include <cstring>
+#include <sodium.h>
+#include <stdexcept>
+
 // Convert binary data to a hexadecimal string
 inline std::string bin2hex(const unsigned char* data, size_t len) {
     std::stringstream ss;
@@ -117,5 +120,8 @@ inline unsigned char* concat_ordered(const unsigned char* a, size_t a_len,
 
     return result;
 }
+
+// Convert a Curve25519 public key to an Ed25519 public key
+unsigned char* convert_curve25519_to_ed25519(const unsigned char* curve25519_pubkey);
 
 #endif // EASTWOOD_CRYPTO_UTILS_H 

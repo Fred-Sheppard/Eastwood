@@ -5,6 +5,7 @@
 #include "src/key_exchange/utils.h"
 #include "SessionManager.h"
 #include "src/sql/queries.h"
+#include "src/structs/KeyBundle.h"
 
 SessionManager::SessionManager() {}
 
@@ -14,42 +15,21 @@ SessionManager::~SessionManager() {
     }
 }
 
-void SessionManager::import_key_bundles(keyBundleRequest request) {
-    size_t identity_session_key_len = sizeof(request.my_identity_public) + sizeof(request.their_identity_public);
-    unsigned char* identity_session_id = concat_ordered(request.my_identity_public, crypto_box_PUBLICKEYBYTES, request.their_identity_public, crypto_box_PUBLICKEYBYTES, identity_session_key_len);
+void SessionManager::import_sending_key_bundles(std::vector<SendingKeyBundle> request, unsigned char* my_identity_public, unsigned char* their_identity_public) {
+    size_t identity_session_key_len = sizeof(my_identity_public) + sizeof(their_identity_public);
+    unsigned char* identity_session_id = concat_ordered(my_identity_public, crypto_box_PUBLICKEYBYTES, their_identity_public, crypto_box_PUBLICKEYBYTES, identity_session_key_len);
 
     if (!identity_sessions[identity_session_id]) {
-        keyBundle my_key_bundle;
-        my_key_bundle.isSending = true;  // We are the sender in this case
-        
-        // Fetch device keys from database
-        std::tuple<QByteArray, QByteArray> device_keypair = get_keypair("device");
-        QByteArray device_public = std::get<0>(device_keypair);
-        QByteArray device_private = std::get<1>(device_keypair);
-        
-        // Allocate and copy device keys
-        my_key_bundle.device_key_public = new unsigned char[crypto_box_PUBLICKEYBYTES];
-        my_key_bundle.device_key_private = new unsigned char[crypto_box_SECRETKEYBYTES];
-        memcpy(my_key_bundle.device_key_public, device_public.data(), crypto_box_PUBLICKEYBYTES);
-        memcpy(my_key_bundle.device_key_private, device_private.data(), crypto_box_SECRETKEYBYTES);
-        
-        // Generate ephemeral keys
-        my_key_bundle.ephemeral_key_public = new unsigned char[crypto_box_PUBLICKEYBYTES];
-        my_key_bundle.ephemeral_key_private = new unsigned char[crypto_box_SECRETKEYBYTES];
-        crypto_box_keypair(my_key_bundle.ephemeral_key_public, my_key_bundle.ephemeral_key_private);
-        
-        // Initialize other keys to nullptr since we don't need them for sending
-        my_key_bundle.signed_prekey_public = nullptr;
-        my_key_bundle.signed_prekey_private = nullptr;
-        my_key_bundle.signed_prekey_signature = nullptr;
-        my_key_bundle.onetime_prekey_public = nullptr;
-        my_key_bundle.onetime_prekey_private = nullptr;
-        my_key_bundle.ed25519_device_key_public = nullptr;
-        my_key_bundle.ed25519_device_key_private = nullptr;
-        
-        identity_sessions[identity_session_id] = new IdentityCommunicationSession(my_key_bundle, request.key_bundles, request.my_identity_public, request.their_identity_public);
+        // Create new identity session with sending key bundles
+        identity_sessions[identity_session_id] = new IdentityCommunicationSession(
+            request,  // sending key bundles
+            {},       // empty receiving key bundles
+            my_identity_public,
+            their_identity_public
+        );
     } else {
-        identity_sessions[identity_session_id]->updateSessionsFromKeyBundles(request.key_bundles);
+        // Update existing session with new sending key bundles
+        identity_sessions[identity_session_id]->updateSendingSessionsFromKeyBundles(request);
     }
 }
 

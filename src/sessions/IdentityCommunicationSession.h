@@ -10,31 +10,13 @@
 #include "DeviceCommunicationSession.h"
 #include "../key_exchange/DoubleRatchet.h"
 #include "../key_exchange/utils.h"
-
-struct keyBundle {
-    bool isSending;
-    unsigned char* device_key_public;
-    unsigned char* device_key_private;
-
-    unsigned char* ed25519_device_key_public;
-    unsigned char* ed25519_device_key_private;
-
-    unsigned char* ephemeral_key_public;
-    unsigned char* ephemeral_key_private;
-
-    unsigned char* signed_prekey_public;
-    unsigned char* signed_prekey_private;
-    unsigned char* signed_prekey_signature;
-
-    unsigned char* onetime_prekey_public;
-    unsigned char* onetime_prekey_private;
-};
+#include "src/structs/KeyBundle.h"
 
 class IdentityCommunicationSession {
     // identity session key = two identity keys together in alphabetical order hashed
     // this is our out of band code to verify
 public:
-    IdentityCommunicationSession(keyBundle myBundle, std::vector<keyBundle>, unsigned char* , unsigned char*);
+    IdentityCommunicationSession(std::vector<SendingKeyBundle>, std::vector<ReceivingKeyBundle>, unsigned char* , unsigned char*);
     // use vector of keybundles to establish per device sessions
     // ensure to make sure the device session does not already exist
     // device session id of two device ids in alphabetical order hashed
@@ -45,14 +27,16 @@ public:
 
     // Public methods for testing
     const std::map<unsigned char*, DeviceCommunicationSession*>& getDeviceSessions() const { return device_sessions; }
-    void updateSessionsFromKeyBundles(std::vector<keyBundle> key_bundles);
+    void updateSendingSessionsFromKeyBundles(std::vector<SendingKeyBundle> key_bundles);
+    void updateReceivingSessionsFromKeyBundles(std::vector<ReceivingKeyBundle> key_bundles);
 
 private:
-    keyBundle myBundle;
     unsigned char* identity_session_id;
     std::map<unsigned char*, DeviceCommunicationSession*> device_sessions;
+    unsigned char* my_device_key_public;
 
-    void createSessionFromKeyBundle(keyBundle);
+    void createSendingSessionFromKeyBundle(SendingKeyBundle);
+    void createReceivingSessionFromKeyBundle(ReceivingKeyBundle key_bundle);
 };
 
 #endif //IDENTITYCOMMUNICATIONSESSION_H

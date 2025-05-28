@@ -7,19 +7,14 @@
 
 #include "IdentityCommunicationSession.h"
 #include "src/key_exchange/DoubleRatchet.h"
-
-struct keyBundleRequest {
-    unsigned char* my_identity_public;
-    unsigned char* their_identity_public;
-    std::vector<keyBundle> key_bundles;
-};
+#include "src/structs/KeyBundle.h"
 
 class SessionManager {
     public:
     SessionManager();
     ~SessionManager();
 
-    void import_key_bundles(keyBundleRequest request);
+    void import_sending_key_bundles(std::vector<SendingKeyBundle> request, unsigned char* my_identity_public, unsigned char* their_identity_public);
     void routeToIdentity(DeviceMessage message, unsigned char* other_identity);
 
 private:
