@@ -120,6 +120,7 @@ set(CRYPTO_SOURCES
 set(AUTH_SOURCES
         src/auth/register_user/register_user.cpp
         src/auth/register_device/register_device.cpp
+        src/auth/login/login.cpp
 )
 
 
