@@ -17,11 +17,10 @@ void post_register_user(
     const unsigned char nonce_signature[crypto_sign_BYTES]
 ) {
     qDebug() << "Checking user registration:";
-    if (crypto_sign_verify_detached(nonce_signature, registration_nonce, CHA_CHA_NONCE_LEN, pk_identity) == 0) {
-        qDebug() << "C'est bon!";
-    } else {
-        qDebug() << "Signature is BAD";
-    };
+    if (crypto_sign_verify_detached(nonce_signature, registration_nonce, CHA_CHA_NONCE_LEN, pk_identity) != 0) {
+        throw std::runtime_error("Invalid signature for registration");
+    }
+    
     const json body = {
         {"username", username},
         {"identity_public", bin2hex(pk_identity, crypto_sign_PUBLICKEYBYTES)},
@@ -31,7 +30,7 @@ void post_register_user(
     std::cout << body << std::endl;
 
     post_unauth(body, "/registerUser");
-};
+}
 
 void post_register_device(
     const unsigned char pk_id[crypto_sign_PUBLICKEYBYTES],
