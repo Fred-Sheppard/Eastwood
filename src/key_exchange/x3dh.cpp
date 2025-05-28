@@ -13,6 +13,13 @@ static std::string bin2hex(const unsigned char* bin, size_t len) {
     return oss.str();
 }
 
+static void print_key(const char* name, const unsigned char* key, size_t len) {
+    std::ostringstream oss;
+    for (size_t i = 0; i < len; ++i)
+        oss << std::hex << std::setw(2) << std::setfill('0') << (int)key[i];
+    std::cout << name << ": " << oss.str() << std::endl;
+}
+
 unsigned char* x3dh_initiator(
     const unsigned char* my_identity_key_private,
     const unsigned char* my_ephemeral_key_private,
@@ -20,16 +27,20 @@ unsigned char* x3dh_initiator(
     const unsigned char* recipient_signed_prekey_public,
     const unsigned char* recipient_onetime_prekey_public,
     const unsigned char* recipient_signed_prekey_signature,
-    const unsigned char* recipient_ed25519_identity_key_public) {
+    const unsigned char* recipient_ed25519_public_key) {
     
     std::cout << "\n===== INITIATOR X3DH =====" << std::endl;
     
-    if (recipient_signed_prekey_signature && recipient_ed25519_identity_key_public) {
+    if (recipient_signed_prekey_signature) {
+        // Debug output
+        print_key("signed_public (verify)", recipient_signed_prekey_public, crypto_box_PUBLICKEYBYTES);
+        print_key("signature (verify)", recipient_signed_prekey_signature, crypto_sign_BYTES);
+        print_key("recipient_ed25519_public (verify)", recipient_ed25519_public_key, crypto_sign_PUBLICKEYBYTES);
         if (crypto_sign_verify_detached(
                 recipient_signed_prekey_signature, 
                 recipient_signed_prekey_public, 
                 crypto_box_PUBLICKEYBYTES, 
-                recipient_ed25519_identity_key_public) != 0) {
+                recipient_ed25519_public_key) != 0) {
             throw std::runtime_error("Signature verification failed");
         }
         std::cout << "Signature verification successful" << std::endl;

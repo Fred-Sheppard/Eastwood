@@ -44,8 +44,7 @@ DeviceSendingCommunicationSession::DeviceSendingCommunicationSession(
     const unsigned char* recipient_signed_prekey_public,
     const unsigned char* recipient_onetime_prekey_public,
     const unsigned char* recipient_signed_prekey_signature,
-    const unsigned char* recipient_ed25519_device_key_public
-) : DeviceCommunicationSession() {
+    const unsigned char* recipient_ed25519_public_key) : DeviceCommunicationSession() {
 
     device_id = recipient_device_key_public;
     size_t device_session_key_len = sizeof(device_key_public) + sizeof(recipient_device_key_public);
@@ -58,14 +57,9 @@ DeviceSendingCommunicationSession::DeviceSendingCommunicationSession(
         recipient_signed_prekey_public,
         recipient_onetime_prekey_public,
         recipient_signed_prekey_signature,
-        recipient_ed25519_device_key_public // ed converted curve for verification
+        recipient_ed25519_public_key
     );
 
-    // SEND POST REQUET TO /handshake/identity_key
-    // request contains;
-    // recipients public signed prekey, recipients public onetime prekey
-    // initiator (my) public device key, initiatior (my) public ephemeral key
-    
     ratchet = std::make_unique<DoubleRatchet>(
         shared_secret,
         recipient_signed_prekey_public,

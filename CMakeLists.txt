@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(Eastwood VERSION 1.0 LANGUAGES CXX)
 
+set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "" FORCE)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -13,21 +14,8 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets UiTools)
 find_package(OpenSSL REQUIRED)
 
-# Add Google Test
-include(FetchContent)
-FetchContent_Declare(
-    googletest
-    URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
-)
-FetchContent_MakeAvailable(googletest)
-
-# Add nlohmann_json
-FetchContent_Declare(
-    json
-    URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
-    DOWNLOAD_EXTRACT_TIMESTAMP true
-)
-FetchContent_MakeAvailable(json)
+# Use Homebrew-provided Google Test
+find_package(GTest REQUIRED)
 
 # Find pkg-config and SQLCipher
 find_package(PkgConfig REQUIRED)
@@ -54,9 +42,9 @@ endif ()
 # Add nlohmann_json
 include(FetchContent)
 FetchContent_Declare(
-        json
-        URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
-        DOWNLOAD_EXTRACT_TIMESTAMP true
+    json
+    URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+    DOWNLOAD_EXTRACT_TIMESTAMP true
 )
 FetchContent_MakeAvailable(json)
 
@@ -81,6 +69,7 @@ set(DATABASE_SOURCES
 set(CRYPTO_SOURCES
         src/key_exchange/DoubleRatchet.cpp
         src/key_exchange/x3dh.cpp
+        src/key_exchange/utils.cpp
         src/sessions/DeviceCommunicationSession.cpp
         src/sessions/IdentityCommunicationSession.cpp
         src/sessions/SessionManager.cpp
@@ -94,6 +83,7 @@ set(CRYPTO_SOURCES
         src/endpoints/endpoints.cpp
         src/auth/register_user/register_user.cpp
         src/algorithms/algorithms.cpp
+        src/sql/queries.cpp
 )
 
 set(CRYPTO_HEADERS
@@ -146,9 +136,24 @@ target_link_libraries(Eastwood PRIVATE
 
 # Create test executable
 add_executable(EastwoodTests
-    test/identity_session_message_test.cpp
-    ${CRYPTO_SOURCES}
+    test/identity_communication_session_test.cpp
     src/database/database.cpp
+    src/key_exchange/DoubleRatchet.cpp
+    src/key_exchange/x3dh.cpp
+    src/key_exchange/utils.cpp
+    src/sessions/DeviceCommunicationSession.cpp
+    src/sessions/IdentityCommunicationSession.cpp
+    src/sessions/SessionManager.cpp
+    src/key_exchange/XChaCha20-Poly1305.cpp
+    src/utils/ConversionUtils.cpp
+    src/utils/JsonParser.cpp
+    src/client_api_interactions/MakeAuthReq.cpp
+    src/client_api_interactions/MakeUnauthReq.cpp
+    src/libraries/BaseClient.cpp
+    src/libraries/HTTPSClient.cpp
+    src/endpoints/endpoints.cpp
+    src/auth/register_user/register_user.cpp
+    src/algorithms/algorithms.cpp
 )
 
 # Configure test target
@@ -158,11 +163,13 @@ target_include_directories(EastwoodTests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/key_exchange
-    ${CMAKE_CURRENT_SOURCE_DIR}/external/cereal/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/sessions
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/structs
     ${CMAKE_CURRENT_BINARY_DIR}/_deps/googletest-src/googletest/include
 )
 
 target_link_libraries(EastwoodTests PRIVATE 
+    GTest::gtest
     GTest::gtest_main
     Qt6::Core
     Qt6::Gui

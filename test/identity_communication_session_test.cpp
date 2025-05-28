@@ -1,288 +1,263 @@
-#include <iostream>
+#include <gtest/gtest.h>
+#include <sodium.h>
+#include <memory>
+#include <vector>
+#include <map>
+#include <QByteArray>
+#include "src/sessions/IdentityCommunicationSession.h"
+#include "src/sessions/DeviceCommunicationSession.h"
+#include "src/key_exchange/utils.h"
+#include "src/structs/KeyBundle.h"
+#include "src/sql/queries.h"
+#include "src/database/database.h"
 #include <iomanip>
 #include <sstream>
-#include <sodium.h>
-#include "src/key_exchange/utils.h"
-#include "src/key_exchange/DoubleRatchet.h"
-#include <map>
-#include <gtest/gtest.h>
-#include "src/sessions/IdentityCommunicationSession.h"
-#include <memory>
 
-struct keyBundle {
-    bool isSending;
-    unsigned char* device_key_public[32];
-    unsigned char* device_key_private[32];
+// Provide a global definition to override the real get_keypair at link time
+typedef std::tuple<QByteArray, QByteArray> KeypairTuple;
+KeypairTuple get_keypair(const std::string& label) {
+    // Generate Ed25519 keys directly
+    unsigned char ed25519_pk[crypto_sign_PUBLICKEYBYTES];
+    unsigned char ed25519_sk[crypto_sign_SECRETKEYBYTES];
+    crypto_sign_keypair(ed25519_pk, ed25519_sk);
 
-    unsigned char* ed25519_device_key_public[32];
-    unsigned char* ed25519_device_key_private[64];
-
-    unsigned char* ephemeral_key_public[32];
-    unsigned char* ephemeral_key_private[32];
-
-    unsigned char* signed_prekey_public[32];
-    unsigned char* signed_prekey_private[32];
-    unsigned char* signed_prekey_signature[64];
-
-    unsigned char* onetime_prekey_public[32];
-    unsigned char* onetime_prekey_private[32];
-};
-
-// Helper function to generate a key bundle
-keyBundle generateKeyBundle(bool isSending) {
-    keyBundle bundle;
-    bundle.isSending = isSending;
-    
-    // Allocate memory for all keys
-    bundle.device_key_public = new unsigned char[crypto_box_PUBLICKEYBYTES];
-    bundle.device_key_private = new unsigned char[crypto_box_SECRETKEYBYTES];
-    bundle.ephemeral_key_public = new unsigned char[crypto_box_PUBLICKEYBYTES];
-    bundle.ephemeral_key_private = new unsigned char[crypto_box_SECRETKEYBYTES];
-    bundle.signed_prekey_public = new unsigned char[crypto_box_PUBLICKEYBYTES];
-    bundle.signed_prekey_private = new unsigned char[crypto_box_SECRETKEYBYTES];
-    bundle.onetime_prekey_public = new unsigned char[crypto_box_PUBLICKEYBYTES];
-    bundle.onetime_prekey_private = new unsigned char[crypto_box_SECRETKEYBYTES];
-    bundle.signed_prekey_signature = new unsigned char[crypto_sign_BYTES];
-    bundle.ed25519_device_key_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
-    bundle.ed25519_device_key_private = new unsigned char[crypto_sign_SECRETKEYBYTES];
-    
-    // Generate keys
-    crypto_box_keypair(bundle.device_key_public, bundle.device_key_private);
-    crypto_box_keypair(bundle.ephemeral_key_public, bundle.ephemeral_key_private);
-    crypto_box_keypair(bundle.signed_prekey_public, bundle.signed_prekey_private);
-    crypto_box_keypair(bundle.onetime_prekey_public, bundle.onetime_prekey_private);
-    crypto_sign_keypair(bundle.ed25519_device_key_public, bundle.ed25519_device_key_private);
-    
-    // Sign the signed prekey
-    crypto_sign_detached(bundle.signed_prekey_signature, nullptr,
-                        bundle.signed_prekey_public, crypto_box_PUBLICKEYBYTES,
-                        bundle.ed25519_device_key_private);
-    
-    return bundle;
+    QByteArray public_key(reinterpret_cast<char*>(ed25519_pk), crypto_sign_PUBLICKEYBYTES);
+    QByteArray private_key(reinterpret_cast<char*>(ed25519_sk), crypto_sign_SECRETKEYBYTES);
+    return std::make_tuple(public_key, private_key);
 }
 
-// Helper function to clean up a key bundle
-void cleanupKeyBundle(keyBundle& bundle) {
-    delete[] bundle.device_key_public;
-    delete[] bundle.device_key_private;
-    delete[] bundle.ephemeral_key_public;
-    delete[] bundle.ephemeral_key_private;
-    delete[] bundle.signed_prekey_public;
-    delete[] bundle.signed_prekey_private;
-    delete[] bundle.onetime_prekey_public;
-    delete[] bundle.onetime_prekey_private;
-    delete[] bundle.signed_prekey_signature;
-    delete[] bundle.ed25519_device_key_public;
-    delete[] bundle.ed25519_device_key_private;
-}
+// Mock save_keypair and save_encrypted_key for test build
+void save_keypair(const std::string&, unsigned char*, unsigned char*, unsigned char*) {}
+void save_encrypted_key(const std::string&, unsigned char*, unsigned char*) {}
 
-// Helper function to simulate device session ID creation
-unsigned char* createDeviceSessionId(const unsigned char* device_id_1, const unsigned char* device_id_2, size_t& out_len) {
-    return concat_ordered(device_id_1, crypto_box_PUBLICKEYBYTES, device_id_2, crypto_box_PUBLICKEYBYTES, out_len);
-}
-
-// Class to simulate a device communication session for testing
-class MockDeviceSession {
+// Mock database for testing
+class MockDatabase {
 public:
-    MockDeviceSession(const unsigned char* local_device_id, const unsigned char* remote_device_id) {
-        size_t session_id_len;
-        session_id = createDeviceSessionId(local_device_id, remote_device_id, session_id_len);
-        this->session_id_len = session_id_len;
+    static MockDatabase& get() {
+        static MockDatabase instance;
+        return instance;
     }
-    
-    ~MockDeviceSession() {
-        delete[] session_id;
+
+    bool initialize(const QString& masterKey, bool encrypted) {
+        return true;  // Always succeed
     }
-    
-    const unsigned char* getSessionId() const {
-        return session_id;
+
+    bool isInitialized() const {
+        return true;  // Always initialized
     }
-    
-    size_t getSessionIdLen() const {
-        return session_id_len;
+
+    void prepare_or_throw(const char* zSql, sqlite3_stmt** stmt) const {
+        // No-op for testing
     }
-    
-private:
-    unsigned char* session_id;
-    size_t session_id_len;
+
+    void execute(sqlite3_stmt* stmt) const {
+        // No-op for testing
+    }
+
+    QVector<QVariantMap> query(sqlite3_stmt* stmt) const {
+        QVector<QVariantMap> results;
+        QVariantMap row;
+        
+        // Create mock key pair data
+        QByteArray public_key(crypto_box_PUBLICKEYBYTES, 0);
+        QByteArray private_key(crypto_box_SECRETKEYBYTES, 0);
+        
+        // Fill with deterministic test data
+        for (int i = 0; i < crypto_box_PUBLICKEYBYTES; i++) {
+            public_key[i] = static_cast<char>(i % 256);
+        }
+        for (int i = 0; i < crypto_box_SECRETKEYBYTES; i++) {
+            private_key[i] = static_cast<char>((i + 128) % 256);
+        }
+        
+        row["public_key"] = public_key;
+        row["encrypted_private_key"] = private_key;
+        results.append(row);
+        
+        return results;
+    }
 };
 
-// Class to simulate an identity communication session for testing
-class MockIdentitySession {
+// Mock key pair generator for testing
+class MockKeyPairGenerator {
 public:
-    MockIdentitySession(const keyBundle& my_bundle, const std::string& owner_name) 
-        : my_bundle(my_bundle), owner_name(owner_name) {}
-    
-    ~MockIdentitySession() {
-        // Clean up all device sessions
-        for (auto& pair : device_sessions) {
-            delete pair.second;
-        }
-        device_sessions.clear();
-    }
-    
-    // Create a new session with a remote device
-    bool createSessionWithDevice(const keyBundle& remote_bundle, const std::string& remote_name) {
-        // Create a unique session ID for this device pair
-        std::string session_key = remote_name + ":" + bin2hex(*remote_bundle.device_key_public, crypto_box_PUBLICKEYBYTES);
+    static std::pair<unsigned char*, unsigned char*> generateKeyPair() {
+        unsigned char* public_key = new unsigned char[crypto_box_PUBLICKEYBYTES];
+        unsigned char* private_key = new unsigned char[crypto_box_SECRETKEYBYTES];
         
-        // Check if session already exists
-        if (device_sessions.find(session_key) != device_sessions.end()) {
-            std::cout << owner_name << " already has a session with " << remote_name 
-                      << " device " << bin2hex(*remote_bundle.device_key_public, crypto_box_PUBLICKEYBYTES).substr(0, 8) 
-                      << "..." << std::endl;
-            return false;
+        // Generate deterministic test keys
+        for (size_t i = 0; i < crypto_box_PUBLICKEYBYTES; i++) {
+            public_key[i] = static_cast<unsigned char>(i % 256);
+        }
+        for (size_t i = 0; i < crypto_box_SECRETKEYBYTES; i++) {
+            private_key[i] = static_cast<unsigned char>((i + 128) % 256);
         }
         
-        // Create a new session
-        MockDeviceSession* new_session = new MockDeviceSession(
-            *my_bundle.device_key_public,
-            *remote_bundle.device_key_public
-        );
-        
-        // Store the session
-        device_sessions[session_key] = new_session;
-        
-        std::cout << owner_name << " created a new session with " << remote_name 
-                  << " device " << bin2hex(*remote_bundle.device_key_public, crypto_box_PUBLICKEYBYTES).substr(0, 8) 
-                  << "..." << std::endl;
-        
-        return true;
+        return {public_key, private_key};
     }
-    
-    // Get number of active sessions
-    size_t getSessionCount() const {
-        return device_sessions.size();
-    }
-    
-    // Get a list of remote device names that have sessions
-    std::vector<std::string> getSessionDevices() const {
-        std::vector<std::string> devices;
-        for (const auto& pair : device_sessions) {
-            devices.push_back(pair.first);
-        }
-        return devices;
-    }
-    
-private:
-    keyBundle my_bundle;
-    std::string owner_name;
-    std::map<std::string, MockDeviceSession*> device_sessions;
 };
 
-void test_multi_device_session_management() {
-    std::cout << "\n===== TESTING MULTI-DEVICE SESSION MANAGEMENT =====" << std::endl;
-    
-    // Initialize libsodium
-    if (sodium_init() < 0) {
-        std::cerr << "Failed to initialize libsodium" << std::endl;
-        return;
+class IdentityCommunicationSessionTest : public ::testing::Test {
+protected:
+    void SetUp() override {
+        if (sodium_init() < 0) {
+            FAIL() << "Failed to initialize libsodium";
+        }
+        
+        // Initialize the mock database
+        auto& db = Database::get();
+        if (!db.initialize("test_key", false)) {
+            FAIL() << "Failed to initialize mock database";
+        }
     }
-    
-    try {
-        // SETUP: Create devices for Alice and Bob
-        std::cout << "\n--- SETUP: Creating devices ---" << std::endl;
-        
-        // Alice has 3 devices
-        keyBundle alice_device1 = generateKeyBundle(true);  // Primary device
-        keyBundle alice_device2 = generateKeyBundle(true);  // Secondary device
-        keyBundle alice_device3 = generateKeyBundle(true);  // Tertiary device
-        
-        // Bob has 2 devices
-        keyBundle bob_device1 = generateKeyBundle(true);    // Primary device
-        keyBundle bob_device2 = generateKeyBundle(true);    // Secondary device
-        
-        std::cout << "Alice Primary Device: " << bin2hex(*alice_device1.device_key_public, crypto_box_PUBLICKEYBYTES).substr(0, 16) << "..." << std::endl;
-        std::cout << "Alice Secondary Device: " << bin2hex(*alice_device2.device_key_public, crypto_box_PUBLICKEYBYTES).substr(0, 16) << "..." << std::endl;
-        std::cout << "Alice Tertiary Device: " << bin2hex(*alice_device3.device_key_public, crypto_box_PUBLICKEYBYTES).substr(0, 16) << "..." << std::endl;
-        std::cout << "Bob Primary Device: " << bin2hex(*bob_device1.device_key_public, crypto_box_PUBLICKEYBYTES).substr(0, 16) << "..." << std::endl;
-        std::cout << "Bob Secondary Device: " << bin2hex(*bob_device2.device_key_public, crypto_box_PUBLICKEYBYTES).substr(0, 16) << "..." << std::endl;
-        
-        // SCENARIO 1: Alice initiates communication with Bob
-        std::cout << "\n--- SCENARIO 1: Alice initiates communication with Bob ---" << std::endl;
-        
-        // Alice creates a session from her primary device
-        MockIdentitySession alice_session(alice_device1, "Alice");
-        
-        // Alice should create one session per Bob device
-        alice_session.createSessionWithDevice(bob_device1, "Bob");
-        alice_session.createSessionWithDevice(bob_device2, "Bob");
-        
-        std::cout << "Alice has " << alice_session.getSessionCount() << " device sessions" << std::endl;
-        
-        // SCENARIO 2: Bob receives communication from Alice
-        std::cout << "\n--- SCENARIO 2: Bob receives communication from Alice ---" << std::endl;
-        
-        // Bob creates a session from his primary device
-        MockIdentitySession bob_session(bob_device1, "Bob");
-        
-        // Bob should create one session for the specific Alice device
-        bob_session.createSessionWithDevice(alice_device1, "Alice");
-        
-        std::cout << "Bob has " << bob_session.getSessionCount() << " device sessions" << std::endl;
-        
-        // SCENARIO 3: Bob now wants to message Alice on all her devices
-        std::cout << "\n--- SCENARIO 3: Bob messages all of Alice's devices ---" << std::endl;
-        
-        // Bob should retain the existing session and create new ones for Alice's other devices
-        bool retained_session = !bob_session.createSessionWithDevice(alice_device1, "Alice"); // This should not create a new session
-        bool created_session2 = bob_session.createSessionWithDevice(alice_device2, "Alice");
-        bool created_session3 = bob_session.createSessionWithDevice(alice_device3, "Alice");
-        
-        std::cout << "Bob retained existing session: " << (retained_session ? "Yes" : "No") << std::endl;
-        std::cout << "Bob created new session for Alice's device 2: " << (created_session2 ? "Yes" : "No") << std::endl;
-        std::cout << "Bob created new session for Alice's device 3: " << (created_session3 ? "Yes" : "No") << std::endl;
-        std::cout << "Bob now has " << bob_session.getSessionCount() << " device sessions" << std::endl;
-        
-        // SCENARIO 4: Alice receives from Bob's primary device and wants to respond to all Bob's devices
-        std::cout << "\n--- SCENARIO 4: Alice receives and responds to all Bob's devices ---" << std::endl;
-        
-        // Alice should retain existing sessions and not create duplicates
-        bool alice_retained1 = !alice_session.createSessionWithDevice(bob_device1, "Bob");
-        bool alice_retained2 = !alice_session.createSessionWithDevice(bob_device2, "Bob");
-        
-        std::cout << "Alice retained session with Bob's device 1: " << (alice_retained1 ? "Yes" : "No") << std::endl;
-        std::cout << "Alice retained session with Bob's device 2: " << (alice_retained2 ? "Yes" : "No") << std::endl;
-        std::cout << "Alice still has " << alice_session.getSessionCount() << " device sessions" << std::endl;
-        
-        // Clean up key bundles
-        cleanupKeyBundle(alice_device1);
-        cleanupKeyBundle(alice_device2);
-        cleanupKeyBundle(alice_device3);
-        cleanupKeyBundle(bob_device1);
-        cleanupKeyBundle(bob_device2);
-        
-        std::cout << "\n✅ Multi-device session management test completed successfully" << std::endl;
-    } catch (const std::exception& e) {
-        std::cerr << "❌ Error in test: " << e.what() << std::endl;
+
+    // Helper function to generate key pairs using mock
+    std::pair<unsigned char*, unsigned char*> generateKeyPair() {
+        return MockKeyPairGenerator::generateKeyPair();
     }
+
+    // Helper function to print a key in hex
+    void print_key(const char* name, const unsigned char* key, size_t len) {
+        std::ostringstream oss;
+        for (size_t i = 0; i < len; ++i)
+            oss << std::hex << std::setw(2) << std::setfill('0') << (int)key[i];
+        std::cout << name << ": " << oss.str() << std::endl;
+    }
+
+    // Helper function to generate a key bundle
+    SendingKeyBundle generateSendingKeyBundle(unsigned char* recipient_ed25519_public, unsigned char* recipient_ed25519_private) {
+        SendingKeyBundle bundle;
+        
+        // Generate device private key
+        auto [device_public, device_private] = generateKeyPair();
+        bundle.my_device_private = device_private;
+        // device_public is not used in SendingKeyBundle
+
+        // Generate ephemeral keys
+        auto [ephemeral_public, ephemeral_private] = generateKeyPair();
+        bundle.my_ephemeral_public = ephemeral_public;
+        bundle.my_ephemeral_private = ephemeral_private;
+
+        // Generate recipient keys
+        auto [recipient_device_public, _] = generateKeyPair();
+        auto [signed_public, signed_private] = generateKeyPair();
+        auto [onetime_public, onetime_private] = generateKeyPair();
+        
+        bundle.their_device_public = recipient_device_public;
+        bundle.their_signed_public = signed_public;
+        bundle.their_onetime_public = onetime_public;
+        bundle.their_ed25519_public = recipient_ed25519_public;
+
+        // Generate signature using the recipient's Ed25519 private key
+        unsigned char* signature = new unsigned char[crypto_sign_BYTES];
+        crypto_sign_detached(signature, nullptr, signed_public, crypto_box_PUBLICKEYBYTES, recipient_ed25519_private);
+        bundle.their_signature = signature;
+        // Debug output
+        print_key("signed_public", signed_public, crypto_box_PUBLICKEYBYTES);
+        print_key("signature", signature, crypto_sign_BYTES);
+        print_key("recipient_ed25519_public", recipient_ed25519_public, crypto_sign_PUBLICKEYBYTES);
+
+        return bundle;
+    }
+
+    // Helper function to clean up key bundles
+    void cleanupKeyBundle(SendingKeyBundle& bundle) {
+        delete[] bundle.my_device_private;
+        delete[] bundle.my_ephemeral_public;
+        delete[] bundle.my_ephemeral_private;
+        delete[] bundle.their_device_public;
+        delete[] bundle.their_signed_public;
+        delete[] bundle.their_onetime_public;
+        delete[] bundle.their_signature;
+    }
+
+    // Helper function to generate Ed25519 keypair
+    std::pair<unsigned char*, unsigned char*> generateEd25519KeyPair() {
+        unsigned char* pk = new unsigned char[crypto_sign_PUBLICKEYBYTES];
+        unsigned char* sk = new unsigned char[crypto_sign_SECRETKEYBYTES];
+        crypto_sign_keypair(pk, sk);
+        return {pk, sk};
+    }
+};
+
+// Test creating an identity communication session
+TEST_F(IdentityCommunicationSessionTest, CreateIdentitySession) {
+    // Generate Ed25519 identity keys
+    auto [alice_identity_public, alice_identity_private] = generateEd25519KeyPair();
+    auto [bob_identity_public, bob_identity_private] = generateEd25519KeyPair();
+
+    // Generate key bundles
+    std::vector<SendingKeyBundle> alice_bundles;
+    std::vector<ReceivingKeyBundle> bob_bundles;
     
-    std::cout << "\n===== MULTI-DEVICE SESSION MANAGEMENT TEST COMPLETED =====" << std::endl;
+    SendingKeyBundle alice_bundle = generateSendingKeyBundle(bob_identity_public, bob_identity_private);
+    alice_bundles.push_back(alice_bundle);
+        
+    // Create sessions
+    auto alice_session = std::make_unique<IdentityCommunicationSession>(
+        alice_bundles, bob_bundles, alice_identity_public, bob_identity_public);
+        
+    // Verify session was created
+    EXPECT_NE(alice_session, nullptr);
+    EXPECT_EQ(alice_session->getDeviceSessions().size(), 1);
+
+    // Cleanup
+    cleanupKeyBundle(alice_bundle);
+    delete[] alice_identity_public;
+    delete[] alice_identity_private;
+    delete[] bob_identity_public;
+    delete[] bob_identity_private;
 }
 
-void test_message_encryption_decryption() {
-    if (sodium_init() < 0) {
-        FAIL() << "Failed to initialize libsodium";
+// Test multi-device session management
+TEST_F(IdentityCommunicationSessionTest, MultiDeviceSessionManagement) {
+    // Generate Ed25519 identity keys
+    auto [alice_identity_public, alice_identity_private] = generateEd25519KeyPair();
+    auto [bob_identity_public, bob_identity_private] = generateEd25519KeyPair();
+
+    // Generate key bundles
+    std::vector<SendingKeyBundle> alice_bundles;
+    std::vector<ReceivingKeyBundle> bob_bundles;
+        
+    // Create 3 key bundles for Alice's devices
+    for (int i = 0; i < 3; i++) {
+        SendingKeyBundle bundle = generateSendingKeyBundle(bob_identity_public, bob_identity_private);
+        alice_bundles.push_back(bundle);
     }
 
-    // Generate key bundles for Alice and Bob
-    keyBundle alice_bundle = generateKeyBundle(true);
-    keyBundle bob_bundle = generateKeyBundle(false);
+    // Create session
+    auto alice_session = std::make_unique<IdentityCommunicationSession>(
+        alice_bundles, bob_bundles, alice_identity_public, bob_identity_public);
+        
+    // Verify all device sessions were created
+    EXPECT_EQ(alice_session->getDeviceSessions().size(), 3);
+        
+    // Cleanup
+    for (auto& bundle : alice_bundles) {
+        cleanupKeyBundle(bundle);
+    }
+    delete[] alice_identity_public;
+    delete[] alice_identity_private;
+    delete[] bob_identity_public;
+    delete[] bob_identity_private;
+}
+
+// Test message encryption and decryption
+TEST_F(IdentityCommunicationSessionTest, MessageEncryptionDecryption) {
+    // Generate Ed25519 identity keys
+    auto [alice_identity_public, alice_identity_private] = generateEd25519KeyPair();
+    auto [bob_identity_public, bob_identity_private] = generateEd25519KeyPair();
+
+    // Generate key bundles
+    std::vector<SendingKeyBundle> alice_bundles;
+    std::vector<ReceivingKeyBundle> bob_bundles;
     
-    // Create identity keys
-    unsigned char* alice_identity_key = new unsigned char[crypto_box_PUBLICKEYBYTES];
-    unsigned char* bob_identity_key = new unsigned char[crypto_box_PUBLICKEYBYTES];
-    crypto_box_keypair(alice_identity_key, nullptr);
-    crypto_box_keypair(bob_identity_key, nullptr);
+    SendingKeyBundle alice_bundle = generateSendingKeyBundle(bob_identity_public, bob_identity_private);
+    alice_bundles.push_back(alice_bundle);
     
     // Create sessions
-    std::vector<keyBundle> alice_bundles = {bob_bundle};
-    std::vector<keyBundle> bob_bundles = {alice_bundle};
-    
     auto alice_session = std::make_unique<IdentityCommunicationSession>(
-        alice_bundle, alice_bundles, alice_identity_key, bob_identity_key);
-    auto bob_session = std::make_unique<IdentityCommunicationSession>(
-        bob_bundle, bob_bundles, bob_identity_key, alice_identity_key);
+        alice_bundles, bob_bundles, alice_identity_public, bob_identity_public);
     
     // Test message
     const char* test_message = "Hello, Bob!";
@@ -290,22 +265,55 @@ void test_message_encryption_decryption() {
     auto message = std::make_unique<unsigned char[]>(message_len + 1);
     memcpy(message.get(), test_message, message_len + 1);
     
-    // Send message from Alice to Bob
+    // Send message
     alice_session->message_send(message.get());
     
-    // Clean up
+    // Cleanup
     cleanupKeyBundle(alice_bundle);
-    cleanupKeyBundle(bob_bundle);
-    delete[] alice_identity_key;
-    delete[] bob_identity_key;
+    delete[] alice_identity_public;
+    delete[] alice_identity_private;
+    delete[] bob_identity_public;
+    delete[] bob_identity_private;
 }
 
-TEST(IdentityCommunicationSessionTest, MessageEncryptionDecryption) {
-    test_message_encryption_decryption();
+// Test session key management
+TEST_F(IdentityCommunicationSessionTest, SessionKeyManagement) {
+    // Generate Ed25519 identity keys
+    auto [alice_identity_public, alice_identity_private] = generateEd25519KeyPair();
+    auto [bob_identity_public, bob_identity_private] = generateEd25519KeyPair();
+
+    // Generate key bundles
+    std::vector<SendingKeyBundle> alice_bundles;
+    std::vector<ReceivingKeyBundle> bob_bundles;
+    
+    SendingKeyBundle alice_bundle = generateSendingKeyBundle(bob_identity_public, bob_identity_private);
+    alice_bundles.push_back(alice_bundle);
+
+    // Create sessions
+    auto alice_session = std::make_unique<IdentityCommunicationSession>(
+        alice_bundles, bob_bundles, alice_identity_public, bob_identity_public);
+
+    // Verify session keys
+    const auto& device_sessions = alice_session->getDeviceSessions();
+    EXPECT_EQ(device_sessions.size(), 1);
+
+    // Get the first device session
+    auto it = device_sessions.begin();
+    DeviceCommunicationSession* device_session = it->second;
+
+    // Verify device session has valid keys
+    EXPECT_NE(device_session->getSharedSecret(), nullptr);
+    EXPECT_NE(device_session->getRatchet(), nullptr);
+
+    // Cleanup
+    cleanupKeyBundle(alice_bundle);
+    delete[] alice_identity_public;
+    delete[] alice_identity_private;
+    delete[] bob_identity_public;
+    delete[] bob_identity_private;
 }
 
-int main() {
-    test_multi_device_session_management();
-    test_message_encryption_decryption();
-    return 0;
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 } 

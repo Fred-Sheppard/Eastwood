@@ -14,6 +14,7 @@ struct SendingKeyBundle {
     unsigned char* their_signed_public;
     unsigned char* their_onetime_public;
     unsigned char* their_signature;
+    unsigned char* their_ed25519_public;
 };
 
 // key bundles needed for receiving

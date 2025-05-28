@@ -39,7 +39,7 @@ public:
         const unsigned char* recipient_signed_prekey_public,
         const unsigned char* recipient_onetime_prekey_public,
         const unsigned char* recipient_signed_prekey_signature,
-        const unsigned char* recipient_ed25519_device_key_public);
+        const unsigned char* recipient_ed25519_public_key);
     
     ~DeviceSendingCommunicationSession() override;
     const unsigned char* getSharedSecret() const override;

@@ -70,7 +70,7 @@ void IdentityCommunicationSession::createSendingSessionFromKeyBundle(SendingKeyB
             key_bundle.their_signed_public,
             key_bundle.their_onetime_public,
             key_bundle.their_signature,
-            convert_curve25519_to_ed25519(key_bundle.their_device_public)
+            key_bundle.their_ed25519_public
         );
     }
 }
