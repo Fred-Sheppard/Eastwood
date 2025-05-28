@@ -7,20 +7,16 @@
 #define SQLITE_HAS_CODEC 1
 #include <QFile>
 #include <QApplication>
-#include "auth/register_device/register_device.h"
-#include "auth/register_user/register_user.h"
 #include "database/database.h"
 #include "database/schema.h"
 #include "endpoints/endpoints.h"
 #include "sql/queries.h"
-#include "utils/ConversionUtils.h"
 
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
     constexpr bool encrypted = false;
     constexpr bool refresh_database = true;
 
-    constexpr bool encrypted = false;
     auto &db = Database::get();
     if (db.initialize("master key", encrypted)) {
         qDebug() << "Database initialized successfully.";
