@@ -224,9 +224,7 @@ void post_handshake_device(
     post(body, "/handshake");
 }
 
-void get_handshake_backlog(
-
-) {
+std::tuple<std::vector<KeyBundle*>, unsigned char*> get_handshake_backlog() {
     json response = get("/incomingHandshakes");
     std::cout << "Raw response: " << response.dump() << std::endl;
     std::cout << "Response keys: ";
@@ -274,8 +272,7 @@ void get_handshake_backlog(
         bundles.push_back(new_bundle);
     }
 
-    // Update identity sessions with all bundles
-    IdentityManager::getInstance().update_or_create_identity_sessions(bundles, identity_session_id);
+    return std::make_tuple(bundles, identity_session_id);
 }
 
 void post_new_keybundles(std::tuple<QByteArray, std::unique_ptr<SecureMemoryBuffer> > device_keypair,
