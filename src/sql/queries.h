@@ -111,46 +111,29 @@ inline void save_encrypted_key(
 }
 
 inline void save_encrypted_onetime_keys(
-    const std::vector<std::tuple<unsigned char*, std::unique_ptr<SecureMemoryBuffer>, unsigned char*>> onetime_keys
+    const std::vector<std::tuple<unsigned char*, std::unique_ptr<SecureMemoryBuffer>, unsigned char*>>& onetime_keys
 ) {
-    std::cout << "Starting to save " << onetime_keys.size() << " one-time keys" << std::endl;
     const auto &db = Database::get();
     sqlite3_stmt *stmt;
 
-    for (size_t i = 0; i < onetime_keys.size(); i++) {
+    for (const auto& [pk, encrypted_sk, nonce] : onetime_keys) {
         try {
-            std::cout << "Processing one-time key " << i << std::endl;
-            
             db.prepare_or_throw(
                 "INSERT INTO onetime_prekeys (public_key, encrypted_key, nonce) VALUES (?, ?, ?);", &stmt
             );
-            
-            const unsigned char* pk = std::get<0>(onetime_keys[i]);
-            const auto& encrypted_sk = std::get<1>(onetime_keys[i]);
-            const unsigned char* nonce = std::get<2>(onetime_keys[i]);
-            
-            std::cout << "Key " << i << " - Public key ptr: " << (void*)pk 
-                      << ", Encrypted key ptr: " << (void*)encrypted_sk.get() 
-                      << ", Encrypted key size: " << encrypted_sk->size() << std::endl;
-            
+
             if (!pk || !encrypted_sk || !nonce) {
-                std::cerr << "Invalid key data at index " << i << std::endl;
+                std::cerr << "Invalid key data" << std::endl;
                 continue;
             }
 
-            std::cout << "Binding data to SQL statement for key " << i << std::endl;
             sqlite3_bind_blob(stmt, 1, pk, crypto_box_PUBLICKEYBYTES, SQLITE_TRANSIENT);
             sqlite3_bind_blob(stmt, 2, encrypted_sk->data(), encrypted_sk->size(), SQLITE_TRANSIENT);
             sqlite3_bind_blob(stmt, 3, nonce, CHA_CHA_NONCE_LEN, SQLITE_TRANSIENT);
-            
-            std::cout << "Executing SQL statement for key " << i << std::endl;
+
             db.execute(stmt);
-            std::cout << "Successfully saved one-time key " << i << std::endl;
-            
-            // Clean up the nonce
-            delete[] nonce;
         } catch (const std::exception& e) {
-            std::cerr << "Error saving one-time key " << i << ": " << e.what() << std::endl;
+            std::cerr << "Error saving one-time key" << std::endl;
         }
     }
     std::cout << "Finished processing all one-time keys" << std::endl;
@@ -160,26 +143,26 @@ inline std::tuple<std::unique_ptr<SecureMemoryBuffer>, QByteArray> get_onetime_p
     const auto &db = Database::get();
     sqlite3_stmt *stmt;
     db.prepare_or_throw(
-        "SELECT encrypted_key, nonce FROM onetime_prekeys WHERE public_key = ?", 
+        "SELECT encrypted_key, nonce FROM onetime_prekeys WHERE public_key = ?",
         &stmt
     );
     sqlite3_bind_blob(stmt, 1, public_key, crypto_box_PUBLICKEYBYTES, SQLITE_TRANSIENT);
-    
+
     auto rows = db.query(stmt);
     if (rows.empty()) {
         throw std::runtime_error("No one-time key found for given public key");
     }
-    
+
     const auto &row = rows[0];
     QByteArray encrypted_key = row["encrypted_key"].toByteArray();
     QByteArray nonce = row["nonce"].toByteArray();
-    
+
     // Decrypt the private key
     auto decrypted_key = decrypt_secret_key(
-        q_byte_array_to_chars(encrypted_key), 
+        q_byte_array_to_chars(encrypted_key),
         q_byte_array_to_chars(nonce)
     );
-    
+
     return std::make_tuple(std::move(decrypted_key), nonce);
 }
 
