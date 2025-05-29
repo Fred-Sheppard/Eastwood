@@ -1,42 +1,34 @@
 name: Clang-Tidy on PR Files Only
-
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-
 permissions:
   contents: read
   pull-requests: write
   issues: write
-
 jobs:
   clang-tidy:
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-
     - name: Install dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y clang-tidy cmake build-essential qt6-base-dev libssl-dev \
           qt6-tools-dev qt6-tools-dev-tools libxkbcommon-dev libsodium-dev libvulkan-dev libsqlcipher-dev
-
     - name: Configure and build project with CMake
       run: |
         mkdir -p build
         cd build
         cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
         make -j$(nproc)
-
     - name: Get list of changed C++ files
       id: changed-files
       run: |
         CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '.*\.(cpp|h|hpp|cc|cxx)$' || true)
-
         if [[ -n "$CHANGED_FILES" ]]; then
           echo "files_found=true" >> $GITHUB_OUTPUT
           CHANGED_FILES_ESCAPED=$(echo "$CHANGED_FILES" | tr '\n' ' ')
@@ -45,25 +37,32 @@ jobs:
           echo "files_found=false" >> $GITHUB_OUTPUT
           echo "changed_files=" >> $GITHUB_OUTPUT
         fi
-
     - name: Check if any files were found
       if: steps.changed-files.outputs.files_found == 'false'
       run: echo "No C++ files changed in this PR."
-
     - name: Run clang-tidy on changed files
       if: steps.changed-files.outputs.files_found == 'true'
+      id: clang-tidy-check
       run: |
         echo "Changed files: ${{ steps.changed-files.outputs.changed_files }}"
-        clang-tidy -p build ${{ steps.changed-files.outputs.changed_files }} > build/tidy-report.txt 2>&1 || true
+        clang-tidy -p build ${{ steps.changed-files.outputs.changed_files }} > build/tidy-report.txt 2>&1
+        TIDY_EXIT_CODE=$?
         cat build/tidy-report.txt
-
+        
+        # Check if there are any issues (warnings or errors) in the report
+        if grep -E "(warning:|error:)" build/tidy-report.txt > /dev/null; then
+          echo "issues_found=true" >> $GITHUB_OUTPUT
+          echo "Clang-tidy found issues in the code"
+        else
+          echo "issues_found=false" >> $GITHUB_OUTPUT
+          echo "No clang-tidy issues found"
+        fi
     - name: Upload tidy report
       if: steps.changed-files.outputs.files_found == 'true'
       uses: actions/upload-artifact@v4
       with:
         name: clang-tidy-report
         path: build/tidy-report.txt
-
     - name: Comment PR with clang-tidy results
       if: steps.changed-files.outputs.files_found == 'true'
       uses: actions/github-script@v7
@@ -74,36 +73,38 @@ jobs:
           if (fs.existsSync(path)) {
             const report = fs.readFileSync(path, 'utf8').trim();
             const changedFiles = `${{ steps.changed-files.outputs.changed_files }}` || '<file-list>';
-
-            const body = report
-              ? `## 🔍 Clang-Tidy Report
-
+            const hasIssues = '${{ steps.clang-tidy-check.outputs.issues_found }}' === 'true';
+            
+            const body = hasIssues && report
+              ? `## ❌ Clang-Tidy Report - Issues Found
+          
+          **This PR cannot be merged until these issues are resolved.**
+          
           \`\`\`
           ${report}
           \`\`\`
-
           ---
-
           <details>
           <summary>💡 How to fix most issues</summary>
-
           Most issues can be fixed automatically with:
-
           \`\`\`bash
           clang-tidy -p build --fix-errors ${changedFiles}
           \`\`\`
-
           This will apply suggested fixes to the files in-place.
-
           > 💡 Tip: Run this locally and inspect the diffs before committing.
-
           </details>`
-                        : '## ✅ Clang-Tidy Report\n\nNo issues found in the changed files! 🎉';
-
-                      github.rest.issues.createComment({
-                        issue_number: context.issue.number,
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        body
-                      });
-                    }
+              : '## ✅ Clang-Tidy Report\n\nNo issues found in the changed files! 🎉';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+          }
+    - name: Fail if clang-tidy found issues
+      if: steps.changed-files.outputs.files_found == 'true' && steps.clang-tidy-check.outputs.issues_found == 'true'
+      run: |
+        echo "❌ Clang-tidy found issues in the code. Please fix them before merging."
+        echo "Check the clang-tidy report above for details."
+        exit 1
