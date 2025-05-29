@@ -6,6 +6,8 @@
 #include <iomanip>
 #include <vector>
 #include <cstring>
+#include <sodium.h>
+
 // Convert binary data to a hexadecimal string
 inline std::string bin2hex(const unsigned char* data, size_t len) {
     std::stringstream ss;
