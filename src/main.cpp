@@ -23,6 +23,7 @@
 #include "sessions/IdentitySession.h"
 #include "sql/queries.h"
 
+// This is a test that will not be merged
 std::string generateRandomString(int length) {
     // Define the characters you want to include in your random string.
     // This example uses uppercase letters, lowercase letters, and digits.
