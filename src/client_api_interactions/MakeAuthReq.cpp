@@ -9,6 +9,7 @@
 #include "src/keys/session_token_manager.h"
 #include "src/key_exchange/utils.h"
 #include "src/utils/utils.h"
+#include "MakeAuthReq.h"
 
 using json = nlohmann::json;
 
@@ -59,6 +60,19 @@ std::string sign_message(const std::string &message) {
     return bin2hex(signature, crypto_sign_BYTES);
 }
 
+std::string sign_nonce(const unsigned char nonce[CHA_CHA_NONCE_LEN]) {
+    const auto sk_device = get_decrypted_sk("device");
+
+    unsigned char signature[crypto_sign_BYTES];
+    crypto_sign_detached(
+        signature, nullptr,
+        nonce,
+        CHA_CHA_NONCE_LEN,
+        sk_device->data()
+    );
+    return bin2hex(signature, crypto_sign_BYTES);
+}
+
 std::string generate_get_headers(const std::string &nonce) {
     auto pk_device = get_public_key("device");
     std::string pk_device_hex = bin2hex(reinterpret_cast<const unsigned char *>(pk_device.data()), pk_device.size());
@@ -78,7 +92,6 @@ std::string generate_get_headers(const std::string &nonce) {
     }
     return header_string;
 }
-
 
 json generate_post_headers(const std::string &request_body) {
     auto hex_signature = sign_message(request_body);
@@ -118,8 +131,7 @@ std::string generate_hex_nonce() {
     return std::string(hex_nonce);
 }
 
-
-json post(const json &data, const std::string &endpoint = "/") {
+json post(const json &data, const std::string &endpoint) {
     const std::string API_HOST = load_env_variable("API_HOST");
     if (API_HOST.empty()) {
         std::cerr << "API_HOST not found in .env file" << std::endl;
@@ -140,8 +152,7 @@ json post(const json &data, const std::string &endpoint = "/") {
     return handle_response(response);
 }
 
-
-json get(const std::string &endpoint = "/") {
+json get(const std::string &endpoint) {
     const std::string API_HOST = load_env_variable("API_HOST");
     if (API_HOST.empty()) {
         std::cerr << "API_HOST not found in .env file" << std::endl;
