@@ -57,13 +57,12 @@ void Login::onLoginButtonClicked()
 
     try {
         login_user(username.toStdString());
+        post_new_keybundles();
+        WindowManager::instance().showReceived();
+        hide();
     } catch (std::exception &e) {
         StyledMessageBox::warning(this, "Error", e.what());
     }
-
-    std::string identity = "niall";
-    get_keybundles(identity);
-    StyledMessageBox::info(this, "Success", "Login functionality here");
 }
 
 void Login::onRegisterButtonClicked()
