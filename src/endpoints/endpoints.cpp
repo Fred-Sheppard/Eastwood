@@ -130,7 +130,7 @@ void get_keybundles(std::string username) {
         unsigned char* their_identity_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
         unsigned char* their_onetime_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
         unsigned char* their_signed_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
-        unsigned char* their_signed_signature = new unsigned char[crypto_sign_BYTES];  // Use correct size for signature
+        unsigned char* their_signed_signature = new unsigned char[crypto_sign_BYTES];
 
         // Convert hex to binary
         std::cout << "Converting hex to binary:" << std::endl;
