@@ -197,7 +197,7 @@ void post_new_keybundles(){
     unsigned char sk[crypto_sign_SECRETKEYBYTES];
     
     // Generate new keypair
-    crypto_sign_keypair(pk, sk);
+    crypto_box_keypair(pk, sk);
 
     // Create a secure buffer for the private key
     auto sk_buffer = SecureMemoryBuffer::create(crypto_sign_SECRETKEYBYTES);
