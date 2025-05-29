@@ -64,6 +64,8 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    int unused = 5;
+
     auto master_password = std::make_unique<std::string>("correct horse battery stapler");
 
     // TODO: Debugging only
