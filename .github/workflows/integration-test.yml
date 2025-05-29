@@ -1,0 +1,41 @@
+name: Integration Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  check-server-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check server status
+        run: |
+          if ! curl -s -f https://rhudeboys.gobbler.info/status > /dev/null; then
+            echo "::error::Server is offline"
+            exit 1
+          fi
+        continue-on-error: false
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake libssl-dev libsqlcipher-dev libsodium-dev qt6-base-dev
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Debug
+
+      - name: Build
+        run: |
+          cmake --build build --config Debug
+
+      - name: Run integration test
+        run: |
+          cd build
+          ctest -V -R IntegrationTests 
