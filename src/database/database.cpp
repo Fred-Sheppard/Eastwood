@@ -5,6 +5,7 @@
 #include <iostream>
 #include "src/utils/utils.h"
 
+// TODO:  This is a test that will be removed
 Database &Database::get() {
     static Database instance;
     return instance;
