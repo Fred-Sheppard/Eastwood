@@ -25,14 +25,37 @@ std::string pk_device_hex() {
 std::string sign_message(const std::string &message) {
     const auto sk_device = get_decrypted_sk("device");
 
-    // Sign the message with the private key
+    // Check if message is hex encoded
+    bool is_hex = true;
+    for (char c : message) {
+        if (!std::isxdigit(c)) {
+            is_hex = false;
+            break;
+        }
+    }
+
     unsigned char signature[crypto_sign_BYTES];
-    crypto_sign_detached(
-        signature, nullptr,
-        reinterpret_cast<const unsigned char *>(message.data()),
-        message.length(),
-        sk_device->data()
-    );
+    if (is_hex) {
+        // Convert hex to binary first
+        std::vector<unsigned char> binary(message.length() / 2);
+        if (!hex_to_bin(message, binary.data(), binary.size())) {
+            throw std::runtime_error("Failed to convert hex message to binary");
+        }
+        crypto_sign_detached(
+            signature, nullptr,
+            binary.data(),
+            binary.size(),
+            sk_device->data()
+        );
+    } else {
+        // Sign raw binary data
+        crypto_sign_detached(
+            signature, nullptr,
+            reinterpret_cast<const unsigned char *>(message.data()),
+            message.length(),
+            sk_device->data()
+        );
+    }
     return bin2hex(signature, crypto_sign_BYTES);
 }
 
@@ -85,16 +108,14 @@ json handle_response(const std::string &response) {
     }
 }
 
-std::string generate_base64_nonce() {
+std::string generate_hex_nonce() {
     unsigned char nonce[CHA_CHA_NONCE_LEN];
     randombytes_buf(nonce, CHA_CHA_NONCE_LEN);
 
-    constexpr auto max_len = sodium_base64_ENCODED_LEN(CHA_CHA_NONCE_LEN, sodium_base64_VARIANT_URLSAFE_NO_PADDING);
-    char b64_nonce[max_len];
-    sodium_bin2base64(b64_nonce, max_len,
-                      nonce, sizeof(nonce),
-                      sodium_base64_VARIANT_URLSAFE_NO_PADDING);
-    return std::string(b64_nonce);
+    constexpr auto max_len = CHA_CHA_NONCE_LEN * 2 + 1;  // Each byte becomes 2 hex chars + null terminator
+    char hex_nonce[max_len];
+    sodium_bin2hex(hex_nonce, max_len, nonce, CHA_CHA_NONCE_LEN);
+    return std::string(hex_nonce);
 }
 
 
@@ -105,11 +126,11 @@ json post(const json &data, const std::string &endpoint = "/") {
         throw;
     }
 
-    std::string b64_nonce = generate_base64_nonce();
-    std::cout << b64_nonce;
+    std::string hex_nonce = generate_hex_nonce();
+    std::cout << hex_nonce;
 
     json request_json = data;
-    request_json["nonce"] = b64_nonce;
+    request_json["nonce"] = hex_nonce;
     const std::string request_body = request_json.dump();
     qDebug().noquote() << "request.dump" << request_json.dump();
     const std::string headers = generate_post_headers(request_body);
@@ -127,9 +148,9 @@ json get(const std::string &endpoint = "/") {
         throw;
     }
 
-    const std::string b64_nonce = generate_base64_nonce();
+    const std::string hex_nonce = generate_hex_nonce();
 
-    const std::string headers = generate_get_headers(b64_nonce);
+    const std::string headers = generate_get_headers(hex_nonce);
 
     webwood::HTTPSClient client;
     const std::string response = client.get(API_HOST, endpoint, headers);
