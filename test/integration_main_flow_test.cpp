@@ -59,6 +59,12 @@ int main() {
     register_user(username, std::make_unique<std::string>("1234"));
     register_first_device();
     login_user(username);
+    post_new_keybundles(
+        get_decrypted_keypair("device"),
+        generate_signed_prekey(),
+        generate_onetime_keys(100)
+    );
+
 
     std::cout << "Integration main flow test completed successfully." << std::endl;
     return 0;
