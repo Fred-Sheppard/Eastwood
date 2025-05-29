@@ -103,7 +103,7 @@ void get_keybundles(std::string username) {
 
     // Get my identity public key
     std::string my_identity_public_hex = response["data"]["identity_public_key"];
-    unsigned char* my_identity_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
+    unsigned char *my_identity_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
     if (!hex_to_bin(my_identity_public_hex, my_identity_public, crypto_sign_PUBLICKEYBYTES)) {
         delete[] my_identity_public;
         throw std::runtime_error("Failed to decode my identity public key");
@@ -113,11 +113,11 @@ void get_keybundles(std::string username) {
     const auto [pk_device, sk_device] = get_decrypted_keypair("device");
     const auto [pk_signed, sk_signed] = get_decrypted_keypair("signed");
 
-    std::vector<KeyBundle*> bundles;
+    std::vector<KeyBundle *> bundles;
     std::string their_identity_public_hex;
 
     // Process each key bundle
-    for (const auto& bundle : response["data"]["key_bundles"]) {
+    for (const auto &bundle: response["data"]["key_bundles"]) {
         // Convert hex strings to binary
         std::string their_device_public_hex = bundle["device_public_key"];
         their_identity_public_hex = bundle["identity_public_key"];
@@ -126,35 +126,40 @@ void get_keybundles(std::string username) {
         std::string their_signed_signature_hex = bundle["signedpk_signature"];
 
         // Allocate memory for binary data
-        unsigned char* their_device_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
-        unsigned char* their_identity_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
-        unsigned char* their_onetime_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
-        unsigned char* their_signed_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
-        unsigned char* their_signed_signature = new unsigned char[crypto_sign_BYTES];  // Use correct size for signature
+        unsigned char *their_device_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
+        unsigned char *their_identity_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
+        unsigned char *their_onetime_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
+        unsigned char *their_signed_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
+        unsigned char *their_signed_signature = new unsigned char[crypto_sign_BYTES]; // Use correct size for signature
 
         // Convert hex to binary
         std::cout << "Converting hex to binary:" << std::endl;
-        std::cout << "Device public key hex length: " << their_device_public_hex.length() << ", expected binary size: " << crypto_sign_PUBLICKEYBYTES << std::endl;
-        std::cout << "Identity public key hex length: " << their_identity_public_hex.length() << ", expected binary size: " << crypto_sign_PUBLICKEYBYTES << std::endl;
-        std::cout << "One-time key hex length: " << their_onetime_public_hex.length() << ", expected binary size: " << crypto_sign_PUBLICKEYBYTES << std::endl;
-        std::cout << "Signed prekey hex length: " << their_signed_public_hex.length() << ", expected binary size: " << crypto_sign_PUBLICKEYBYTES << std::endl;
-        std::cout << "Signature hex length: " << their_signed_signature_hex.length() << ", expected binary size: " << crypto_sign_BYTES << std::endl;
-        
+        std::cout << "Device public key hex length: " << their_device_public_hex.length() << ", expected binary size: "
+                << crypto_sign_PUBLICKEYBYTES << std::endl;
+        std::cout << "Identity public key hex length: " << their_identity_public_hex.length() <<
+                ", expected binary size: " << crypto_sign_PUBLICKEYBYTES << std::endl;
+        std::cout << "One-time key hex length: " << their_onetime_public_hex.length() << ", expected binary size: " <<
+                crypto_sign_PUBLICKEYBYTES << std::endl;
+        std::cout << "Signed prekey hex length: " << their_signed_public_hex.length() << ", expected binary size: " <<
+                crypto_sign_PUBLICKEYBYTES << std::endl;
+        std::cout << "Signature hex length: " << their_signed_signature_hex.length() << ", expected binary size: " <<
+                crypto_sign_BYTES << std::endl;
+
         bool device_ok = hex_to_bin(their_device_public_hex, their_device_public, crypto_sign_PUBLICKEYBYTES);
         std::cout << "Device public key conversion: " << (device_ok ? "success" : "failed") << std::endl;
-        
+
         bool identity_ok = hex_to_bin(their_identity_public_hex, their_identity_public, crypto_sign_PUBLICKEYBYTES);
         std::cout << "Identity public key conversion: " << (identity_ok ? "success" : "failed") << std::endl;
-        
+
         bool onetime_ok = hex_to_bin(their_onetime_public_hex, their_onetime_public, crypto_sign_PUBLICKEYBYTES);
         std::cout << "One-time key conversion: " << (onetime_ok ? "success" : "failed") << std::endl;
-        
+
         bool signed_ok = hex_to_bin(their_signed_public_hex, their_signed_public, crypto_sign_PUBLICKEYBYTES);
         std::cout << "Signed prekey conversion: " << (signed_ok ? "success" : "failed") << std::endl;
-        
+
         bool signature_ok = hex_to_bin(their_signed_signature_hex, their_signed_signature, crypto_sign_BYTES);
         std::cout << "Signature conversion: " << (signature_ok ? "success" : "failed") << std::endl;
-        
+
         if (!device_ok || !identity_ok || !onetime_ok || !signed_ok || !signature_ok) {
             // Clean up on error
             delete[] their_device_public;
@@ -165,13 +170,13 @@ void get_keybundles(std::string username) {
             throw std::runtime_error("Failed to decode key bundle data");
         }
 
-        unsigned char* pk_eph = new unsigned char[crypto_sign_BYTES];
-        unsigned char* sk_eph = new unsigned char[crypto_sign_BYTES];
+        unsigned char *pk_eph = new unsigned char[crypto_sign_BYTES];
+        unsigned char *sk_eph = new unsigned char[crypto_sign_BYTES];
         crypto_box_keypair(pk_eph, sk_eph);
 
         // Create a new ReceivingKeyBundle
-        auto* key_bundle = new SendingKeyBundle(
-            reinterpret_cast<unsigned char*>(const_cast<char*>(pk_device.data())),
+        auto *key_bundle = new SendingKeyBundle(
+            reinterpret_cast<unsigned char *>(const_cast<char *>(pk_device.data())),
             sk_device->data(),
             pk_eph,
             sk_eph,
@@ -185,14 +190,15 @@ void get_keybundles(std::string username) {
     }
 
     // Convert their identity public key to binary
-    unsigned char* their_identity_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
+    unsigned char *their_identity_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
     if (!hex_to_bin(their_identity_public_hex, their_identity_public, crypto_sign_PUBLICKEYBYTES)) {
         delete[] their_identity_public;
         throw std::runtime_error("Failed to decode their identity public key");
     }
 
     // Update or create identity session
-    IdentityManager::getInstance().update_or_create_identity_sessions(bundles, my_identity_public, their_identity_public);
+    IdentityManager::getInstance().update_or_create_identity_sessions(bundles, my_identity_public,
+                                                                      their_identity_public);
 }
 
 void post_handshake_device(
@@ -208,22 +214,27 @@ void post_handshake_device(
         {"identity_session_id", bin2hex(identity_session_id, crypto_box_PUBLICKEYBYTES * 2)},
         {"recipient_device_key", bin2hex(recipient_device_key_public, crypto_box_PUBLICKEYBYTES)},
         {"recipient_signed_public_prekey", bin2hex(recipient_signed_prekey_public, crypto_box_PUBLICKEYBYTES)},
-        {"recipient_signed_public_prekey_signature", bin2hex(recipient_signed_prekey_signature, crypto_box_PUBLICKEYBYTES)},
+        {
+            "recipient_signed_public_prekey_signature",
+            bin2hex(recipient_signed_prekey_signature, crypto_box_PUBLICKEYBYTES)
+        },
         {"recipient_onetime_public_prekey", bin2hex(recipient_onetime_prekey_public, crypto_box_PUBLICKEYBYTES)},
         {"initiator_ephemeral_public_key", bin2hex(my_ephemeral_key_public, crypto_box_PUBLICKEYBYTES)}
     };
     post(body, "/handshake");
 }
 
-void post_new_keybundles(){
-    //get keys securely
-    auto [pk_signed, sk_signed] = generate_signed_prekey();
-    auto [pk_device, sk_device] = get_decrypted_keypair("device");
+void post_new_keybundles(std::tuple<unsigned char *, std::unique_ptr<SecureMemoryBuffer> > device_keypair,
+                         std::tuple<unsigned char *, std::unique_ptr<SecureMemoryBuffer> > signed_prekeypair,
+                         std::vector<std::tuple<unsigned char *, std::unique_ptr<SecureMemoryBuffer>,
+                             unsigned char *> > otks) {
+    auto [pk_signed, sk_signed] = std::move(signed_prekeypair);
+    auto [pk_device, sk_device] = std::move(device_keypair);
 
     //sign the public key with device key
     unsigned char signature[crypto_sign_BYTES];
     crypto_sign_detached(signature, nullptr, pk_signed, crypto_sign_PUBLICKEYBYTES, sk_device->data());
-    
+
     // Convert signature to hex string
     std::string signature_hex = bin2hex(signature, crypto_sign_BYTES);
     std::string signed_prekey_pub_hex = bin2hex(pk_signed, crypto_box_PUBLICKEYBYTES);
@@ -235,15 +246,8 @@ void post_new_keybundles(){
         {"one_time_keys", json::array()}
     };
 
-    std::vector<std::tuple<unsigned char*, std::unique_ptr<SecureMemoryBuffer>, unsigned char*>> onetime_keys = generate_onetime_keys(100);
-    for (const auto& [pk, sk, nonce] : onetime_keys) {
+    for (const auto &[pk, sk, nonce]: otks) {
         body["one_time_keys"].push_back(bin2hex(pk, crypto_box_PUBLICKEYBYTES));
     }
-    
-    std::cout << "Generated all one-time keys, saving to database..." << std::endl;
-    // Save all one-time keys to database
-    save_encrypted_onetime_keys(onetime_keys);
-    
-    // Post to server
     post(body, "/updateKeybundle");
 }

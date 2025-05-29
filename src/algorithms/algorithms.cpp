@@ -198,5 +198,7 @@ std::vector<std::tuple<unsigned char*, std::unique_ptr<SecureMemoryBuffer>, unsi
         std::unique_ptr<SecureMemoryBuffer> encrypted_onetime_sk = encrypt_secret_key(sk_buffer, nonce);
         keys.push_back(std::make_tuple(pk, std::move(encrypted_onetime_sk), nonce));
     }
+
+    save_encrypted_onetime_keys(keys);
     return keys;
 }
