@@ -329,7 +329,7 @@ void post_new_keybundles(){
             
             // Encrypt the private key
             std::cout << "Encrypting private key " << i << std::endl;
-            auto encrypted_sk = encrypt_onetime_key(sk_buffer, key_nonce);
+            auto encrypted_sk = encrypt_secret_key(sk_buffer, key_nonce);
             if (!encrypted_sk) {
                 delete[] onetime_pk;
                 delete[] key_nonce;
