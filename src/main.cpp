@@ -69,17 +69,19 @@ int main(int argc, char *argv[]) {
 
     init_schema();
 
-    const std::string username = generateRandomString(8);
-    register_user(username, std::make_unique<std::string>("1234"));
+    register_user("sloggotesting", std::make_unique<std::string>("1234"));
     register_first_device();
-    login_user(username);
+    login_user("sloggotesting");
     post_new_keybundles(
         get_decrypted_keypair("device"),
         generate_signed_prekey(),
         generate_onetime_keys(100)
     );
-    get_keybundles("dill3kco");
 
+    std::cout << "Press Enter to continue...";
+    std::cin.get();
+
+    get_handshake_backlog();
 
     // WindowManager::instance().showLogin();
     return app.exec();

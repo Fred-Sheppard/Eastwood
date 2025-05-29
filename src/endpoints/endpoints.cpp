@@ -218,49 +218,39 @@ void post_handshake_device(
             bin2hex(recipient_signed_prekey_signature, crypto_box_PUBLICKEYBYTES)
         },
         {"recipient_onetime_public_prekey", bin2hex(recipient_onetime_prekey_public, crypto_box_PUBLICKEYBYTES)},
-        {"initiator_ephemeral_public_key", bin2hex(my_ephemeral_key_public, crypto_box_PUBLICKEYBYTES)},
-        {"initiator_device_public_key", bin2hex(my_device_key_public, crypto_box_PUBLICKEYBYTES)},
+        {"initiator_ephemeral_public_key", bin2hex(my_ephemeral_key_public, crypto_box_PUBLICKEYBYTES)}
     };
     post(body, "/handshake");
 }
 
-void get_handshake_backlog(
-
-) {
+void get_handshake_backlog() {
     json response = get("/handshakeBacklog");
 
-    std::vector<KeyBundle*> bundles;
-    auto identity_session_id = new unsigned char[crypto_box_PUBLICKEYBYTES * 2];
+    json::array()
 
-    for (const auto& handshake : response["handshakes"]) {
-        auto initator_dev_key = new unsigned char[crypto_box_PUBLICKEYBYTES];
-        auto initiator_eph_pub = new unsigned char[crypto_box_PUBLICKEYBYTES];
-        auto recip_onetime_pub = new unsigned char[crypto_box_PUBLICKEYBYTES];
+    auto initator_dev_key = new unsigned char[crypto_box_PUBLICKEYBYTES];
+    auto initiator_eph_pub = new unsigned char[crypto_box_PUBLICKEYBYTES];
+    auto recip_onetime_pub = new unsigned char[crypto_box_PUBLICKEYBYTES];
 
-        if (!hex_to_bin(handshake["identity_session_id"], identity_session_id, sizeof(identity_session_id));
-            !hex_to_bin(handshake["initiator_device_key"], initator_dev_key, crypto_box_PUBLICKEYBYTES) ||
-            !hex_to_bin(handshake["initiator_ephemeral_public"], initiator_eph_pub, crypto_box_PUBLICKEYBYTES) ||
-            !hex_to_bin(handshake["recipient_onetime_public_prekey"], recip_onetime_pub, crypto_box_PUBLICKEYBYTES)) {
-            delete[] initator_dev_key;
-            delete[] initiator_eph_pub;
-            delete[] recip_onetime_pub;
-            throw std::runtime_error("Failed to decode handshake backlog data");
-        }
-
-        auto device_key = get_public_key("device");
-
-        auto new_bundle = new ReceivingKeyBundle(
-            initator_dev_key,
-            initiator_eph_pub,
-            const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(device_key.constData())),
-            recip_onetime_pub
-        );
-
-        bundles.push_back(new_bundle);
+    if (!hex_to_bin(response["initiator_device_key"], initator_dev_key, crypto_box_PUBLICKEYBYTES) ||
+        !hex_to_bin(response["initiator_ephemeral_public"], initiator_eph_pub, crypto_box_PUBLICKEYBYTES) ||
+        !hex_to_bin(response["recipient_onetime_public_prekey"], recip_onetime_pub, crypto_box_PUBLICKEYBYTES)) {
+        delete[] initator_dev_key;
+        delete[] initiator_eph_pub;
+        delete[] recip_onetime_pub;
+        throw std::runtime_error("Failed to decode handshake backlog data");
     }
 
-    // Update identity sessions with all bundles
-    IdentityManager::getInstance().update_or_create_identity_sessions(bundles, identity_session_id);
+    auto device_key = get_public_key("device");
+
+    auto new_bundle = new ReceivingKeyBundle(
+        initator_dev_key,
+        initiator_eph_pub,
+        const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(device_key.constData())),
+        recip_onetime_pub
+    );
+
+    IdentityManager::getInstance().update_or_create_identity_sessions();
 }
 
 void post_new_keybundles(std::tuple<QByteArray, std::unique_ptr<SecureMemoryBuffer> > device_keypair,
