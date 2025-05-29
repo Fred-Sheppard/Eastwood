@@ -62,22 +62,6 @@ void Login::onLoginButtonClicked()
         StyledMessageBox::warning(this, "Error", e.what());
         return;
     }
-
-    try {
-        auto [public_key, private_key] = get_decrypted_keypair("signed");
-        // Store the keys or use them as needed
-        // For now, we'll just verify they were retrieved successfully
-        if (public_key.isEmpty() || !private_key) {
-            StyledMessageBox::warning(this, "Error", "Failed to retrieve signed prekey");
-            return;
-        }
-
-    } catch (std::exception &e) {
-        StyledMessageBox::warning(this, "Error", e.what());
-        return;
-    }
-
-    get_keybundles("sloggoooo");
 }
 
 void Login::onRegisterButtonClicked()
