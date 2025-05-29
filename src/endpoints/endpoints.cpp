@@ -217,14 +217,11 @@ void post_handshake_device(
 
 void post_new_keybundles(){
     unsigned char pk[crypto_sign_PUBLICKEYBYTES];
-    unsigned char sk[crypto_sign_SECRETKEYBYTES];
-    
-    // Generate new keypair
-    crypto_box_keypair(pk, sk);
 
     // Create a secure buffer for the private key
     auto sk_buffer = SecureMemoryBuffer::create(crypto_sign_SECRETKEYBYTES);
-    memcpy(sk_buffer->data(), sk, crypto_sign_SECRETKEYBYTES);
+    // Generate new keypair
+    crypto_box_keypair(pk, sk_buffer->data());
     
     // Generate nonce for encryption
     unsigned char nonce[CHA_CHA_NONCE_LEN];
@@ -248,7 +245,7 @@ void post_new_keybundles(){
     
     // Convert keys to hex strings
     std::string pk_hex = bin2hex(pk, crypto_sign_PUBLICKEYBYTES);
-    std::string sk_hex = bin2hex(sk, crypto_sign_SECRETKEYBYTES);
+    std::string sk_hex = bin2hex(sk_buffer->data(), crypto_sign_SECRETKEYBYTES);
 
     auto decrypted_device_key = get_decrypted_sk("device");
     
