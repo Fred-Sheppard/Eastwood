@@ -7,16 +7,9 @@
 #include "src/endpoints/endpoints.h"
 #include "src/key_exchange/utils.h"
 
-IdentitySession::IdentitySession(std::vector<KeyBundle*> const &keys, unsigned char* identity_one, unsigned char* identity_two) {
+IdentitySession::IdentitySession(std::vector<KeyBundle*> const &keys, unsigned char* identity_session_id_in): identity_session_id(
+    identity_session_id_in) {
     std::cout << "IdentitySession::IdentitySession" << std::endl;
-
-    size_t out_len;
-    unsigned char *concatenated = concat_ordered(identity_one, crypto_box_PUBLICKEYBYTES,
-                                               identity_two, crypto_box_PUBLICKEYBYTES,
-                                               out_len);
-    identity_session_id = new unsigned char[crypto_box_PUBLICKEYBYTES * 2];
-    memcpy(identity_session_id, concatenated, out_len);
-    delete[] concatenated;
     updateFromBundles(keys);
 }
 
