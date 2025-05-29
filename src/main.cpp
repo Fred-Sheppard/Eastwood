@@ -72,9 +72,9 @@ int main(int argc, char *argv[]) {
 
     init_schema();
 
-    register_user("sloggotesting12", std::make_unique<std::string>("1234"));
+    register_user("sloggotesting13", std::make_unique<std::string>("1234"));
     register_first_device();
-    login_user("sloggotesting12");
+    login_user("sloggotesting13");
     post_new_keybundles(
         get_decrypted_keypair("device"),
         generate_signed_prekey(),
@@ -92,9 +92,9 @@ int main(int argc, char *argv[]) {
 
     auto msg = new unsigned char[5];
     randombytes_buf(msg, 5);
-    std::cout << "message" << bin2hex(msg, sizeof(msg)) << std::endl;
+    std::cout << "message" << bin2hex(msg, 5) << std::endl;
 
-    IdentityManager::getInstance().send_to_user("nialltesting11", msg);
+    IdentityManager::getInstance().send_to_user("nialltesting13", msg);
     // WindowManager::instance().showLogin();
     return app.exec();
 }
