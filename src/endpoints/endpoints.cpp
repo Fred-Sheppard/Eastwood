@@ -27,7 +27,7 @@ void post_register_user(
     };
     std::cout << body << std::endl;
 
-    post_unauth(body, "/registerUser");
+    post_unauth("/registerUser", body);
 };
 
 void post_register_device(
@@ -40,7 +40,7 @@ void post_register_device(
         {"device_public", bin2hex(pk_device, crypto_sign_PUBLICKEYBYTES)},
         {"signature", bin2hex(pk_signature, crypto_sign_BYTES)}
     };
-    post_unauth(body, "/registerDevice");
+    post_unauth("/registerDevice", body);
 };
 
 std::vector<unsigned char> post_request_login(
@@ -52,7 +52,7 @@ std::vector<unsigned char> post_request_login(
         {"username", username},
         {"device_public", bin2hex(pk_device, crypto_sign_PUBLICKEYBYTES)}
     };
-    const json response = post_unauth(body, "/requestLogin");
+    const json response = post_unauth("/requestLogin", body);
     QString response_text(response.dump().data());
     const std::string nonce_string = response["data"]["nonce"];
 
@@ -78,7 +78,7 @@ std::string post_authenticate(
         {"device_public", bin2hex(pk_device, crypto_sign_PUBLICKEYBYTES)},
         {"nonce_signature", bin2hex(signature, crypto_sign_BYTES)}
     };
-    const json response = post_unauth(body, "/authenticate");
+    const json response = post_unauth("/authenticate", body);
     return response["data"]["token"];
 }
 
@@ -96,7 +96,7 @@ void post_ratchet_message(const DeviceMessage *msg) {
     };
     //todo: post to /sendMessage/deviceId
 
-    post(body, "/sendMessage");
+    post("/sendMessage", body);
 };
 
 void get_keybundles(std::string username) {
@@ -221,7 +221,7 @@ void post_handshake_device(
         {"initiator_ephemeral_public_key", bin2hex(my_ephemeral_key_public, crypto_box_PUBLICKEYBYTES)},
         {"initiator_device_public_key", bin2hex(my_device_key_public, crypto_box_PUBLICKEYBYTES)},
     };
-    post(body, "/handshake");
+    post("/handshake", body);
 }
 
 std::tuple<std::vector<KeyBundle*>, unsigned char*> get_handshake_backlog() {
@@ -301,5 +301,5 @@ void post_new_keybundles(std::tuple<QByteArray, std::unique_ptr<SecureMemoryBuff
     for (const auto &[pk, sk, nonce]: otks) {
         body["one_time_keys"].push_back(bin2hex(pk, crypto_box_PUBLICKEYBYTES));
     }
-    post(body, "/updateKeybundle");
+    post("/updateKeybundle", body);
 }
