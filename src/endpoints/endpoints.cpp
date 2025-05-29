@@ -138,7 +138,7 @@ std::vector<DeviceMessage*> get_messages() {
 void post_ratchet_message(const DeviceMessage *msg) {
     json body = {
         {"file_id", 0},
-        {"device_id", bin_to_hex(msg->header->device_id, sizeof(msg->header->device_id))},
+        {"recipient_device_public_key", bin_to_hex(msg->header->device_id, sizeof(msg->header->device_id))},
         {"dh_public", bin_to_hex(msg->header->dh_public, sizeof(msg->header->dh_public))},
         {"prev_chain_length", msg->header->prev_chain_length},
         {"message_index", msg->header->message_index},
