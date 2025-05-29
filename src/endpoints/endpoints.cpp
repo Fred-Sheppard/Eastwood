@@ -176,8 +176,9 @@ void get_keybundles(std::string username) {
 
         // Create a new KeyBundle
         auto *key_bundle = new SendingKeyBundle(
-reinterpret_cast<unsigned char*>(const_cast<char*>(pk_device.constData())),            pk_eph,
-            sk_buffer_eph.get(),
+            reinterpret_cast<unsigned char*>(const_cast<char*>(pk_device.constData())),
+            pk_eph,
+            std::shared_ptr<SecureMemoryBuffer>(sk_buffer_eph.release()),
             their_device_public,
             their_signed_public,
             their_onetime_public,

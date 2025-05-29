@@ -15,7 +15,7 @@ static std::string bin2hex(const unsigned char *bin, size_t len) {
 
 unsigned char *x3dh_initiator(
     std::unique_ptr<SecureMemoryBuffer> my_identity_key_private,
-    SecureMemoryBuffer *my_ephemeral_key_private,
+    std::shared_ptr<SecureMemoryBuffer> my_ephemeral_key_private,
     const unsigned char *recipient_identity_key_public,
     const unsigned char *recipient_signed_prekey_public,
     const unsigned char *recipient_onetime_prekey_public
@@ -37,16 +37,16 @@ unsigned char *x3dh_initiator(
     unsigned char their_id_x25519_pk[KEY_LEN];
     if (crypto_sign_ed25519_pk_to_curve25519(their_id_x25519_pk, recipient_identity_key_public) != 0)
         throw std::runtime_error("Failed to convert recipient identity public key to X25519");
-    if (crypto_scalarmult(dh2, my_ephemeral_key_private->data(), their_id_x25519_pk) != 0)
+    if (crypto_scalarmult(dh2, my_ephemeral_key_private.get()->data(), their_id_x25519_pk) != 0)
         throw std::runtime_error("DH2 failed");
 
     // DH3: my_ephemeral_private * their_signed_prekey_public
-    if (crypto_scalarmult(dh3, my_ephemeral_key_private->data(), recipient_signed_prekey_public) != 0)
+    if (crypto_scalarmult(dh3, my_ephemeral_key_private.get()->data(), recipient_signed_prekey_public) != 0)
         throw std::runtime_error("DH3 failed");
 
     // DH4: my_ephemeral_private * their_onetime_prekey_public
-    if (recipient_onetime_prekey_public && my_ephemeral_key_private->data()) {
-        if (crypto_scalarmult(dh4, my_ephemeral_key_private->data(), recipient_onetime_prekey_public) != 0)
+    if (recipient_onetime_prekey_public && my_ephemeral_key_private.get()->data()) {
+        if (crypto_scalarmult(dh4, my_ephemeral_key_private.get()->data(), recipient_onetime_prekey_public) != 0)
             throw std::runtime_error("DH4 failed");
     } else {
         memset(dh4, 0, KEY_LEN);

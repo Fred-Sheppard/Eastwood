@@ -14,7 +14,7 @@ static constexpr size_t KEY_LEN = crypto_scalarmult_BYTES;
 
 unsigned char* x3dh_initiator(
     std::unique_ptr<SecureMemoryBuffer> my_identity_key_private,
-    SecureMemoryBuffer* my_ephemeral_key_private,
+    std::shared_ptr<SecureMemoryBuffer> my_ephemeral_key_private,
     const unsigned char* recipient_identity_key_public,
     const unsigned char* recipient_signed_prekey_public,
     const unsigned char* recipient_onetime_prekey_public

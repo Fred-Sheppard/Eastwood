@@ -6,6 +6,7 @@
 #define KEYBUNDLE_H
 #include <iostream>
 #include <iomanip>
+#include <memory>
 
 #include "src/key_exchange/x3dh.h"
 #include "src/sql/queries.h"
@@ -41,14 +42,14 @@ public:
     SendingKeyBundle(
                 unsigned char* my_device_public_in,
                 unsigned char* my_ephemeral_public_in,
-                SecureMemoryBuffer* my_ephemeral_private_in,
+                std::shared_ptr<SecureMemoryBuffer> my_ephemeral_private_in,
                 unsigned char* their_device_public_in,
                 unsigned char* their_signed_public_in,
                 unsigned char* their_onetime_public_in,
                 unsigned char* their_signed_signature_in
             ) : KeyBundle(my_device_public_in, their_device_public_in) {
         my_ephemeral_public = my_ephemeral_public_in;
-        my_ephemeral_private = my_ephemeral_private_in;
+        my_ephemeral_private = std::move(my_ephemeral_private_in);
         their_signed_public = their_signed_public_in;
         their_onetime_public = their_onetime_public_in;
         their_signed_signature = their_signed_signature_in;
@@ -117,14 +118,14 @@ public:
     // Getters for private attributes
     std::unique_ptr<SecureMemoryBuffer> get_my_device_private() const { return get_decrypted_sk("device"); }
     unsigned char* get_my_ephemeral_public() const { return my_ephemeral_public; }
-    SecureMemoryBuffer* get_my_ephemeral_private() { return my_ephemeral_private; }
+    const std::shared_ptr<SecureMemoryBuffer>& get_my_ephemeral_private() const { return my_ephemeral_private; }
     unsigned char* get_their_signed_public() const { return their_signed_public; }
     unsigned char* get_their_onetime_public() const { return their_onetime_public; }
     unsigned char* get_their_signed_signature() const { return their_signed_signature; }
 
 private:
     unsigned char* my_ephemeral_public;
-    SecureMemoryBuffer* my_ephemeral_private;
+    std::shared_ptr<SecureMemoryBuffer> my_ephemeral_private;
     unsigned char* their_signed_public;
     unsigned char* their_onetime_public;
     unsigned char* their_signed_signature;
