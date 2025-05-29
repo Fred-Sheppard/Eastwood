@@ -16,6 +16,13 @@ inline std::string bin2hex(const unsigned char* data, size_t len) {
     return ss.str();
 }
 
+inline std::string hex2bin(const unsigned char* hex, const size_t len) {
+    const auto max_len = len * 2 + 1;
+    char bin[max_len];
+    sodium_bin2hex(bin, max_len, hex, len);
+    return std::string(bin);
+}
+
 // Convert base64 string to binary data
 inline std::vector<unsigned char> base642bin(const std::string& base64_str) {
     static const unsigned char base64_lookup[] = {
