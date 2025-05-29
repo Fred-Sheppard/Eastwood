@@ -11,14 +11,12 @@
 #include "auth/login/login.h"
 #include "auth/register_device/register_device.h"
 #include "auth/register_user/register_user.h"
-#include "auth/login/login.h"
 #include "client_api_interactions/MakeAuthReq.h"
-#include "src/auth/login/login.h"
 #include "database/database.h"
 #include "database/schema.h"
 #include "endpoints/endpoints.h"
-#include "keys/session_token_manager.h"
 #include "sql/queries.h"
+#include <memory>
 
 std::string generateRandomString(int length) {
     const std::string characters =
