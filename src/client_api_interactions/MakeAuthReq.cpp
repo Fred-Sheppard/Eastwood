@@ -29,7 +29,7 @@ std::string sign_message(const std::string &message) {
     crypto_sign_detached(
         signature, nullptr,
         reinterpret_cast<const unsigned char *>(message.data()),
-        message.size(),
+        message.length(),
         sk_device->data()
     );
     return bin2hex(signature, crypto_sign_BYTES);
