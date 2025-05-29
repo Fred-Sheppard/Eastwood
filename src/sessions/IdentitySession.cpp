@@ -14,7 +14,10 @@ IdentitySession::IdentitySession(std::vector<KeyBundle*> const &keys, unsigned c
 }
 
 void IdentitySession::updateFromBundles(std::vector<KeyBundle*> bundles) {
+    std::cout << "IdentitySession::updateFromBundles" << std::endl;
+    std::cout << bundles.size() << std::endl;
     for (KeyBundle* bundle: bundles) {
+        std::cout << "IdentitySession::updateFromBundles in loop" << std::endl;
         unsigned char* my_dev_pub = bundle->get_my_device_public();
         unsigned char* their_dev_pub = bundle->get_their_device_public();
         
@@ -23,6 +26,7 @@ void IdentitySession::updateFromBundles(std::vector<KeyBundle*> bundles) {
 }
 
 void IdentitySession::create_ratchet_if_needed(const unsigned char* device_id_one, const unsigned char* device_id_two, KeyBundle* bundle) {
+    std::cout << "IdentitySession::create_ratchet_if_needed" << std::endl;
     size_t out_len;
     unsigned char* concatenated = concat_ordered(device_id_one, crypto_box_PUBLICKEYBYTES,
                                                device_id_two, crypto_box_PUBLICKEYBYTES,
@@ -30,9 +34,11 @@ void IdentitySession::create_ratchet_if_needed(const unsigned char* device_id_on
     
     // Check if a ratchet exists for this key
     bool exists = ratchets.find(concatenated) != ratchets.end();
+    std::cout << "Ratchets exists: " << exists << std::endl;
     
     if (!exists) {
         // Create new DoubleRatchet instance with the bundle
+        std::cout << "Creating ratchet" << std::endl;
         auto ratchet = std::make_unique<DoubleRatchet>(bundle);
         ratchets[concatenated] = std::move(ratchet);
 
