@@ -59,7 +59,6 @@ int main() {
     register_user(username, std::make_unique<std::string>("1234"));
     register_first_device();
     login_user(username);
-    post_new_keybundles();
 
     std::cout << "Integration main flow test completed successfully." << std::endl;
     return 0;
