@@ -43,8 +43,7 @@ inline void init_schema() {
     END;
 
     CREATE TABLE IF NOT EXISTS onetime_prekeys (
-        onetime_prekey_id INTEGER PRIMARY KEY,
-        public_key BLOB UNIQUE,
+        public_key BLOB PRIMARY KEY,
         encrypted_key BLOB UNIQUE,
         nonce BLOB UNIQUE,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
