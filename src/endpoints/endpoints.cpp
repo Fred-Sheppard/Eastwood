@@ -100,9 +100,6 @@ void post_ratchet_message(const DeviceMessage *msg) {
 
 void get_keybundles(std::string username) {
     json response = get("/keybundle/" + username);
-    
-    std::cout << "\n===== RECEIVED KEY BUNDLE =====" << std::endl;
-    std::cout << "Response data: " << response.dump(2) << std::endl;
 
     // Get my identity public key
     std::string my_identity_public_hex = response["data"]["identity_public_key"];
@@ -121,13 +118,6 @@ void get_keybundles(std::string username) {
 
     // Process each key bundle
     for (const auto& bundle : response["data"]["key_bundles"]) {
-        std::cout << "\nProcessing key bundle:" << std::endl;
-        std::cout << "Device public key: " << bundle["device_public_key"] << std::endl;
-        std::cout << "Identity public key: " << bundle["identity_public_key"] << std::endl;
-        std::cout << "One-time key: " << bundle["one_time_key"] << std::endl;
-        std::cout << "Signed prekey: " << bundle["signedpre_key"] << std::endl;
-        std::cout << "Signed prekey signature: " << bundle["signedpk_signature"] << std::endl;
-
         // Convert hex strings to binary
         std::string their_device_public_hex = bundle["device_public_key"];
         their_identity_public_hex = bundle["identity_public_key"];
@@ -136,17 +126,17 @@ void get_keybundles(std::string username) {
         std::string their_signed_signature_hex = bundle["signedpk_signature"];
 
         // Allocate memory for binary data
-        unsigned char* their_device_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];  // Ed25519
-        unsigned char* their_identity_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];  // Ed25519
-        unsigned char* their_onetime_public = new unsigned char[crypto_box_PUBLICKEYBYTES];  // X25519
-        unsigned char* their_signed_public = new unsigned char[crypto_box_PUBLICKEYBYTES];  // X25519
+        unsigned char* their_device_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
+        unsigned char* their_identity_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
+        unsigned char* their_onetime_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
+        unsigned char* their_signed_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
         unsigned char* their_signed_signature = new unsigned char[crypto_sign_BYTES];
 
         // Convert hex to binary
         if (!hex_to_bin(their_device_public_hex, their_device_public, crypto_sign_PUBLICKEYBYTES) ||
             !hex_to_bin(their_identity_public_hex, their_identity_public, crypto_sign_PUBLICKEYBYTES) ||
-            !hex_to_bin(their_onetime_public_hex, their_onetime_public, crypto_box_PUBLICKEYBYTES) ||
-            !hex_to_bin(their_signed_public_hex, their_signed_public, crypto_box_PUBLICKEYBYTES) ||
+            !hex_to_bin(their_onetime_public_hex, their_onetime_public, crypto_sign_PUBLICKEYBYTES) ||
+            !hex_to_bin(their_signed_public_hex, their_signed_public, crypto_sign_PUBLICKEYBYTES) ||
             !hex_to_bin(their_signed_signature_hex, their_signed_signature, crypto_sign_BYTES)) {
             // Clean up on error
             delete[] their_device_public;
@@ -157,44 +147,16 @@ void get_keybundles(std::string username) {
             throw std::runtime_error("Failed to decode key bundle data");
         }
 
-        // Generate ephemeral keypair for X3DH
-        unsigned char* my_ephemeral_public = new unsigned char[crypto_box_PUBLICKEYBYTES];
-        unsigned char* my_ephemeral_private = new unsigned char[crypto_box_SECRETKEYBYTES];
-        if (crypto_box_keypair(my_ephemeral_public, my_ephemeral_private) != 0) {
-            // Clean up on error
-            delete[] their_device_public;
-            delete[] their_identity_public;
-            delete[] their_onetime_public;
-            delete[] their_signed_public;
-            delete[] their_signed_signature;
-            delete[] my_ephemeral_public;
-            delete[] my_ephemeral_private;
-            throw std::runtime_error("Failed to generate ephemeral keypair");
-        }
-
-        // Create a new SendingKeyBundle since we are the initiator
-        std::cout << "\nCreating SendingKeyBundle..." << std::endl;
-        std::cout << "My device public key length: " << pk_device.size() << " bytes" << std::endl;
-        std::cout << "My device private key length: " << sk_device->size() << " bytes" << std::endl;
-        std::cout << "My ephemeral public key length: " << crypto_box_PUBLICKEYBYTES << " bytes" << std::endl;
-        std::cout << "My ephemeral private key length: " << crypto_box_SECRETKEYBYTES << " bytes" << std::endl;
-        std::cout << "Their device public key length: " << crypto_sign_PUBLICKEYBYTES << " bytes" << std::endl;
-        std::cout << "Their signed prekey length: " << crypto_box_PUBLICKEYBYTES << " bytes" << std::endl;
-        std::cout << "Their one-time key length: " << crypto_box_PUBLICKEYBYTES << " bytes" << std::endl;
-        std::cout << "Their signed prekey signature length: " << crypto_sign_BYTES << " bytes" << std::endl;
-
-        auto* key_bundle = new SendingKeyBundle(
-            reinterpret_cast<unsigned char*>(const_cast<char*>(pk_device.data())),  // my_device_public (Ed25519)
-            sk_device->data(), // my_device_private (Ed25519)
-            my_ephemeral_public, // X25519
-            my_ephemeral_private, // X25519
-            their_device_public, // Ed25519
-            their_signed_public, // X25519
-            their_onetime_public, // X25519
-            their_signed_signature // Ed25519 signature
+        // Create a new ReceivingKeyBundle
+        auto* key_bundle = new ReceivingKeyBundle(
+            their_device_public,
+            their_signed_public,
+            my_identity_public,
+            sk_device->data(),  // my_device_private from database
+            sk_signed->data(),  // my_signed_private from database
+            their_onetime_public
         );
 
-        std::cout << "SendingKeyBundle created successfully" << std::endl;
         bundles.push_back(key_bundle);
     }
 
@@ -231,32 +193,15 @@ void post_handshake_device(
 }
 
 void post_new_keybundles(){
-    // Generate new X25519 keypair for signed prekey
-    unsigned char* pk = new unsigned char[crypto_box_PUBLICKEYBYTES];
-    unsigned char* sk = new unsigned char[crypto_box_SECRETKEYBYTES];
-    
-    std::cout << "\nGenerating new X25519 keypair for signed prekey..." << std::endl;
-    std::cout << "Public key size: " << crypto_box_PUBLICKEYBYTES << " bytes" << std::endl;
-    std::cout << "Private key size: " << crypto_box_SECRETKEYBYTES << " bytes" << std::endl;
+    unsigned char pk[crypto_sign_PUBLICKEYBYTES];
+    unsigned char sk[crypto_sign_SECRETKEYBYTES];
     
     // Generate new keypair
-    if (crypto_box_keypair(pk, sk) != 0) {
-        delete[] pk;
-        delete[] sk;
-        throw std::runtime_error("Failed to generate X25519 keypair");
-    }
+    crypto_sign_keypair(pk, sk);
 
     // Create a secure buffer for the private key
-    auto sk_buffer = SecureMemoryBuffer::create(crypto_box_SECRETKEYBYTES);
-    if (!sk_buffer) {
-        delete[] pk;
-        delete[] sk;
-        throw std::runtime_error("Failed to create secure buffer");
-    }
-    memcpy(sk_buffer->data(), sk, crypto_box_SECRETKEYBYTES);
-    
-    // Clean up the original private key
-    delete[] sk;
+    auto sk_buffer = SecureMemoryBuffer::create(crypto_sign_SECRETKEYBYTES);
+    memcpy(sk_buffer->data(), sk, crypto_sign_SECRETKEYBYTES);
     
     // Generate nonce for encryption
     unsigned char nonce[CHA_CHA_NONCE_LEN];
@@ -265,9 +210,6 @@ void post_new_keybundles(){
     // Encrypt and save the signed prekey pair
     const auto encrypted_sk = encrypt_secret_key(sk_buffer, nonce);
     save_encrypted_keypair("signed", pk, encrypted_sk, nonce);
-    
-    // Clean up the public key
-    delete[] pk;
     
     // Verify signed prekey was saved
     try {
@@ -282,8 +224,8 @@ void post_new_keybundles(){
     }
     
     // Convert keys to hex strings
-    std::string pk_hex = bin2hex(saved_pk.data(), saved_pk.size());
-    std::string sk_hex = bin2hex(saved_sk.data(), saved_sk.size());
+    std::string pk_hex = bin2hex(pk, crypto_sign_PUBLICKEYBYTES);
+    std::string sk_hex = bin2hex(sk, crypto_sign_SECRETKEYBYTES);
 
     auto decrypted_device_key = get_decrypted_sk("device");
     
@@ -299,9 +241,7 @@ void post_new_keybundles(){
     
     // Sign the public key with device key
     unsigned char signature[crypto_sign_BYTES];
-    if (crypto_sign_detached(signature, nullptr, saved_pk.data(), saved_pk.size(), device_key) != 0) {
-        throw std::runtime_error("Failed to sign the prekey");
-    }
+    crypto_sign_detached(signature, nullptr, pk, crypto_sign_PUBLICKEYBYTES, device_key);
     
     // Convert signature to hex string
     std::string signature_hex = bin2hex(signature, crypto_sign_BYTES);
@@ -325,15 +265,13 @@ void post_new_keybundles(){
             unsigned char* onetime_pk = new unsigned char[crypto_box_PUBLICKEYBYTES];
             unsigned char* onetime_sk = new unsigned char[crypto_box_SECRETKEYBYTES];
             
-            // Generate new X25519 keypair for one-time key
+            // Generate new keypair
             if (crypto_box_keypair(onetime_pk, onetime_sk) != 0) {
                 delete[] onetime_pk;
                 delete[] onetime_sk;
                 throw std::runtime_error("Failed to generate one-time keypair");
             }
-            std::cout << "Generated X25519 keypair " << i << std::endl;
-            std::cout << "Public key length: " << crypto_box_PUBLICKEYBYTES << " bytes" << std::endl;
-            std::cout << "Private key length: " << crypto_box_SECRETKEYBYTES << " bytes" << std::endl;
+            std::cout << "Generated keypair " << i << std::endl;
             
             // Convert public key to hex
             std::string onetime_pk_hex = bin2hex(onetime_pk, crypto_box_PUBLICKEYBYTES);

@@ -72,8 +72,6 @@ void Login::onLoginButtonClicked()
             StyledMessageBox::warning(this, "Error", "Failed to retrieve signed prekey");
             return;
         }
-
-        get_keybundles("testinguserr");
     } catch (std::exception &e) {
         StyledMessageBox::warning(this, "Error", e.what());
         return;
