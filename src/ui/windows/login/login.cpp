@@ -78,7 +78,7 @@ void Login::onLoginButtonClicked()
         return;
     }
 
-    get_keybundles("testingcurve");
+    get_keybundles("sloggoooo");
 }
 
 void Login::onRegisterButtonClicked()

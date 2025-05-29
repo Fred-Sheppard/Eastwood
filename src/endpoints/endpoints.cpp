@@ -233,19 +233,7 @@ void post_new_keybundles(){
     // Encrypt and save the signed prekey pair
     const auto encrypted_sk = encrypt_secret_key(sk_buffer, nonce);
     save_encrypted_keypair("signed", pk, encrypted_sk, nonce);
-    
-    // Verify signed prekey was saved
-    try {
-        auto [saved_pk, saved_sk, saved_nonce] = get_encrypted_keypair("signed");
-        std::cout << "Successfully saved and retrieved signed prekey" << std::endl;
-        std::cout << "Public key length: " << saved_pk.size() << " bytes" << std::endl;
-        std::cout << "Encrypted private key length: " << saved_sk.size() << " bytes" << std::endl;
-        std::cout << "Nonce length: " << saved_nonce.size() << " bytes" << std::endl;
-    } catch (const std::exception& e) {
-        std::cerr << "Failed to retrieve signed prekey: " << e.what() << std::endl;
-        throw;
-    }
-    
+
     // Convert keys to hex strings
     std::string pk_hex = bin2hex(pk, crypto_sign_PUBLICKEYBYTES);
     std::string sk_hex = bin2hex(sk, crypto_sign_SECRETKEYBYTES);
@@ -349,20 +337,6 @@ void post_new_keybundles(){
     std::cout << "Generated all one-time keys, saving to database..." << std::endl;
     // Save all one-time keys to database
     save_encrypted_onetime_keys(std::move(onetime_keys));
-    
-    // Verify one-time keys were saved
-    try {
-        const auto &db = Database::get();
-        sqlite3_stmt *stmt;
-        db.prepare_or_throw("SELECT COUNT(*) as count FROM onetime_prekeys", &stmt);
-        auto rows = db.query(stmt);
-        if (!rows.empty()) {
-            std::cout << "Successfully saved " << rows[0]["count"].toInt() << " one-time keys" << std::endl;
-        }
-    } catch (const std::exception& e) {
-        std::cerr << "Failed to verify one-time keys: " << e.what() << std::endl;
-        throw;
-    }
     
     // Post to server
     post(body, "/updateKeybundle");
