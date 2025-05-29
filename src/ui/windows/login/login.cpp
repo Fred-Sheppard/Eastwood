@@ -64,7 +64,6 @@ void Login::onLoginButtonClicked()
     }
 
     try {
-        post_new_keybundles();
         auto [public_key, private_key] = get_decrypted_keypair("signed");
         // Store the keys or use them as needed
         // For now, we'll just verify they were retrieved successfully
