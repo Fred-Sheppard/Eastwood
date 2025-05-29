@@ -5,10 +5,9 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:
 
 jobs:
-  check-server-and-test:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
       - name: Check server status
@@ -20,20 +19,21 @@ jobs:
         continue-on-error: false
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake libssl-dev libsqlcipher-dev libsodium-dev qt6-base-dev
+          sudo apt-get install -y cmake g++ pkg-config libssl-dev libsodium-dev qt6-base-dev qt6-tools-dev qt6-tools-dev-tools libsqlcipher-dev
+
+      - name: Write .env file
+        run: echo "${{ secrets.ENV_FILE }}" > .env
 
       - name: Configure CMake
-        run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Debug
+        run: cmake -S . -B build
 
       - name: Build
-        run: |
-          cmake --build build --config Debug
+        run: cmake --build build --config Release
 
       - name: Run integration test
         run: |
