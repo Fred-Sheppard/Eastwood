@@ -41,6 +41,22 @@ inline void init_schema() {
     BEGIN
         UPDATE keys SET last_modified = CURRENT_TIMESTAMP WHERE label = OLD.label;
     END;
+
+    CREATE TABLE IF NOT EXISTS onetime_prekeys (
+        onetime_prekey_id INTEGER PRIMARY KEY,
+        public_key BLOB UNIQUE,
+        encrypted_key BLOB UNIQUE,
+        nonce BLOB UNIQUE,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        last_modified DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TRIGGER IF NOT EXISTS onetime_keys_last_modified_trigger
+    AFTER UPDATE ON onetime_prekeys
+    FOR EACH ROW
+    BEGIN
+        UPDATE onetime_prekeys SET last_modified = CURRENT_TIMESTAMP WHERE onetime_prekey_id = OLD.onetime_prekey_id;
+    END;
 )sql";
 
     const auto &db = Database::get();

@@ -43,6 +43,11 @@ std::unique_ptr<SecureMemoryBuffer> encrypt_secret_key(
     unsigned char nonce[CHA_CHA_NONCE_LEN]
 );
 
+std::unique_ptr<SecureMemoryBuffer> encrypt_onetime_key(
+    const std::unique_ptr<SecureMemoryBuffer> &sk,
+    unsigned char nonce[CHA_CHA_NONCE_LEN]
+);
+
 std::unique_ptr<SecureMemoryBuffer> decrypt_secret_key(
     const unsigned char encrypted_sk[crypto_sign_SECRETKEYBYTES + ENC_OVERHEAD],
     const unsigned char nonce[CHA_CHA_NONCE_LEN]

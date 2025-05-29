@@ -5,6 +5,7 @@
 #include "../../utils/messagebox.h"
 #include "../../utils/window_manager/window_manager.h"
 #include "src/endpoints/endpoints.h"
+#include "src/sql/queries.h"
 
 Login::Login(QWidget *parent)
     : QWidget(parent)
@@ -59,11 +60,24 @@ void Login::onLoginButtonClicked()
         login_user(username.toStdString());
     } catch (std::exception &e) {
         StyledMessageBox::warning(this, "Error", e.what());
+        return;
     }
 
-    std::string identity = "niall";
-    get_keybundles(identity);
-    StyledMessageBox::info(this, "Success", "Login functionality here");
+    try {
+        post_new_keybundles();
+        auto [public_key, private_key] = get_decrypted_keypair("signed");
+        // Store the keys or use them as needed
+        // For now, we'll just verify they were retrieved successfully
+        if (public_key.isEmpty() || !private_key) {
+            StyledMessageBox::warning(this, "Error", "Failed to retrieve signed prekey");
+            return;
+        }
+
+        get_keybundles("testinguserr");
+    } catch (std::exception &e) {
+        StyledMessageBox::warning(this, "Error", e.what());
+        return;
+    }
 }
 
 void Login::onRegisterButtonClicked()

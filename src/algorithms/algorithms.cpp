@@ -103,6 +103,24 @@ std::unique_ptr<SecureMemoryBuffer> encrypt_secret_key(
     return buf;
 }
 
+std::unique_ptr<SecureMemoryBuffer> encrypt_onetime_key(
+    const std::unique_ptr<SecureMemoryBuffer> &sk,
+    unsigned char nonce[CHA_CHA_NONCE_LEN]
+) {
+    auto buf = SecureMemoryBuffer::create(crypto_box_SECRETKEYBYTES + ENC_OVERHEAD);
+    const auto kek = KekManager::instance().getKEK();
+    if (crypto_aead_xchacha20poly1305_ietf_encrypt(
+            buf->data(), nullptr,
+            sk->data(), crypto_box_SECRETKEYBYTES,
+            nullptr, 0, // No associated data
+            nullptr, // Always null for this algorithm
+            nonce, kek->data()
+        ) != 0) {
+        throw std::runtime_error("Failed to encrypt one-time key");
+    }
+    return buf;
+}
+
 std::unique_ptr<SecureMemoryBuffer> decrypt_secret_key(
     const unsigned char encrypted_sk[ENC_SECRET_KEY_LEN],
     const unsigned char nonce[CHA_CHA_NONCE_LEN]
