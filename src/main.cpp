@@ -53,6 +53,19 @@ std::string generateRandomString(int length) {
 }
 
 int main(int argc, char *argv[]) {
+    // Test generate_unique_id_pair
+    std::string input1 = "test1";
+    std::string input2 = "test2";
+    auto result = generate_unique_id_pair(&input1, &input2);
+    
+    std::cout << "Testing generate_unique_id_pair:" << std::endl;
+    std::cout << "Input 1: " << input1 << std::endl;
+    std::cout << "Input 2: " << input2 << std::endl;
+    std::cout << "Result length: " << crypto_hash_sha256_BYTES << " bytes" << std::endl;
+    delete[] result;  // Clean up the result buffer
+    
+    std::cout << "\nStarting main application...\n" << std::endl;
+
     QApplication app(argc, argv);
     constexpr bool encrypted = false;
     constexpr bool refresh_database = true;
@@ -72,9 +85,9 @@ int main(int argc, char *argv[]) {
 
     init_schema();
 
-    register_user("sloggotesting13", std::make_unique<std::string>("1234"));
+    register_user("sloggotesting24", std::make_unique<std::string>("1234"));
     register_first_device();
-    login_user("sloggotesting13");
+    login_user("sloggotesting24");
     post_new_keybundles(
         get_decrypted_keypair("device"),
         generate_signed_prekey(),
@@ -94,7 +107,8 @@ int main(int argc, char *argv[]) {
     randombytes_buf(msg, 5);
     std::cout << "message" << bin2hex(msg, 5) << std::endl;
 
-    IdentityManager::getInstance().send_to_user("nialltesting13", msg);
+    IdentityManager::getInstance().send_to_user("nialltesting24", msg);
+    delete[] msg;  // Clean up the message buffer after sending
     // WindowManager::instance().showLogin();
     return app.exec();
 }

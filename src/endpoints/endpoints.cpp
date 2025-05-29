@@ -21,9 +21,9 @@ void post_register_user(
 ) {
     const json body = {
         {"username", username},
-        {"identity_public", bin2hex(pk_identity, crypto_sign_PUBLICKEYBYTES)},
-        {"nonce", bin2hex(registration_nonce, CHA_CHA_NONCE_LEN)},
-        {"nonce_signature", bin2hex(nonce_signature, crypto_sign_BYTES)}
+        {"identity_public", sodium_bin2hex(new char[crypto_sign_PUBLICKEYBYTES * 2 + 1], crypto_sign_PUBLICKEYBYTES * 2 + 1, pk_identity, crypto_sign_PUBLICKEYBYTES)},
+        {"nonce", sodium_bin2hex(new char[CHA_CHA_NONCE_LEN * 2 + 1], CHA_CHA_NONCE_LEN * 2 + 1, registration_nonce, CHA_CHA_NONCE_LEN)},
+        {"nonce_signature", sodium_bin2hex(new char[crypto_sign_BYTES * 2 + 1], crypto_sign_BYTES * 2 + 1, nonce_signature, crypto_sign_BYTES)}
     };
     std::cout << body << std::endl;
 
@@ -36,9 +36,9 @@ void post_register_device(
     const unsigned char pk_signature[crypto_sign_BYTES]
 ) {
     const json body = {
-        {"identity_public", bin2hex(pk_id, crypto_sign_PUBLICKEYBYTES)},
-        {"device_public", bin2hex(pk_device, crypto_sign_PUBLICKEYBYTES)},
-        {"signature", bin2hex(pk_signature, crypto_sign_BYTES)}
+        {"identity_public", sodium_bin2hex(new char[crypto_sign_PUBLICKEYBYTES * 2 + 1], crypto_sign_PUBLICKEYBYTES * 2 + 1, pk_id, crypto_sign_PUBLICKEYBYTES)},
+        {"device_public", sodium_bin2hex(new char[crypto_sign_PUBLICKEYBYTES * 2 + 1], crypto_sign_PUBLICKEYBYTES * 2 + 1, pk_device, crypto_sign_PUBLICKEYBYTES)},
+        {"signature", sodium_bin2hex(new char[crypto_sign_BYTES * 2 + 1], crypto_sign_BYTES * 2 + 1, pk_signature, crypto_sign_BYTES)}
     };
     post_unauth(body, "/registerDevice");
 };
@@ -50,7 +50,7 @@ std::vector<unsigned char> post_request_login(
     qDebug() << "Requesting login nonce from server";
     const json body = {
         {"username", username},
-        {"device_public", bin2hex(pk_device, crypto_sign_PUBLICKEYBYTES)}
+        {"device_public", sodium_bin2hex(new char[crypto_sign_PUBLICKEYBYTES * 2 + 1], crypto_sign_PUBLICKEYBYTES * 2 + 1, pk_device, crypto_sign_PUBLICKEYBYTES)}
     };
     const json response = post_unauth(body, "/requestLogin");
     QString response_text(response.dump().data());
@@ -60,7 +60,10 @@ std::vector<unsigned char> post_request_login(
     std::vector<unsigned char> nonce_vec(nonce_string.length() / 2);
 
     // Convert hex to bin
-    if (!hex_to_bin(nonce_string, nonce_vec.data(), nonce_vec.size())) {
+    size_t bin_len;
+    if (sodium_hex2bin(nonce_vec.data(), nonce_vec.size(),
+                      nonce_string.c_str(), nonce_string.length(),
+                      nullptr, &bin_len, nullptr) != 0 || bin_len != nonce_vec.size()) {
         throw std::runtime_error("Failed to decode nonce when logging in");
     }
 
@@ -75,8 +78,8 @@ std::string post_authenticate(
     qDebug() << "Authenticating user";
     const json body = {
         {"username", username},
-        {"device_public", bin2hex(pk_device, crypto_sign_PUBLICKEYBYTES)},
-        {"nonce_signature", bin2hex(signature, crypto_sign_BYTES)}
+        {"device_public", sodium_bin2hex(new char[crypto_sign_PUBLICKEYBYTES * 2 + 1], crypto_sign_PUBLICKEYBYTES * 2 + 1, pk_device, crypto_sign_PUBLICKEYBYTES)},
+        {"nonce_signature", sodium_bin2hex(new char[crypto_sign_BYTES * 2 + 1], crypto_sign_BYTES * 2 + 1, signature, crypto_sign_BYTES)}
     };
     const json response = post_unauth(body, "/authenticate");
     return response["data"]["token"];
@@ -108,9 +111,15 @@ std::vector<DeviceMessage*> get_messages() {
         int prev_chain_length = handshake["prev_chain_length"].get<int>();
         int message_index = handshake["message_index"].get<int>();
 
-        bool success = hex_to_bin(dev_key_str, initator_dev_key, crypto_box_PUBLICKEYBYTES) &&
-            hex_to_bin(dh_pub_str, new_dh_public, crypto_box_PUBLICKEYBYTES) &&
-            hex_to_bin(ciphertext_str, ciphertext, ciphertext_length);
+        bool success = sodium_hex2bin(initator_dev_key, crypto_box_PUBLICKEYBYTES,
+                                     dev_key_str.c_str(), dev_key_str.length(),
+                                     nullptr, nullptr, nullptr) == 0 &&
+            sodium_hex2bin(new_dh_public, crypto_box_PUBLICKEYBYTES,
+                          dh_pub_str.c_str(), dh_pub_str.length(),
+                          nullptr, nullptr, nullptr) == 0 &&
+            sodium_hex2bin(ciphertext, ciphertext_length,
+                          ciphertext_str.c_str(), ciphertext_str.length(),
+                          nullptr, nullptr, nullptr) == 0;
 
         if (!success) {
             delete[] initator_dev_key;
@@ -138,11 +147,11 @@ std::vector<DeviceMessage*> get_messages() {
 void post_ratchet_message(const DeviceMessage *msg) {
     json body = {
         {"file_id", 0},
-        {"recipient_device_public_key", bin_to_hex(msg->header->device_id, sizeof(msg->header->device_id))},
-        {"dh_public", bin_to_hex(msg->header->dh_public, sizeof(msg->header->dh_public))},
+        {"recipient_device_public_key", sodium_bin2hex(new char[crypto_box_PUBLICKEYBYTES * 2 + 1], crypto_box_PUBLICKEYBYTES * 2 + 1, msg->header->device_id, sizeof(msg->header->device_id))},
+        {"dh_public", sodium_bin2hex(new char[crypto_box_PUBLICKEYBYTES * 2 + 1], crypto_box_PUBLICKEYBYTES * 2 + 1, msg->header->dh_public, sizeof(msg->header->dh_public))},
         {"prev_chain_length", msg->header->prev_chain_length},
         {"message_index", msg->header->message_index},
-        {"ciphertext", bin_to_hex(msg->ciphertext, sizeof(msg->ciphertext))},
+        {"ciphertext", sodium_bin2hex(new char[sizeof(msg->ciphertext) * 2 + 1], sizeof(msg->ciphertext) * 2 + 1, msg->ciphertext, sizeof(msg->ciphertext))},
         {"ciphertext_length", sizeof(msg->ciphertext)},
     };
 
@@ -155,7 +164,9 @@ void get_keybundles(std::string username) {
     // Get my identity public key
     std::string my_identity_public_hex = response["data"]["identity_public_key"];
     unsigned char *my_identity_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
-    if (!hex_to_bin(my_identity_public_hex, my_identity_public, crypto_sign_PUBLICKEYBYTES)) {
+    if (sodium_hex2bin(my_identity_public, crypto_sign_PUBLICKEYBYTES,
+                      my_identity_public_hex.c_str(), my_identity_public_hex.length(),
+                      nullptr, nullptr, nullptr) != 0) {
         delete[] my_identity_public;
         throw std::runtime_error("Failed to decode my identity public key");
     }
@@ -196,19 +207,29 @@ void get_keybundles(std::string username) {
         std::cout << "Signature hex length: " << their_signed_signature_hex.length() << ", expected binary size: " <<
                 crypto_sign_BYTES << std::endl;
 
-        bool device_ok = hex_to_bin(their_device_public_hex, their_device_public, crypto_sign_PUBLICKEYBYTES);
+        bool device_ok = sodium_hex2bin(their_device_public, crypto_sign_PUBLICKEYBYTES,
+                                       their_device_public_hex.c_str(), their_device_public_hex.length(),
+                                       nullptr, nullptr, nullptr) == 0;
         std::cout << "Device public key conversion: " << (device_ok ? "success" : "failed") << std::endl;
 
-        bool identity_ok = hex_to_bin(their_identity_public_hex, their_identity_public, crypto_sign_PUBLICKEYBYTES);
+        bool identity_ok = sodium_hex2bin(their_identity_public, crypto_sign_PUBLICKEYBYTES,
+                                         their_identity_public_hex.c_str(), their_identity_public_hex.length(),
+                                         nullptr, nullptr, nullptr) == 0;
         std::cout << "Identity public key conversion: " << (identity_ok ? "success" : "failed") << std::endl;
 
-        bool onetime_ok = hex_to_bin(their_onetime_public_hex, their_onetime_public, crypto_sign_PUBLICKEYBYTES);
+        bool onetime_ok = sodium_hex2bin(their_onetime_public, crypto_sign_PUBLICKEYBYTES,
+                                        their_onetime_public_hex.c_str(), their_onetime_public_hex.length(),
+                                        nullptr, nullptr, nullptr) == 0;
         std::cout << "One-time key conversion: " << (onetime_ok ? "success" : "failed") << std::endl;
 
-        bool signed_ok = hex_to_bin(their_signed_public_hex, their_signed_public, crypto_sign_PUBLICKEYBYTES);
+        bool signed_ok = sodium_hex2bin(their_signed_public, crypto_sign_PUBLICKEYBYTES,
+                                       their_signed_public_hex.c_str(), their_signed_public_hex.length(),
+                                       nullptr, nullptr, nullptr) == 0;
         std::cout << "Signed prekey conversion: " << (signed_ok ? "success" : "failed") << std::endl;
 
-        bool signature_ok = hex_to_bin(their_signed_signature_hex, their_signed_signature, crypto_sign_BYTES);
+        bool signature_ok = sodium_hex2bin(their_signed_signature, crypto_sign_BYTES,
+                                          their_signed_signature_hex.c_str(), their_signed_signature_hex.length(),
+                                          nullptr, nullptr, nullptr) == 0;
         std::cout << "Signature conversion: " << (signature_ok ? "success" : "failed") << std::endl;
 
         if (!device_ok || !identity_ok || !onetime_ok || !signed_ok || !signature_ok) {
@@ -241,7 +262,9 @@ void get_keybundles(std::string username) {
 
     // Convert their identity public key to binary
     unsigned char *their_identity_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
-    if (!hex_to_bin(their_identity_public_hex, their_identity_public, crypto_sign_PUBLICKEYBYTES)) {
+    if (sodium_hex2bin(their_identity_public, crypto_sign_PUBLICKEYBYTES,
+                      their_identity_public_hex.c_str(), their_identity_public_hex.length(),
+                      nullptr, nullptr, nullptr) != 0) {
         delete[] their_identity_public;
         throw std::runtime_error("Failed to decode their identity public key");
     }
@@ -260,16 +283,16 @@ void post_handshake_device(
     const unsigned char *my_ephemeral_key_public
 ) {
     json body = {
-        {"identity_session_id", bin2hex(identity_session_id, crypto_hash_sha256_BYTES)},
-        {"recipient_device_key", bin2hex(recipient_device_key_public, crypto_box_PUBLICKEYBYTES)},
-        {"recipient_signed_public_prekey", bin2hex(recipient_signed_prekey_public, crypto_box_PUBLICKEYBYTES)},
+        {"identity_session_id", sodium_bin2hex(new char[crypto_hash_sha256_BYTES * 2 + 1], crypto_hash_sha256_BYTES * 2 + 1, identity_session_id, crypto_hash_sha256_BYTES)},
+        {"recipient_device_key", sodium_bin2hex(new char[crypto_box_PUBLICKEYBYTES * 2 + 1], crypto_box_PUBLICKEYBYTES * 2 + 1, recipient_device_key_public, crypto_box_PUBLICKEYBYTES)},
+        {"recipient_signed_public_prekey", sodium_bin2hex(new char[crypto_box_PUBLICKEYBYTES * 2 + 1], crypto_box_PUBLICKEYBYTES * 2 + 1, recipient_signed_prekey_public, crypto_box_PUBLICKEYBYTES)},
         {
             "recipient_signed_public_prekey_signature",
-            bin2hex(recipient_signed_prekey_signature, crypto_box_PUBLICKEYBYTES)
+            sodium_bin2hex(new char[crypto_box_PUBLICKEYBYTES * 2 + 1], crypto_box_PUBLICKEYBYTES * 2 + 1, recipient_signed_prekey_signature, crypto_box_PUBLICKEYBYTES)
         },
-        {"recipient_onetime_public_prekey", bin2hex(recipient_onetime_prekey_public, crypto_box_PUBLICKEYBYTES)},
-        {"initiator_ephemeral_public_key", bin2hex(my_ephemeral_key_public, crypto_box_PUBLICKEYBYTES)},
-        {"initiator_device_public_key", bin2hex(my_device_key_public, crypto_box_PUBLICKEYBYTES)},
+        {"recipient_onetime_public_prekey", sodium_bin2hex(new char[crypto_box_PUBLICKEYBYTES * 2 + 1], crypto_box_PUBLICKEYBYTES * 2 + 1, recipient_onetime_prekey_public, crypto_box_PUBLICKEYBYTES)},
+        {"initiator_ephemeral_public_key", sodium_bin2hex(new char[crypto_box_PUBLICKEYBYTES * 2 + 1], crypto_box_PUBLICKEYBYTES * 2 + 1, my_ephemeral_key_public, crypto_box_PUBLICKEYBYTES)},
+        {"initiator_device_public_key", sodium_bin2hex(new char[crypto_box_PUBLICKEYBYTES * 2 + 1], crypto_box_PUBLICKEYBYTES * 2 + 1, my_device_key_public, crypto_box_PUBLICKEYBYTES)},
     };
     post(body, "/handshake");
 }
@@ -284,25 +307,50 @@ std::tuple<std::vector<KeyBundle*>, unsigned char*> get_handshake_backlog() {
     std::cout << std::endl;
 
     std::vector<KeyBundle*> bundles;
-    auto identity_session_id = new unsigned char[crypto_box_PUBLICKEYBYTES * 2];
+    auto identity_session_id = new unsigned char[crypto_hash_sha256_BYTES];  // 32 bytes for final hash
 
     for (const auto& handshake : response["data"]) {
         auto initator_dev_key = new unsigned char[crypto_box_PUBLICKEYBYTES];
         auto initiator_eph_pub = new unsigned char[crypto_box_PUBLICKEYBYTES];
         auto recip_onetime_pub = new unsigned char[crypto_box_PUBLICKEYBYTES];
-        auto identity_session_id = new unsigned char[crypto_box_PUBLICKEYBYTES * 2];
 
         std::string dev_key_str = handshake["initiator_device_public_key"].get<std::string>();
         std::string eph_pub_str = handshake["initiator_ephemeral_public_key"].get<std::string>();
         std::string onetime_pub_str = handshake["recipient_onetime_public_prekey"].get<std::string>();
         std::string session_id_str = handshake["identity_session_id"].get<std::string>();
 
-        bool success = hex_to_bin(dev_key_str, initator_dev_key, crypto_box_PUBLICKEYBYTES) &&
-            hex_to_bin(eph_pub_str, initiator_eph_pub, crypto_box_PUBLICKEYBYTES) &&
-            hex_to_bin(onetime_pub_str, recip_onetime_pub, crypto_box_PUBLICKEYBYTES) &&
-            hex_to_bin(session_id_str, identity_session_id, crypto_box_PUBLICKEYBYTES * 2);
+        std::cout << "Session ID hex length: " << session_id_str.length() << std::endl;
+        std::cout << "Expected binary size: " << crypto_hash_sha256_BYTES << std::endl;
+        std::cout << "Session ID hex: " << session_id_str << std::endl;
+
+        // First decode the session ID using sodium_hex2bin
+        size_t bin_len;
+        if (sodium_hex2bin(identity_session_id, crypto_hash_sha256_BYTES,
+                          session_id_str.c_str(), session_id_str.length(),
+                          nullptr, &bin_len, nullptr) != 0 || bin_len != crypto_hash_sha256_BYTES) {
+            delete[] initator_dev_key;
+            delete[] initiator_eph_pub;
+            delete[] recip_onetime_pub;
+            delete[] identity_session_id;
+            throw std::runtime_error("Failed to decode session ID");
+        }
+
+        bool success = sodium_hex2bin(initator_dev_key, crypto_box_PUBLICKEYBYTES,
+                                     dev_key_str.c_str(), dev_key_str.length(),
+                                     nullptr, nullptr, nullptr) == 0 &&
+            sodium_hex2bin(initiator_eph_pub, crypto_box_PUBLICKEYBYTES,
+                          eph_pub_str.c_str(), eph_pub_str.length(),
+                          nullptr, nullptr, nullptr) == 0 &&
+            sodium_hex2bin(recip_onetime_pub, crypto_box_PUBLICKEYBYTES,
+                          onetime_pub_str.c_str(), onetime_pub_str.length(),
+                          nullptr, nullptr, nullptr) == 0;
 
         if (!success) {
+            std::cout << "Failed to decode hex strings:" << std::endl;
+            std::cout << "Device key hex length: " << dev_key_str.length() << std::endl;
+            std::cout << "Ephemeral key hex length: " << eph_pub_str.length() << std::endl;
+            std::cout << "One-time key hex length: " << onetime_pub_str.length() << std::endl;
+            std::cout << "Session ID hex length: " << session_id_str.length() << std::endl;
             delete[] initator_dev_key;
             delete[] initiator_eph_pub;
             delete[] recip_onetime_pub;
@@ -311,7 +359,6 @@ std::tuple<std::vector<KeyBundle*>, unsigned char*> get_handshake_backlog() {
         }
 
         auto device_key = get_public_key("device");
-
         auto new_bundle = new ReceivingKeyBundle(
             initator_dev_key,
             initiator_eph_pub,
@@ -338,8 +385,8 @@ void post_new_keybundles(std::tuple<QByteArray, std::unique_ptr<SecureMemoryBuff
     crypto_sign_detached(signature, nullptr, pk_signed, crypto_sign_PUBLICKEYBYTES, sk_device->data());
 
     // Convert signature to hex string
-    std::string signature_hex = bin2hex(signature, crypto_sign_BYTES);
-    std::string signed_prekey_pub_hex = bin2hex(pk_signed, crypto_box_PUBLICKEYBYTES);
+    std::string signature_hex = sodium_bin2hex(new char[crypto_sign_BYTES * 2 + 1], crypto_sign_BYTES * 2 + 1, signature, crypto_sign_BYTES);
+    std::string signed_prekey_pub_hex = sodium_bin2hex(new char[crypto_box_PUBLICKEYBYTES * 2 + 1], crypto_box_PUBLICKEYBYTES * 2 + 1, pk_signed, crypto_box_PUBLICKEYBYTES);
 
     // Create JSON payload
     json body = {
@@ -349,7 +396,7 @@ void post_new_keybundles(std::tuple<QByteArray, std::unique_ptr<SecureMemoryBuff
     };
 
     for (const auto &[pk, sk, nonce]: otks) {
-        body["one_time_keys"].push_back(bin2hex(pk, crypto_box_PUBLICKEYBYTES));
+        body["one_time_keys"].push_back(sodium_bin2hex(new char[crypto_box_PUBLICKEYBYTES * 2 + 1], crypto_box_PUBLICKEYBYTES * 2 + 1, pk, crypto_box_PUBLICKEYBYTES));
     }
     post(body, "/updateKeybundle");
 }

@@ -43,12 +43,18 @@ void IdentityManager::update_or_create_identity_sessions(std::vector<KeyBundle*>
 }
 
 void IdentityManager::send_to_user(std::string username, unsigned char *msg) {
-
-    // todo: make ratchet if doesnt exist
     std::string my_username = SessionTokenManager::instance().getUsername();
     unsigned char* session_id = generate_unique_id_pair(&username, &my_username);
 
+    // Check if session exists
+    if (_sessions.find(session_id) == _sessions.end()) {
+        std::cout << "No session found for user: " << username << std::endl;
+        delete[] session_id;
+        return;
+    }
+
     _sessions[session_id]->send_message(msg);
+    delete[] session_id;
 }
 
 
