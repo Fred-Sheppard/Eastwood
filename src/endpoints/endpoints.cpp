@@ -82,19 +82,69 @@ std::string post_authenticate(
     return response["data"]["token"];
 }
 
-void get_messages() {
-    // TODO: implement or remove
+std::vector<DeviceMessage*> get_messages() {
+    json response = get("/incomingMessages");
+
+    std::cout << "Raw response: " << response.dump() << std::endl;
+    std::cout << "Response keys: ";
+    for (auto& [key, value] : response.items()) {
+        std::cout << key << " ";
+    }
+    std::cout << std::endl;
+
+    std::vector<DeviceMessage*> messages;
+
+    for (const auto& handshake : response["data"]) {
+        int ciphertext_length = handshake["ciphertext_length"].get<int>();
+
+        auto initator_dev_key = new unsigned char[crypto_box_PUBLICKEYBYTES];
+        auto new_dh_public = new unsigned char[crypto_box_PUBLICKEYBYTES];
+        auto ciphertext = new unsigned char[ciphertext_length];
+
+        std::string dev_key_str = handshake["initiator_device_public_key"].get<std::string>();
+        std::string dh_pub_str = handshake["dh_public"].get<std::string>();
+        std::string ciphertext_str = handshake["ciphertext"].get<std::string>();
+
+        int prev_chain_length = handshake["prev_chain_length"].get<int>();
+        int message_index = handshake["message_index"].get<int>();
+
+        bool success = hex_to_bin(dev_key_str, initator_dev_key, crypto_box_PUBLICKEYBYTES) &&
+            hex_to_bin(dh_pub_str, new_dh_public, crypto_box_PUBLICKEYBYTES) &&
+            hex_to_bin(ciphertext_str, ciphertext, ciphertext_length);
+
+        if (!success) {
+            delete[] initator_dev_key;
+            delete[] new_dh_public;
+            delete[] ciphertext;
+            throw std::runtime_error("Failed to decode handshake backlog data");
+        }
+
+        DeviceMessage* msg = new DeviceMessage();
+        MessageHeader* header = new MessageHeader();
+
+        memcpy(header->dh_public, new_dh_public, crypto_box_PUBLICKEYBYTES);
+        header->message_index = message_index;
+        header->prev_chain_length = prev_chain_length;
+        memcpy(header->device_id, initator_dev_key, crypto_box_PUBLICKEYBYTES);
+
+        memcpy(msg->header, header, sizeof(MessageHeader));
+        memcpy(msg->ciphertext, ciphertext, ciphertext_length);
+
+        messages.push_back(msg);
+    }
+    return messages;
 }
 
 void post_ratchet_message(const DeviceMessage *msg) {
     json body = {
+        {"file_id", 0},
         {"device_id", bin_to_hex(msg->header->device_id, sizeof(msg->header->device_id))},
         {"dh_public", bin_to_hex(msg->header->dh_public, sizeof(msg->header->dh_public))},
         {"prev_chain_length", msg->header->prev_chain_length},
-        {"prev_chain_length", msg->header->message_index},
+        {"message_index", msg->header->message_index},
         {"ciphertext", bin_to_hex(msg->ciphertext, sizeof(msg->ciphertext))},
+        {"ciphertext_length", sizeof(msg->ciphertext)},
     };
-    //todo: post to /sendMessage/deviceId
 
     post(body, "/sendMessage");
 };
@@ -210,7 +260,7 @@ void post_handshake_device(
     const unsigned char *my_ephemeral_key_public
 ) {
     json body = {
-        {"identity_session_id", bin2hex(identity_session_id, crypto_box_PUBLICKEYBYTES * 2)},
+        {"identity_session_id", bin2hex(identity_session_id, crypto_hash_sha256_BYTES)},
         {"recipient_device_key", bin2hex(recipient_device_key_public, crypto_box_PUBLICKEYBYTES)},
         {"recipient_signed_public_prekey", bin2hex(recipient_signed_prekey_public, crypto_box_PUBLICKEYBYTES)},
         {

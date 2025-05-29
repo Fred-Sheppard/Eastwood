@@ -6,6 +6,7 @@
 #include <iostream>
 #include <cstring>
 
+#include "src/keys/session_token_manager.h"
 #include "src/key_exchange/utils.h"
 
 void IdentityManager::update_or_create_identity_sessions(std::vector<KeyBundle*> bundles, std::string username_one, std::string username_two) {
@@ -40,5 +41,15 @@ void IdentityManager::update_or_create_identity_sessions(std::vector<KeyBundle*>
         _sessions[identity_session_id]->updateFromBundles(bundles);
     };
 }
+
+void IdentityManager::send_to_user(std::string username, unsigned char *msg) {
+
+    // todo: make ratchet if doesnt exist
+    std::string my_username = SessionTokenManager::instance().getUsername();
+    unsigned char* session_id = generate_unique_id_pair(&username, &my_username);
+
+    _sessions[session_id]->send_message(msg);
+}
+
 
 

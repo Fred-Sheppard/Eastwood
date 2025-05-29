@@ -19,6 +19,8 @@ public:
     void update_or_create_identity_sessions(std::vector<KeyBundle*> bundles, std::string username_one, std::string username_two);
     void update_or_create_identity_sessions(std::vector<KeyBundle*> bundles, unsigned char* identity_session_id);
 
+    void send_to_user(std::string username, unsigned char* msg);
+
 private:
     IdentityManager() = default;
     ~IdentityManager() = default;

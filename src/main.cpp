@@ -19,6 +19,7 @@
 #include "database/schema.h"
 #include "endpoints/endpoints.h"
 #include "keys/session_token_manager.h"
+#include "key_exchange/utils.h"
 #include "sessions/IdentityManager.h"
 #include "sessions/IdentitySession.h"
 #include "sql/queries.h"
@@ -71,9 +72,9 @@ int main(int argc, char *argv[]) {
 
     init_schema();
 
-    register_user("sloggotesting11", std::make_unique<std::string>("1234"));
+    register_user("sloggotesting12", std::make_unique<std::string>("1234"));
     register_first_device();
-    login_user("sloggotesting11");
+    login_user("sloggotesting12");
     post_new_keybundles(
         get_decrypted_keypair("device"),
         generate_signed_prekey(),
@@ -85,6 +86,15 @@ int main(int argc, char *argv[]) {
 
     auto [backlog, identity_id] = get_handshake_backlog();
     IdentityManager::getInstance().update_or_create_identity_sessions(backlog, identity_id);
+
+    std::cout << "Press Enter to continue...";
+    std::cin.get();
+
+    auto msg = new unsigned char[5];
+    randombytes_buf(msg, 5);
+    std::cout << "message" << bin2hex(msg, sizeof(msg)) << std::endl;
+
+    IdentityManager::getInstance().send_to_user("nialltesting11", msg);
     // WindowManager::instance().showLogin();
     return app.exec();
 }

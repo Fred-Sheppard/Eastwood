@@ -48,7 +48,7 @@ void post_handshake_device(
 
 std::tuple<std::vector<KeyBundle*>, unsigned char*> get_handshake_backlog();
 
-void get_messages();
+std::vector<DeviceMessage*> get_messages();
 
 void get_keybundles(
     std::string username
