@@ -55,15 +55,6 @@ if (NOT SODIUM_INCLUDE_DIR OR NOT SODIUM_LIBRARY)
     message(FATAL_ERROR "libsodium not found. Please install it using your package manager.")
 endif ()
 
-# Add nlohmann_json
-include(FetchContent)
-FetchContent_Declare(
-        json
-        URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
-        DOWNLOAD_EXTRACT_TIMESTAMP true
-)
-FetchContent_MakeAvailable(json)
-
 # Define frontend sources
 set(FRONTEND_SOURCES
         src/ui/windows/login/login.cpp
@@ -130,9 +121,7 @@ set(AUTH_SOURCES
         src/sessions/IdentityManager.cpp
         src/files/upload_file.cpp
         src/auth/salt.cpp
-
 )
-
 
 # Create main executable
 add_executable(Eastwood
@@ -186,15 +175,14 @@ target_include_directories(EastwoodTests PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/keys
         ${CMAKE_CURRENT_SOURCE_DIR}/src/database
         ${CMAKE_CURRENT_SOURCE_DIR}/external/cereal/include
-        ${CMAKE_CURRENT_BINARY_DIR}/_deps/googletest-src/googletest/include
 )
 
-# Link libraries in the correct order
+# Link libraries using proper CMake targets
 target_link_libraries(EastwoodTests PRIVATE
-        ${CMAKE_CURRENT_BINARY_DIR}/lib/libgtest.a
-        ${CMAKE_CURRENT_BINARY_DIR}/lib/libgtest_main.a
-        ${CMAKE_CURRENT_BINARY_DIR}/lib/libgmock.a
-        ${CMAKE_CURRENT_BINARY_DIR}/lib/libgmock_main.a
+        gtest
+        gtest_main
+        gmock
+        gmock_main
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets
