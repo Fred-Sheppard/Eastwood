@@ -5,23 +5,19 @@
 #include "ui/utils/window_manager/window_manager.h"
 #include <iostream>
 #define SQLITE_HAS_CODEC 1
-#include <QFile>
 #include <QApplication>
 #include <random>
-
-#include "auth/login/login.h"
-#include "auth/register_device/register_device.h"
-#include "auth/register_user/register_user.h"
-#include "auth/login/login.h"
+#include <QLabel>
+#include <QString>
+#include <sstream>
 #include "client_api_interactions/MakeAuthReq.h"
-#include "src/auth/login/login.h"
 #include "database/database.h"
 #include "database/schema.h"
 #include "endpoints/endpoints.h"
-#include "keys/session_token_manager.h"
-#include "sessions/IdentityManager.h"
-#include "sessions/IdentitySession.h"
-#include "sql/queries.h"
+#include "qrcodegen.hpp"
+#include "ui/QRCodeGenerator.h"
+
+using namespace qrcodegen;
 
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);

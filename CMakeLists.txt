@@ -11,7 +11,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 # Find Qt
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets UiTools)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets UiTools Svg)
 find_package(OpenSSL REQUIRED)
 
 # Add Google Test
@@ -60,6 +60,15 @@ FetchContent_Declare(
         DOWNLOAD_EXTRACT_TIMESTAMP true
 )
 FetchContent_MakeAvailable(json)
+
+# Add Nayuki QR Code generator library
+include(FetchContent)
+FetchContent_Declare(
+    qrcodegen
+    GIT_REPOSITORY https://github.com/nayuki/QR-Code-generator.git
+    GIT_TAG master
+)
+FetchContent_MakeAvailable(qrcodegen)
 
 # Define frontend sources
 set(FRONTEND_SOURCES
@@ -125,8 +134,9 @@ set(AUTH_SOURCES
         src/sessions/IdentitySession.h
         src/sessions/IdentityManager.cpp
         src/sessions/IdentityManager.h
+        src/ui/QRCodeGenerator.cpp
+        src/ui/QRCodeGenerator.h
 )
-
 
 # Create main executable
 add_executable(Eastwood
@@ -135,6 +145,7 @@ add_executable(Eastwood
         ${DATABASE_SOURCES}
         ${CRYPTO_SOURCES}
         ${AUTH_SOURCES}
+        ${qrcodegen_SOURCE_DIR}/cpp/qrcodegen.cpp
 )
 
 # Include directories and link libraries for main executable
@@ -142,6 +153,7 @@ target_include_directories(Eastwood PRIVATE
         ${SODIUM_INCLUDE_DIR}
         ${SQLCIPHER_INCLUDE_DIRS}
         ${CMAKE_CURRENT_SOURCE_DIR}
+        ${qrcodegen_SOURCE_DIR}/cpp
 )
 
 target_link_libraries(Eastwood PRIVATE
@@ -149,6 +161,7 @@ target_link_libraries(Eastwood PRIVATE
         Qt6::Gui
         Qt6::Widgets
         Qt6::UiTools
+        Qt6::Svg
         ${SODIUM_LIBRARY}
         OpenSSL::SSL
         OpenSSL::Crypto
