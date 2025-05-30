@@ -38,8 +38,7 @@ std::string generateRandomString(int length) {
     return randomString;
 }
 
-int main(int argc, char *argv[]) {
-    QApplication app(argc, argv);
+int main() {
     if (sodium_init() < 0) {
         throw std::runtime_error("Libsodium initialization failed");
     }
@@ -71,7 +70,7 @@ int main(int argc, char *argv[]) {
         generate_onetime_keys(100)
     );
 
-    upload_file(QCoreApplication::applicationDirPath().toStdString() + "/CTestTestfile.cmake");
+    upload_file(".gitignore");
 
     std::cout << "Integration main flow test completed successfully." << std::endl;
 }
