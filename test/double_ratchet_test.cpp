@@ -99,6 +99,9 @@ protected:
             delete bob_receiving_bundle;
             bob_receiving_bundle = nullptr;
         }
+        
+        // Reset database state
+        drop_all_tables();
     }
 
     void switch_to_alice_db() {
@@ -128,7 +131,7 @@ protected:
         randombytes_buf(nonce_2, CHA_CHA_NONCE_LEN);
 
         std::unique_ptr<SecureMemoryBuffer> encrypted_bob_presign_priv = encrypt_secret_key(std::move(bob_presign_priv), nonce_2);
-        save_encrypted_keypair("sign", bob_presign_pub, encrypted_bob_presign_priv, nonce_2);
+        save_encrypted_keypair("signed", bob_presign_pub, encrypted_bob_presign_priv, nonce_2);
 
         auto nonce_3 = new unsigned char[CHA_CHA_NONCE_LEN];
         randombytes_buf(nonce_3, CHA_CHA_NONCE_LEN);
@@ -169,25 +172,249 @@ protected:
     unsigned char bob_presign_signature[crypto_sign_BYTES] = {};
 };
 
-// Basic test example
-TEST_F(DoubleRatchetTest, InitializationTest) {
-    // Your test code here
-    EXPECT_TRUE(true);
+TEST_F(DoubleRatchetTest, SharedSecretDerivationTest) {
+    switch_to_alice_db();
+    unsigned char* shared_secret_alice = alice_sending_bundle->get_shared_secret();
+
+    switch_to_bob_db();
+    unsigned char* shared_secret_bob = bob_receiving_bundle->get_shared_secret();
+
+    // Compare the actual values of the shared secrets
+    EXPECT_EQ(memcmp(shared_secret_alice, shared_secret_bob, crypto_scalarmult_BYTES), 0);
 }
 
-// Test with multiple assertions
-TEST_F(DoubleRatchetTest, MultipleAssertionsTest) {
-    // Arrange
-    int expected = 42;
-    int actual = 42;
+TEST_F(DoubleRatchetTest, OneMessageFromOneSideTest) {
+    // alice ratchet
+    switch_to_alice_db();
+    std::unique_ptr<DoubleRatchet> alice_ratchet = std::make_unique<DoubleRatchet>(alice_sending_bundle);
 
-    // Act
-    // Your test code here
+    auto plaintext_message = new unsigned char[10];
+    randombytes_buf(plaintext_message, 10);
+    DeviceMessage* device_message = alice_ratchet.get()->message_send(plaintext_message);
 
-    // Assert
-    EXPECT_EQ(expected, actual);
-    EXPECT_TRUE(true);
-    EXPECT_FALSE(false);
+    //bob ratchet
+    switch_to_bob_db();
+    std::unique_ptr<DoubleRatchet> bob_ratchet = std::make_unique<DoubleRatchet>(bob_receiving_bundle);
+
+    std::vector<unsigned char> decrypted_message = bob_ratchet.get()->message_receive(*device_message);
+
+    EXPECT_EQ(decrypted_message.size(), 10);
+    EXPECT_EQ(memcmp(decrypted_message.data(), plaintext_message, 10), 0);
+
+    delete[] plaintext_message;
+    delete device_message;
+}
+
+TEST_F(DoubleRatchetTest, TwoMessageFromOneSideTest) {
+    // alice ratchet
+    switch_to_alice_db();
+    std::unique_ptr<DoubleRatchet> alice_ratchet = std::make_unique<DoubleRatchet>(alice_sending_bundle);
+
+    auto plaintext_message = new unsigned char[10];
+    randombytes_buf(plaintext_message, 10);
+    DeviceMessage* device_message = alice_ratchet.get()->message_send(plaintext_message);
+
+    auto plaintext_message2 = new unsigned char[20];
+    randombytes_buf(plaintext_message2, 20);
+    DeviceMessage* device_message2 = alice_ratchet.get()->message_send(plaintext_message2);
+
+    //bob ratchet
+    switch_to_bob_db();
+    std::unique_ptr<DoubleRatchet> bob_ratchet = std::make_unique<DoubleRatchet>(bob_receiving_bundle);
+
+    std::vector<unsigned char> decrypted_message = bob_ratchet.get()->message_receive(*device_message);
+    std::vector<unsigned char> decrypted_message2 = bob_ratchet.get()->message_receive(*device_message2);
+
+    EXPECT_EQ(decrypted_message.size(), 10);
+    EXPECT_EQ(decrypted_message2.size(), 20);
+    EXPECT_EQ(memcmp(decrypted_message.data(), plaintext_message, 10), 0);
+    EXPECT_EQ(memcmp(decrypted_message2.data(), plaintext_message2, 20), 0);
+
+    delete[] plaintext_message;
+    delete[] plaintext_message2;
+    delete device_message;
+    delete device_message2;
+}
+
+TEST_F(DoubleRatchetTest, OutOfOrderMessagesFromOneSideTest) {
+    // alice ratchet
+    switch_to_alice_db();
+    std::unique_ptr<DoubleRatchet> alice_ratchet = std::make_unique<DoubleRatchet>(alice_sending_bundle);
+
+    auto plaintext_message = new unsigned char[10];
+    randombytes_buf(plaintext_message, 10);
+    DeviceMessage* device_message = alice_ratchet.get()->message_send(plaintext_message);
+
+    auto plaintext_message2 = new unsigned char[20];
+    randombytes_buf(plaintext_message2, 20);
+    DeviceMessage* device_message2 = alice_ratchet.get()->message_send(plaintext_message2);
+
+    auto plaintext_message3 = new unsigned char[30];
+    randombytes_buf(plaintext_message3, 30);
+    DeviceMessage* device_message3 = alice_ratchet.get()->message_send(plaintext_message3);
+
+    //bob ratchet
+    switch_to_bob_db();
+    std::unique_ptr<DoubleRatchet> bob_ratchet = std::make_unique<DoubleRatchet>(bob_receiving_bundle);
+
+    std::vector<unsigned char> decrypted_message3 = bob_ratchet.get()->message_receive(*device_message3);
+    std::vector<unsigned char> decrypted_message2 = bob_ratchet.get()->message_receive(*device_message2);
+    std::vector<unsigned char> decrypted_message = bob_ratchet.get()->message_receive(*device_message);
+
+    EXPECT_EQ(decrypted_message.size(), 10);
+    EXPECT_EQ(decrypted_message2.size(), 20);
+    EXPECT_EQ(decrypted_message3.size(), 30);
+    EXPECT_EQ(memcmp(decrypted_message.data(), plaintext_message, 10), 0);
+    EXPECT_EQ(memcmp(decrypted_message2.data(), plaintext_message2, 20), 0);
+    EXPECT_EQ(memcmp(decrypted_message3.data(), plaintext_message3, 30), 0);
+
+    delete[] plaintext_message;
+    delete[] plaintext_message2;
+    delete[] plaintext_message3;
+    delete device_message;
+    delete device_message2;
+    delete device_message3;
+}
+
+TEST_F(DoubleRatchetTest, OneMessageFromEitherSideTest) {
+    // alice ratchet
+    switch_to_alice_db();
+    std::unique_ptr<DoubleRatchet> alice_ratchet = std::make_unique<DoubleRatchet>(alice_sending_bundle);
+
+    auto plaintext_message = new unsigned char[10];
+    randombytes_buf(plaintext_message, 10);
+    DeviceMessage* device_message = alice_ratchet.get()->message_send(plaintext_message);
+
+    //bob ratchet
+    switch_to_bob_db();
+    std::unique_ptr<DoubleRatchet> bob_ratchet = std::make_unique<DoubleRatchet>(bob_receiving_bundle);
+
+    std::vector<unsigned char> decrypted_message = bob_ratchet.get()->message_receive(*device_message);
+
+    EXPECT_EQ(decrypted_message.size(), 10);
+    EXPECT_EQ(memcmp(decrypted_message.data(), plaintext_message, 10), 0);
+
+    //now bob sends
+
+    auto plaintext_message2 = new unsigned char[10];
+    randombytes_buf(plaintext_message2, 10);
+    DeviceMessage* device_message2 = bob_ratchet.get()->message_send(plaintext_message2);
+
+    switch_to_alice_db();
+    std::vector<unsigned char> decrypted_message2 = alice_ratchet.get()->message_receive(*device_message2);
+
+    EXPECT_EQ(decrypted_message2.size(), 10);
+    EXPECT_EQ(memcmp(decrypted_message2.data(), plaintext_message2, 10), 0);
+
+    delete[] plaintext_message;
+    delete[] plaintext_message2;
+    delete device_message;
+    delete device_message2;
+}
+
+TEST_F(DoubleRatchetTest, MultipleMessageFromOneSideThenSwitchTest) {
+    // alice ratchet
+    switch_to_alice_db();
+    std::unique_ptr<DoubleRatchet> alice_ratchet = std::make_unique<DoubleRatchet>(alice_sending_bundle);
+
+    auto plaintext_message = new unsigned char[10];
+    randombytes_buf(plaintext_message, 10);
+    DeviceMessage* device_message = alice_ratchet.get()->message_send(plaintext_message);
+
+    auto plaintext_message2 = new unsigned char[10];
+    randombytes_buf(plaintext_message2, 10);
+    DeviceMessage* device_message2 = alice_ratchet.get()->message_send(plaintext_message2);
+
+    //bob ratchet
+    switch_to_bob_db();
+    std::unique_ptr<DoubleRatchet> bob_ratchet = std::make_unique<DoubleRatchet>(bob_receiving_bundle);
+
+    std::vector<unsigned char> decrypted_message = bob_ratchet.get()->message_receive(*device_message);
+    std::vector<unsigned char> decrypted_message2 = bob_ratchet.get()->message_receive(*device_message2);
+
+    EXPECT_EQ(decrypted_message.size(), 10);
+    EXPECT_EQ(memcmp(decrypted_message.data(), plaintext_message, 10), 0);
+
+    EXPECT_EQ(decrypted_message2.size(), 10);
+    EXPECT_EQ(memcmp(decrypted_message2.data(), plaintext_message2, 10), 0);
+
+    // now bob sends
+    auto plaintext_message3 = new unsigned char[10];
+    randombytes_buf(plaintext_message3, 10);
+    DeviceMessage* device_message3 = bob_ratchet.get()->message_send(plaintext_message3);
+
+    switch_to_alice_db();
+    std::vector<unsigned char> decrypted_message3 = bob_ratchet.get()->message_receive(*device_message3);
+
+    EXPECT_EQ(decrypted_message3.size(), 10);
+    EXPECT_EQ(memcmp(decrypted_message3.data(), plaintext_message3, 10), 0);
+
+    delete[] plaintext_message;
+    delete[] plaintext_message2;
+    delete[] plaintext_message3;
+    delete device_message;
+    delete device_message2;
+    delete device_message3;
+}
+
+TEST_F(DoubleRatchetTest, MultipleMessageFromOneSideThenMultipleSwitchTest) {
+    // alice ratchet
+    switch_to_alice_db();
+    std::unique_ptr<DoubleRatchet> alice_ratchet = std::make_unique<DoubleRatchet>(alice_sending_bundle);
+
+    auto plaintext_message = new unsigned char[10];
+    randombytes_buf(plaintext_message, 10);
+    DeviceMessage* device_message = alice_ratchet.get()->message_send(plaintext_message);
+
+    auto plaintext_message2 = new unsigned char[10];
+    randombytes_buf(plaintext_message2, 10);
+    DeviceMessage* device_message2 = alice_ratchet.get()->message_send(plaintext_message2);
+
+    //bob ratchet
+    switch_to_bob_db();
+    std::unique_ptr<DoubleRatchet> bob_ratchet = std::make_unique<DoubleRatchet>(bob_receiving_bundle);
+
+    std::vector<unsigned char> decrypted_message = bob_ratchet.get()->message_receive(*device_message);
+    std::vector<unsigned char> decrypted_message2 = bob_ratchet.get()->message_receive(*device_message2);
+
+    EXPECT_EQ(decrypted_message.size(), 10);
+    EXPECT_EQ(memcmp(decrypted_message.data(), plaintext_message, 10), 0);
+
+    EXPECT_EQ(decrypted_message2.size(), 10);
+    EXPECT_EQ(memcmp(decrypted_message2.data(), plaintext_message2, 10), 0);
+
+    // now bob sends
+    auto plaintext_message3 = new unsigned char[10];
+    randombytes_buf(plaintext_message3, 10);
+    DeviceMessage* device_message3 = bob_ratchet.get()->message_send(plaintext_message3);
+
+    switch_to_alice_db();
+    std::vector<unsigned char> decrypted_message3 = bob_ratchet.get()->message_receive(*device_message3);
+
+    EXPECT_EQ(decrypted_message3.size(), 10);
+    EXPECT_EQ(memcmp(decrypted_message3.data(), plaintext_message3, 10), 0);
+
+    //alice again
+
+    switch_to_alice_db();
+
+    auto plaintext_message4 = new unsigned char[10];
+    randombytes_buf(plaintext_message4, 10);
+    DeviceMessage* device_message4 = alice_ratchet.get()->message_send(plaintext_message4);
+
+    //bob ratchet
+    switch_to_bob_db();
+
+    std::vector<unsigned char> decrypted_message4 = bob_ratchet.get()->message_receive(*device_message);
+
+    delete[] plaintext_message;
+    delete[] plaintext_message2;
+    delete[] plaintext_message3;
+    delete[] plaintext_message4;
+    delete device_message;
+    delete device_message2;
+    delete device_message3;
+    delete device_message4;
 }
 
 int main(int argc, char **argv) {
