@@ -58,7 +58,6 @@ int main(int argc, char *argv[]) {
     if (refresh_database) drop_all_tables();
 
     init_schema();
-    WindowManager::instance().showLogin();
 
     WindowManager::instance().showLogin();
     return QApplication::exec();

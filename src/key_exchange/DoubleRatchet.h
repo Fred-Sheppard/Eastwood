@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "src/sessions/KeyBundle.h"
+#include "src/sessions/IdentitySessionId.h"
 
 struct Chain {
     unsigned char chain_key[crypto_kdf_KEYBYTES];
@@ -136,12 +137,15 @@ public:
     ~DoubleRatchet();
     
     // Creates a message key and header for sending
-    DeviceMessage message_send(const unsigned char* message, unsigned char* identity_session_id);
+    DeviceMessage* message_send(const unsigned char* message);
 
     // Processes a received message with header and returns the decrypted plaintext
     std::vector<unsigned char> message_receive(const DeviceMessage& encrypted_message);
 
     void print_state() const;
+    
+    // Post handshake device
+    void send_handshake_device(IdentitySessionId session_id, unsigned char* their_device_public, unsigned char* their_signed_public, unsigned char* their_signed_signature, unsigned char* their_onetime_public, unsigned char* my_device_public, unsigned char* my_ephemeral_public);
 
 private:
     unsigned char ratchet_id[crypto_box_PUBLICKEYBYTES * 2]{};  // Changed from pointer to array
