@@ -70,7 +70,7 @@ int main() {
         generate_onetime_keys(100)
     );
 
-    upload_file(".gitignore");
+    upload_file("file.txt");
 
     std::cout << "Integration main flow test completed successfully." << std::endl;
 }

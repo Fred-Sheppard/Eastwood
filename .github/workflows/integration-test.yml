@@ -18,6 +18,9 @@ jobs:
           fi
         continue-on-error: false
 
+      - name: Create file to test uploading
+        run: echo "This is the contents of an encrypted file" > file.txt
+
       - name: Checkout code
         uses: actions/checkout@v3
 
