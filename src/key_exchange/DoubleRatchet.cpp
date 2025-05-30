@@ -179,7 +179,7 @@ void DoubleRatchet::advance_chain_key(unsigned char* chain_key) {
     }
 }
 
-DeviceMessage DoubleRatchet::message_send(const unsigned char* message) {
+DeviceMessage DoubleRatchet::message_send(const unsigned char* message, unsigned char* identity_session_id) {
     // Check if send chain is uninitialized (all zeros)
     bool send_chain_uninitialized = sodium_is_zero(send_chain.chain_key, crypto_kdf_KEYBYTES) == 1;
 
@@ -219,7 +219,7 @@ DeviceMessage DoubleRatchet::message_send(const unsigned char* message) {
     advance_chain_key(send_chain.chain_key);
 
     // Convert DeviceMessage to Message for post_ratchet_message
-    post_ratchet_message(&device_message);
+    post_ratchet_message(&device_message, identity_session_id);
     return device_message;
 }
 

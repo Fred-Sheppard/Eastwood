@@ -33,7 +33,8 @@ std::string post_authenticate(
 );
 
 void post_ratchet_message(
-    const DeviceMessage *msg
+    const DeviceMessage *msg,
+    const unsigned char* identity_session_id
 );
 
 void post_handshake_device(
@@ -48,7 +49,7 @@ void post_handshake_device(
 
 std::vector<std::tuple<unsigned char*, KeyBundle*>> get_handshake_backlog();
 
-std::vector<DeviceMessage*> get_messages();
+std::vector<std::tuple<unsigned char*, DeviceMessage*>>  get_messages();
 
 void get_keybundles(
     std::string username

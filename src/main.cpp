@@ -89,10 +89,11 @@ int main(int argc, char *argv[]) {
     if (refresh_database) drop_all_tables();
 
     init_schema();
+    WindowManager::instance().showLogin();
 
-    register_user("sloggotesting35", std::make_unique<std::string>("1234"));
+    register_user("sloggotesting40", std::make_unique<std::string>("1234"));
     register_first_device();
-    login_user("sloggotesting35");
+    login_user("sloggotesting40");
     post_new_keybundles(
         get_decrypted_keypair("device"),
         generate_signed_prekey(),
@@ -110,10 +111,12 @@ int main(int argc, char *argv[]) {
 
     auto msg = new unsigned char[5];
     randombytes_buf(msg, 5);
-    std::cout << "message" << bin2hex(msg, 5) << std::endl;
+    std::cout << "message " << bin2hex(msg, 5) << std::endl;
 
-    IdentityManager::getInstance().send_to_user("nialltesting35", msg);
-    delete[] msg;  // Clean up the message buffer after sending
-    // WindowManager::instance().showLogin();
+    IdentityManager::getInstance().send_to_user("nialltesting40", msg);
+
+    auto backlog2 = get_messages();
+
+    delete[] msg;
     return app.exec();
 }

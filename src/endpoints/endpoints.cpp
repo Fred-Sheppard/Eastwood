@@ -82,7 +82,7 @@ std::string post_authenticate(
     return response["data"]["token"];
 }
 
-std::vector<DeviceMessage*> get_messages() {
+std::vector<std::tuple<unsigned char*, DeviceMessage*>> get_messages() {
     json response = get("/incomingMessages");
 
     std::cout << "Raw response: " << response.dump() << std::endl;
@@ -92,15 +92,17 @@ std::vector<DeviceMessage*> get_messages() {
     }
     std::cout << std::endl;
 
-    std::vector<DeviceMessage*> messages;
+    std::vector<std::tuple<unsigned char*, DeviceMessage*>> messages;
 
     for (const auto& handshake : response["data"]) {
         int ciphertext_length = handshake["ciphertext_length"].get<int>();
 
+        auto identity_session_id = new unsigned char[crypto_hash_sha256_BYTES];  // 32 bytes for final hash
         auto initator_dev_key = new unsigned char[crypto_box_PUBLICKEYBYTES];
         auto new_dh_public = new unsigned char[crypto_box_PUBLICKEYBYTES];
         auto ciphertext = new unsigned char[ciphertext_length];
 
+        std::string identity_session_str = handshake["identity_session"].get<std::string>();
         std::string dev_key_str = handshake["initiator_device_public_key"].get<std::string>();
         std::string dh_pub_str = handshake["dh_public"].get<std::string>();
         std::string ciphertext_str = handshake["ciphertext"].get<std::string>();
@@ -108,11 +110,13 @@ std::vector<DeviceMessage*> get_messages() {
         int prev_chain_length = handshake["prev_chain_length"].get<int>();
         int message_index = handshake["message_index"].get<int>();
 
-        bool success = hex_to_bin(dev_key_str, initator_dev_key, crypto_box_PUBLICKEYBYTES) &&
+        bool success = hex_to_bin(identity_session_str, identity_session_id, crypto_hash_sha256_BYTES) &&
+            hex_to_bin(dev_key_str, initator_dev_key, crypto_box_PUBLICKEYBYTES) &&
             hex_to_bin(dh_pub_str, new_dh_public, crypto_box_PUBLICKEYBYTES) &&
             hex_to_bin(ciphertext_str, ciphertext, ciphertext_length);
 
         if (!success) {
+            delete[] identity_session_id;
             delete[] initator_dev_key;
             delete[] new_dh_public;
             delete[] ciphertext;
@@ -130,14 +134,15 @@ std::vector<DeviceMessage*> get_messages() {
         memcpy(msg->header, header, sizeof(MessageHeader));
         memcpy(msg->ciphertext, ciphertext, ciphertext_length);
 
-        messages.push_back(msg);
+        messages.push_back(std::make_tuple(identity_session_id, msg));
     }
     return messages;
 }
 
-void post_ratchet_message(const DeviceMessage *msg) {
+void post_ratchet_message(const DeviceMessage *msg, const unsigned char* identity_session_id) {
     json body = {
         {"file_id", 0},
+        {"identity_session_id", bin2hex(identity_session_id, crypto_hash_sha256_BYTES)},
         {"recipient_device_public_key", bin2hex(msg->header->device_id, sizeof(msg->header->device_id))},
         {"dh_public", bin2hex(msg->header->dh_public, sizeof(msg->header->dh_public))},
         {"prev_chain_length", msg->header->prev_chain_length},

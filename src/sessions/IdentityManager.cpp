@@ -71,5 +71,33 @@ void IdentityManager::send_to_user(std::string username, unsigned char *msg) {
     delete[] session_id;
 }
 
+void IdentityManager::receive_messages(std::vector<std::tuple<unsigned char *, DeviceMessage *> > messages_with_ids) {
+    // Group messages by their identity session ID
+    std::map<unsigned char*, std::vector<DeviceMessage*>, IdentityIdComparator> messages_by_id;
+
+    // First pass: group messages by their identity session ID
+    for (const auto& [id, message] : messages_with_ids) {
+        messages_by_id[id].push_back(message);
+    }
+
+    // Second pass: route messages to their respective sessions
+    for (const auto& [id, messages] : messages_by_id) {
+        if (_sessions.find(id) == _sessions.end()) {
+            std::cout << "No session found for identity: ";
+            for (size_t i = 0; i < crypto_hash_sha256_BYTES; i++) {
+                printf("%02x", id[i]);
+            }
+            std::cout << std::endl;
+            continue;
+        }
+        
+        // Route each message to the session
+        for (auto* message : messages) {
+            _sessions[id]->receive_message(message);
+        }
+    }
+}
+
+
 
 
