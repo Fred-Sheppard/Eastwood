@@ -4,7 +4,6 @@
 
 #include "NewRatchet.h"
 
-#include "../../../../../../../../../opt/homebrew/Cellar/libsodium/1.0.20/include/sodium/crypto_box.h"
 #include "src/sql/queries.h"
 
 // other key is initiator ephemeral for recipient
