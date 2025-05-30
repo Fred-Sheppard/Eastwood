@@ -6,6 +6,7 @@
 #include <iostream>
 #include <cstring>
 
+#include "src/endpoints/endpoints.h"
 #include "src/keys/session_token_manager.h"
 #include "src/key_exchange/utils.h"
 
@@ -69,6 +70,9 @@ void IdentityManager::send_to_user(std::string username, unsigned char *msg) {
         std::cout << "No session found for user: " << username << std::endl;
         return;
     }
+
+    get_keybundles(username);
+    send_to_user(username, msg);
 
     _sessions[session_id]->send_message(msg);
 }
