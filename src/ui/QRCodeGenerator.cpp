@@ -7,6 +7,8 @@
 #include <qrcodegen.hpp>
 #include <sstream>
 
+#include "src/sql/queries.h"
+
 std::string toSvgString(const qrcodegen::QrCode &qr, int border) {
     if (border < 0)
         throw std::invalid_argument("Border must be non-negative");
@@ -53,6 +55,12 @@ QImage qrCodeToImage(const qrcodegen::QrCode &qr, int scale = 10) {
 
 QImage getQRCodeImage(std::string input) {
     qrcodegen::QrCode qr0 = qrcodegen::QrCode::encodeText(input.c_str(), qrcodegen::QrCode::Ecc::MEDIUM);
+    return qrCodeToImage(qr0, 10);
+}
+
+QImage getQRCodeForMyDevicePublicKey() {
+    const QByteArray my_device_public = get_public_key("device");
+    qrcodegen::QrCode qr0 = qrcodegen::QrCode::encodeText(my_device_public, qrcodegen::QrCode::Ecc::MEDIUM);
     return qrCodeToImage(qr0, 10);
 }
 

@@ -8,5 +8,6 @@
 
 QImage getQRCodeImage(std::string input);
 
+QImage getQRCodeForMyDevicePublicKey();
 
 #endif //QRCODEGENERATOR_H
