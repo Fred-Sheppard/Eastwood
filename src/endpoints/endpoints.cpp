@@ -82,7 +82,7 @@ std::string post_authenticate(
     return response["data"]["token"];
 }
 
-std::vector<std::tuple<unsigned char*, DeviceMessage*>> get_messages() {
+std::vector<std::tuple<IdentitySessionId, DeviceMessage*>> get_messages() {
     json response = get("/incomingMessages");
 
     std::cout << "Raw response: " << response.dump() << std::endl;
@@ -92,35 +92,40 @@ std::vector<std::tuple<unsigned char*, DeviceMessage*>> get_messages() {
     }
     std::cout << std::endl;
 
-    std::vector<std::tuple<unsigned char*, DeviceMessage*>> messages;
+    std::vector<std::tuple<IdentitySessionId, DeviceMessage*>> messages;
 
-    for (const auto& handshake : response["data"]) {
-        int ciphertext_length = handshake["ciphertext_length"].get<int>();
+    // Check if data array exists
+    if (!response.contains("data") || !response["data"].is_array()) {
+        std::cout << "No messages in response" << std::endl;
+        return messages;
+    }
 
-        auto identity_session_id = new unsigned char[crypto_hash_sha256_BYTES];  // 32 bytes for final hash
+    for (const auto& message : response["data"]) {
+        int ciphertext_length = message["ciphertext_length"].get<int>();
+
+        IdentitySessionId identity_session_id;
         auto initator_dev_key = new unsigned char[crypto_box_PUBLICKEYBYTES];
         auto new_dh_public = new unsigned char[crypto_box_PUBLICKEYBYTES];
         auto ciphertext = new unsigned char[ciphertext_length];
 
-        std::string identity_session_str = handshake["identity_session"].get<std::string>();
-        std::string dev_key_str = handshake["initiator_device_public_key"].get<std::string>();
-        std::string dh_pub_str = handshake["dh_public"].get<std::string>();
-        std::string ciphertext_str = handshake["ciphertext"].get<std::string>();
+        std::string identity_session_str = message["identity_session_id"].get<std::string>();
+        std::string dev_key_str = message["initiator_device_public_key"].get<std::string>();
+        std::string dh_pub_str = message["dh_public"].get<std::string>();
+        std::string ciphertext_str = message["ciphertext"].get<std::string>();
 
-        int prev_chain_length = handshake["prev_chain_length"].get<int>();
-        int message_index = handshake["message_index"].get<int>();
+        int prev_chain_length = message["prev_chain_length"].get<int>();
+        int message_index = message["message_index"].get<int>();
 
-        bool success = hex_to_bin(identity_session_str, identity_session_id, crypto_hash_sha256_BYTES) &&
+        bool success = hex_to_bin(identity_session_str, identity_session_id.data.data(), crypto_hash_sha256_BYTES) &&
             hex_to_bin(dev_key_str, initator_dev_key, crypto_box_PUBLICKEYBYTES) &&
             hex_to_bin(dh_pub_str, new_dh_public, crypto_box_PUBLICKEYBYTES) &&
             hex_to_bin(ciphertext_str, ciphertext, ciphertext_length);
 
         if (!success) {
-            delete[] identity_session_id;
             delete[] initator_dev_key;
             delete[] new_dh_public;
             delete[] ciphertext;
-            throw std::runtime_error("Failed to decode handshake backlog data");
+            throw std::runtime_error("Failed to decode message data");
         }
 
         DeviceMessage* msg = new DeviceMessage();
@@ -131,22 +136,23 @@ std::vector<std::tuple<unsigned char*, DeviceMessage*>> get_messages() {
         header->prev_chain_length = prev_chain_length;
         memcpy(header->device_id, initator_dev_key, crypto_box_PUBLICKEYBYTES);
 
-        memcpy(msg->header, header, sizeof(MessageHeader));
-        memcpy(msg->ciphertext, ciphertext, ciphertext_length);
+        msg->header = header;
+        msg->ciphertext = ciphertext;
+        msg->length = ciphertext_length;
 
         messages.push_back(std::make_tuple(identity_session_id, msg));
     }
     return messages;
 }
 
-void post_ratchet_message(const DeviceMessage *msg, const unsigned char* identity_session_id) {
+void post_ratchet_message(const DeviceMessage *msg, const IdentitySessionId& identity_session_id) {
     auto dev_pub = new unsigned char[crypto_box_PUBLICKEYBYTES];
     QByteArray dev_pub_byte = get_public_key("device");
     memcpy(dev_pub, dev_pub_byte.constData(), crypto_sign_PUBLICKEYBYTES);
 
     json body = {
         {"file_id", 0},
-        {"identity_session_id", bin2hex(identity_session_id, crypto_hash_sha256_BYTES)},
+        {"identity_session_id", bin2hex(identity_session_id.data.data(), crypto_hash_sha256_BYTES)},
         {"initiator_device_public_key", bin2hex(dev_pub, crypto_sign_PUBLICKEYBYTES)},
         {"recipient_device_public_key", bin2hex(msg->header->device_id, sizeof(msg->header->device_id))},
         {"dh_public", bin2hex(msg->header->dh_public, sizeof(msg->header->dh_public))},
@@ -157,7 +163,8 @@ void post_ratchet_message(const DeviceMessage *msg, const unsigned char* identit
     };
 
     post(body, "/sendMessage");
-};
+    delete[] dev_pub;
+}
 
 void get_keybundles(std::string username) {
     json response = get("/keybundle/" + username);
@@ -261,7 +268,7 @@ void get_keybundles(std::string username) {
 }
 
 void post_handshake_device(
-    const unsigned char *identity_session_id,
+    const IdentitySessionId& identity_session_id,
     const unsigned char *recipient_device_key_public,
     const unsigned char *recipient_signed_prekey_public,
     const unsigned char *recipient_signed_prekey_signature,
@@ -270,13 +277,10 @@ void post_handshake_device(
     const unsigned char *my_ephemeral_key_public
 ) {
     json body = {
-        {"identity_session_id", bin2hex(identity_session_id, crypto_hash_sha256_BYTES)},
+        {"identity_session_id", bin2hex(identity_session_id.data.data(), crypto_hash_sha256_BYTES)},
         {"recipient_device_key", bin2hex(recipient_device_key_public, crypto_box_PUBLICKEYBYTES)},
         {"recipient_signed_public_prekey", bin2hex(recipient_signed_prekey_public, crypto_box_PUBLICKEYBYTES)},
-        {
-            "recipient_signed_public_prekey_signature",
-            bin2hex(recipient_signed_prekey_signature, crypto_box_PUBLICKEYBYTES)
-        },
+        {"recipient_signed_public_prekey_signature", bin2hex(recipient_signed_prekey_signature, crypto_box_PUBLICKEYBYTES)},
         {"recipient_onetime_public_prekey", bin2hex(recipient_onetime_prekey_public, crypto_box_PUBLICKEYBYTES)},
         {"initiator_ephemeral_public_key", bin2hex(my_ephemeral_key_public, crypto_box_PUBLICKEYBYTES)},
         {"initiator_device_public_key", bin2hex(my_device_key_public, crypto_box_PUBLICKEYBYTES)},
@@ -284,7 +288,7 @@ void post_handshake_device(
     post(body, "/handshake");
 }
 
-std::vector<std::tuple<unsigned char*, KeyBundle*>> get_handshake_backlog() {
+std::vector<std::tuple<IdentitySessionId, KeyBundle*>> get_handshake_backlog() {
     json response = get("/incomingHandshakes");
     std::cout << "Raw response: " << response.dump() << std::endl;
     std::cout << "Response keys: ";
@@ -293,10 +297,10 @@ std::vector<std::tuple<unsigned char*, KeyBundle*>> get_handshake_backlog() {
     }
     std::cout << std::endl;
 
-    std::vector<std::tuple<unsigned char*, KeyBundle*>> bundles;
+    std::vector<std::tuple<IdentitySessionId, KeyBundle*>> bundles;
 
     for (const auto& handshake : response["data"]) {
-        auto identity_session_id = new unsigned char[crypto_hash_sha256_BYTES];  // 32 bytes for final hash
+        IdentitySessionId identity_session_id;
         auto initator_dev_key = new unsigned char[crypto_box_PUBLICKEYBYTES];
         auto initiator_eph_pub = new unsigned char[crypto_box_PUBLICKEYBYTES];
         auto recip_onetime_pub = new unsigned char[crypto_box_PUBLICKEYBYTES];
@@ -313,7 +317,7 @@ std::vector<std::tuple<unsigned char*, KeyBundle*>> get_handshake_backlog() {
         bool success = hex_to_bin(dev_key_str, initator_dev_key, crypto_box_PUBLICKEYBYTES) &&
             hex_to_bin(eph_pub_str, initiator_eph_pub, crypto_box_PUBLICKEYBYTES) &&
             hex_to_bin(onetime_pub_str, recip_onetime_pub, crypto_box_PUBLICKEYBYTES) &&
-            hex_to_bin(session_id_str, identity_session_id, crypto_hash_sha256_BYTES);  // 32 bytes for final hash
+            hex_to_bin(session_id_str, identity_session_id.data.data(), crypto_hash_sha256_BYTES);
 
         if (!success) {
             std::cout << "Failed to decode hex strings:" << std::endl;
@@ -324,7 +328,6 @@ std::vector<std::tuple<unsigned char*, KeyBundle*>> get_handshake_backlog() {
             delete[] initator_dev_key;
             delete[] initiator_eph_pub;
             delete[] recip_onetime_pub;
-            delete[] identity_session_id;
             throw std::runtime_error("Failed to decode handshake backlog data");
         }
 

@@ -218,8 +218,9 @@ DeviceMessage DoubleRatchet::message_send(const unsigned char* message, unsigned
     // Advance the chain key after encryption
     advance_chain_key(send_chain.chain_key);
 
-    // Convert DeviceMessage to Message for post_ratchet_message
-    post_ratchet_message(&device_message, identity_session_id);
+    IdentitySessionId session_id;
+    memcpy(session_id.data.data(), identity_session_id, crypto_hash_sha256_BYTES);
+    post_ratchet_message(&device_message, session_id);
     return device_message;
 }
 
