@@ -17,6 +17,8 @@ public:
 
     void updateFromBundles(std::vector<KeyBundle*> bundles);
     void send_message(unsigned char* message);
+    void receive_message(DeviceMessage* message);
+
 private:
     unsigned char* identity_session_id;
     std::map<unsigned char*, std::unique_ptr<DoubleRatchet>> ratchets;

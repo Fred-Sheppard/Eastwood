@@ -140,9 +140,14 @@ std::vector<std::tuple<unsigned char*, DeviceMessage*>> get_messages() {
 }
 
 void post_ratchet_message(const DeviceMessage *msg, const unsigned char* identity_session_id) {
+    auto dev_pub = new unsigned char[crypto_box_PUBLICKEYBYTES];
+    QByteArray dev_pub_byte = get_public_key("device");
+    memcpy(dev_pub, dev_pub_byte.constData(), crypto_sign_PUBLICKEYBYTES);
+
     json body = {
         {"file_id", 0},
         {"identity_session_id", bin2hex(identity_session_id, crypto_hash_sha256_BYTES)},
+        {"initiator_device_public_key", bin2hex(dev_pub, crypto_sign_PUBLICKEYBYTES)},
         {"recipient_device_public_key", bin2hex(msg->header->device_id, sizeof(msg->header->device_id))},
         {"dh_public", bin2hex(msg->header->dh_public, sizeof(msg->header->dh_public))},
         {"prev_chain_length", msg->header->prev_chain_length},

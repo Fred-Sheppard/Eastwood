@@ -58,4 +58,10 @@ void IdentitySession::send_message(unsigned char *message) {
     }
 }
 
+void IdentitySession::receive_message(DeviceMessage *message) {
+    for (const auto& [id, ratchet]: ratchets) {
+        ratchet.get()->message_receive(*message);
+    }
+}
+
 
