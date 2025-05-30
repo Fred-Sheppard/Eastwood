@@ -48,6 +48,7 @@ void DoubleRatchet::derive_keys_from_dh_output(const unsigned char* dh_output, b
 DoubleRatchet::DoubleRatchet(KeyBundle* bundle) {
     // Set ratchet ID by concatenating device keys
     set_ratchet_id_and_initial_keys(bundle);
+    other_device_id = bundle->get_their_device_public();
 
     send_chain.index = 0;
     recv_chain.index = 0;
@@ -178,7 +179,7 @@ void DoubleRatchet::advance_chain_key(unsigned char* chain_key) {
     }
 }
 
-DeviceMessage DoubleRatchet::message_send(const unsigned char* message, const unsigned char* device_id) {
+DeviceMessage DoubleRatchet::message_send(const unsigned char* message) {
     // Check if send chain is uninitialized (all zeros)
     bool send_chain_uninitialized = sodium_is_zero(send_chain.chain_key, crypto_kdf_KEYBYTES) == 1;
 
@@ -195,7 +196,7 @@ DeviceMessage DoubleRatchet::message_send(const unsigned char* message, const un
     memcpy(device_message.header->dh_public, local_dh_public, crypto_kx_PUBLICKEYBYTES);
     device_message.header->prev_chain_length = prev_send_chain_length;
     device_message.header->message_index = send_chain.index;
-    memcpy(device_message.header->device_id, device_id, crypto_box_PUBLICKEYBYTES);
+    memcpy(device_message.header->device_id, other_device_id, crypto_box_PUBLICKEYBYTES);
 
     // Derive message key for the current message
     unsigned char* message_key = derive_message_key(send_chain.chain_key);

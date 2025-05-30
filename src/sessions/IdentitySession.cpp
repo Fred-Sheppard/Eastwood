@@ -53,7 +53,7 @@ void IdentitySession::create_ratchet_if_needed(const unsigned char* device_id_on
 
 void IdentitySession::send_message(unsigned char *message) {
     for (const auto& [id, ratchet]: ratchets) {
-        ratchet.get()->message_send(message, id);
+        ratchet.get()->message_send(message);
     }
 }
 

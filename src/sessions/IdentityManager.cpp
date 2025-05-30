@@ -29,7 +29,6 @@ void IdentityManager::update_or_create_identity_sessions(std::vector<KeyBundle*>
 }
 
 void IdentityManager::update_or_create_identity_sessions(std::vector<KeyBundle*> bundles, unsigned char* identity_session_id) {
-
     // Check if a session already exists for this identity pair
     if (_sessions.find(identity_session_id) == _sessions.end()) {
         std::cout << "Session creating... (identity manager)" << std::endl;
@@ -39,7 +38,7 @@ void IdentityManager::update_or_create_identity_sessions(std::vector<KeyBundle*>
     } else {
         // Update existing session with new bundles
         _sessions[identity_session_id]->updateFromBundles(bundles);
-    };
+    }
 }
 
 void IdentityManager::send_to_user(std::string username, unsigned char *msg) {
@@ -48,6 +47,11 @@ void IdentityManager::send_to_user(std::string username, unsigned char *msg) {
 
     // Check if session exists
     if (_sessions.find(session_id) == _sessions.end()) {
+        std::cout << "No session found for identity: ";
+        for (size_t i = 0; i < crypto_hash_sha256_BYTES; i++) {
+            printf("%02x", session_id[i]);
+        }
+        std::cout << std::endl;
         std::cout << "No session found for user: " << username << std::endl;
         delete[] session_id;
         return;
