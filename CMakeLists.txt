@@ -106,6 +106,8 @@ set(CRYPTO_SOURCES
         src/key_exchange/DoubleRatchet.cpp
         src/key_exchange/x3dh.cpp
         src/key_exchange/XChaCha20-Poly1305.cpp
+        src/key_exchange/NewRatchet.cpp
+        src/key_exchange/NewRatchet.h
         src/utils/ConversionUtils.cpp
         src/utils/JsonParser.cpp
         src/client_api_interactions/MakeAuthReq.cpp

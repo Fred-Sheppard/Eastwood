@@ -5,6 +5,8 @@
 #include <gtest/gtest.h>
 
 #include "kek_manager.h"
+#include "NewRatchet.h"
+#include "utils.h"
 #include "database/schema.h"
 #include "src/key_exchange/DoubleRatchet.h"
 
@@ -183,26 +185,33 @@ TEST_F(DoubleRatchetTest, SharedSecretDerivationTest) {
     EXPECT_EQ(memcmp(shared_secret_alice, shared_secret_bob, crypto_scalarmult_BYTES), 0);
 }
 
-TEST_F(DoubleRatchetTest, OneMessageFromOneSideTest) {
-    // alice ratchet
+TEST_F(DoubleRatchetTest, FullRatchetTest) {
+    // Initialize both parties
     switch_to_alice_db();
-    std::unique_ptr<DoubleRatchet> alice_ratchet = std::make_unique<DoubleRatchet>(alice_sending_bundle);
 
-    auto plaintext_message = new unsigned char[10];
-    randombytes_buf(plaintext_message, 10);
-    DeviceMessage* device_message = alice_ratchet.get()->message_send(plaintext_message);
+    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true);
 
-    //bob ratchet
     switch_to_bob_db();
-    std::unique_ptr<DoubleRatchet> bob_ratchet = std::make_unique<DoubleRatchet>(bob_receiving_bundle);
+    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false);
 
-    std::vector<unsigned char> decrypted_message = bob_ratchet.get()->message_receive(*device_message);
+    // Alice sends first message
+    switch_to_alice_db();
+    auto alice_key1 = alice.advance_send();
+    switch_to_bob_db();
+    auto bob_key1 = bob.advance_receive(alice.get_current_dh_public());
+    ASSERT_EQ(memcmp(alice_key1, bob_key1, 32), 0);
 
-    EXPECT_EQ(decrypted_message.size(), 10);
-    EXPECT_EQ(memcmp(decrypted_message.data(), plaintext_message, 10), 0);
+    // Bob responds
+    auto bob_key2 = bob.advance_send();
+    switch_to_alice_db();
+    auto alice_key2 = alice.advance_receive(bob.get_current_dh_public());
+    ASSERT_EQ(memcmp(bob_key2, alice_key2, 32), 0);
 
-    delete[] plaintext_message;
-    delete device_message;
+    // Alice sends again (should trigger DH ratchet)
+    auto alice_key3 = alice.advance_send();
+    switch_to_bob_db();
+    auto bob_key3 = bob.advance_receive(alice.get_current_dh_public());
+    ASSERT_EQ(memcmp(alice_key3, bob_key3, 32), 0);
 }
 
 TEST_F(DoubleRatchetTest, TwoMessageFromOneSideTest) {
