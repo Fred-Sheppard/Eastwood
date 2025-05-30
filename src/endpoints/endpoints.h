@@ -51,12 +51,12 @@ std::vector<std::tuple<IdentitySessionId, KeyBundle*>> get_handshake_backlog();
 
 std::vector<std::tuple<IdentitySessionId, DeviceMessage*>> get_messages();
 
-void get_keybundles(std::string username);
+void get_keybundles(const std::string &username);
 
 void post_new_keybundles(
-    std::tuple<QByteArray, std::unique_ptr<SecureMemoryBuffer>> device_keypair,
-    std::tuple<unsigned char*, std::unique_ptr<SecureMemoryBuffer>> signed_prekeypair,
-    std::vector<std::tuple<unsigned char*, std::unique_ptr<SecureMemoryBuffer>, unsigned char*>> otks
+    std::tuple<QByteArray, std::unique_ptr<SecureMemoryBuffer> > device_keypair,
+    std::tuple<unsigned char *, std::unique_ptr<SecureMemoryBuffer> > signed_prekeypair,
+    const std::vector<std::tuple<unsigned char *, std::unique_ptr<SecureMemoryBuffer>, unsigned char *> > &otks
 );
 
 #endif //ENDPOINTS_H
