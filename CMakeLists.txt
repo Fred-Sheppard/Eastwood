@@ -162,6 +162,7 @@ target_link_libraries(Eastwood PRIVATE
 # Create test executable
 add_executable(EastwoodTests
         test/identity_communication_session_test.cpp
+        test/double_ratchet_test.cpp
         ${CRYPTO_SOURCES}
         src/database/database.cpp
         src/sessions/KeyBundle.h
@@ -180,12 +181,17 @@ target_include_directories(EastwoodTests PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/key_exchange
         ${CMAKE_CURRENT_SOURCE_DIR}/src/sessions
         ${CMAKE_CURRENT_SOURCE_DIR}/src/keys
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/database
         ${CMAKE_CURRENT_SOURCE_DIR}/external/cereal/include
         ${CMAKE_CURRENT_BINARY_DIR}/_deps/googletest-src/googletest/include
 )
 
+# Link libraries in the correct order
 target_link_libraries(EastwoodTests PRIVATE
-        GTest::gtest_main
+        ${CMAKE_CURRENT_BINARY_DIR}/lib/libgtest.a
+        ${CMAKE_CURRENT_BINARY_DIR}/lib/libgtest_main.a
+        ${CMAKE_CURRENT_BINARY_DIR}/lib/libgmock.a
+        ${CMAKE_CURRENT_BINARY_DIR}/lib/libgmock_main.a
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets
