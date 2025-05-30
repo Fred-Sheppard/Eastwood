@@ -145,7 +145,10 @@ std::vector<std::tuple<IdentitySessionId, DeviceMessage*>> get_messages() {
 }
 
 void post_ratchet_message(std::vector<std::tuple<IdentitySessionId&, DeviceMessage*>> messages) {
-    json data = json::array();
+    std::cout << "posting ratchet message" << std::endl;
+    json data = {"data", json::array()};
+
+
     for (const auto& [identity_session_id, msg] : messages) {
         auto dev_pub = new unsigned char[crypto_box_PUBLICKEYBYTES];
         QByteArray dev_pub_byte = get_public_key("device");
@@ -156,13 +159,13 @@ void post_ratchet_message(std::vector<std::tuple<IdentitySessionId&, DeviceMessa
             {"identity_session_id", bin2hex(identity_session_id.data.data(), crypto_hash_sha256_BYTES)},
             {"initiator_device_public_key", bin2hex(dev_pub, crypto_sign_PUBLICKEYBYTES)},
             {"recipient_device_public_key", bin2hex(msg->header->device_id, sizeof(msg->header->device_id))},
-            {"dh_public", bin2hex(msg->header->dh_public, sizeof(msg->header->dh_public))},
+            {"dh_public", bin2hex(msg->header->dh_public, crypto_sign_PUBLICKEYBYTES)},
             {"prev_chain_length", msg->header->prev_chain_length},
             {"message_index", msg->header->message_index},
-            {"ciphertext", bin2hex(msg->ciphertext, sizeof(msg->ciphertext))},
-            {"ciphertext_length", sizeof(msg->ciphertext)},
+            {"ciphertext", bin2hex(msg->ciphertext, msg->length)},
+            {"ciphertext_length", msg->length},
         };
-        data.push_back(body);
+        data["data"].push_back(body);
         delete[] dev_pub;
     }
 
