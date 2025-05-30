@@ -24,34 +24,6 @@
 #include "sessions/IdentitySession.h"
 #include "sql/queries.h"
 
-std::string generateRandomString(int length) {
-    // Define the characters you want to include in your random string.
-    // This example uses uppercase letters, lowercase letters, and digits.
-    const std::string characters =
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-            "abcdefghijklmnopqrstuvwxyz"
-            "0123456789";
-
-    // Seed the random number generator.
-    // Using std::chrono::system_clock::now().time_since_epoch().count()
-    // provides a good, time-based seed.
-    std::mt19937 generator(static_cast<unsigned int>(
-        std::chrono::system_clock::now().time_since_epoch().count()
-    ));
-
-    // Create a distribution to pick random indices from the 'characters' string.
-    std::uniform_int_distribution<> distribution(0, characters.length() - 1);
-
-    std::string randomString;
-    randomString.reserve(length); // Pre-allocate memory for efficiency
-
-    for (int i = 0; i < length; ++i) {
-        randomString += characters[distribution(generator)];
-    }
-
-    return randomString;
-}
-
 int main(int argc, char *argv[]) {
     // Test generate_unique_id_pair
     std::string input1 = "test1";
@@ -72,18 +44,15 @@ int main(int argc, char *argv[]) {
     std::cout << "\nStarting main application...\n" << std::endl;
 
     QApplication app(argc, argv);
-    constexpr bool encrypted = false;
-    constexpr bool refresh_database = true;
+    constexpr bool refresh_database = false;
 
     auto &db = Database::get();
-    if (db.initialize("master key", encrypted)) {
+    if (db.initialize("master key")) {
         qDebug() << "Database initialized successfully.";
     } else {
         qDebug() << "Failed to initialize database.";
         return 1;
     }
-
-    auto master_password = std::make_unique<std::string>("correct horse battery stapler");
 
     // TODO: Debugging only
     if (refresh_database) drop_all_tables();
@@ -91,32 +60,6 @@ int main(int argc, char *argv[]) {
     init_schema();
     WindowManager::instance().showLogin();
 
-    register_user("sloggotesting40", std::make_unique<std::string>("1234"));
-    register_first_device();
-    login_user("sloggotesting40");
-    post_new_keybundles(
-        get_decrypted_keypair("device"),
-        generate_signed_prekey(),
-        generate_onetime_keys(100)
-    );
-
-    std::cout << "Press Enter to continue...";
-    std::cin.get();
-
-    auto backlog = get_handshake_backlog();
-    IdentityManager::getInstance().update_or_create_identity_sessions(backlog);
-
-    std::cout << "Press Enter to continue...";
-    std::cin.get();
-
-    auto msg = new unsigned char[5];
-    randombytes_buf(msg, 5);
-    std::cout << "message " << bin2hex(msg, 5) << std::endl;
-
-    IdentityManager::getInstance().send_to_user("nialltesting40", msg);
-
-    auto backlog2 = get_messages();
-
-    delete[] msg;
-    return app.exec();
+    WindowManager::instance().showLogin();
+    return QApplication::exec();
 }

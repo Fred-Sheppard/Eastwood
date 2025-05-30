@@ -103,6 +103,7 @@ void IdentityManager::receive_messages(std::vector<std::tuple<IdentitySessionId,
             delete message; // Clean up the message after processing
         }
     }
+
 }
 
 void IdentityManager::print_all_session_ids() {

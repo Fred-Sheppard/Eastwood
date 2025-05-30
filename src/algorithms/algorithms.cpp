@@ -179,8 +179,7 @@ unsigned char* generate_unique_id_pair(std::string *input_one, std::string *inpu
     crypto_hash_sha256(hashed_one, reinterpret_cast<const unsigned char*>(input_one->c_str()), input_one->length());
     crypto_hash_sha256(hashed_two, reinterpret_cast<const unsigned char*>(input_two->c_str()), input_two->length());
     
-    // Concatenate and rehash
-    unsigned char concatenated[64];  // 32 + 32 bytes
+    unsigned char concatenated[64]; 
     
     if (memcmp(hashed_one, hashed_two, 32) <= 0) {
         memcpy(concatenated, hashed_one, 32);
