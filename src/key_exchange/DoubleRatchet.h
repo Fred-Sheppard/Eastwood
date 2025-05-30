@@ -137,7 +137,7 @@ public:
     ~DoubleRatchet();
     
     // Creates a message key and header for sending
-    DeviceMessage message_send(const unsigned char* message);
+    DeviceMessage* message_send(const unsigned char* message);
 
     // Processes a received message with header and returns the decrypted plaintext
     std::vector<unsigned char> message_receive(const DeviceMessage& encrypted_message);
