@@ -15,12 +15,12 @@ struct NewChain {
 
 class NewRatchet {
 public:
-    NewRatchet(const unsigned char* shared_secret, unsigned char* other_key, bool is_sender);
+    NewRatchet(const unsigned char* shared_secret, const unsigned char* other_key, bool is_sender);
 
     unsigned char* advance_send();
     unsigned char* advance_receive(const unsigned char* new_dh_public);
 
-    const unsigned char *get_current_dh_public(); //testing!!
+    const unsigned char *get_current_dh_public() const; //testing!!
 private:
     bool reversed;
     bool due_to_send_new_dh;

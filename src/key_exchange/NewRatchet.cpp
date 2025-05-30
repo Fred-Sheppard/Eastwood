@@ -8,7 +8,7 @@
 
 // other key is initiator ephemeral for recipient
 // other key is receiver signed prekey for initiator
-NewRatchet::NewRatchet(const unsigned char *shared_secret, unsigned char *other_key, bool is_sender) {
+NewRatchet::NewRatchet(const unsigned char *shared_secret, const unsigned char *other_key, bool is_sender) {
     memcpy(root_key, shared_secret, 32);
 
     if (is_sender) {
@@ -118,7 +118,9 @@ void NewRatchet::generate_new_local_dh_keypair() {
 
 unsigned char* NewRatchet::dh() const {
     const auto result = new unsigned char[32];
-    crypto_scalarmult(result, local_dh_priv->data(), remote_dh_public);
+    if (crypto_scalarmult(result, local_dh_priv->data(), remote_dh_public) != 0) {
+        throw std::runtime_error("Failed to perform dh");
+    };
     return result;
 };
 
@@ -186,7 +188,7 @@ unsigned char* NewRatchet::advance_receive(const unsigned char* new_dh_public) {
 }
 
 //remove this is for tesitng
-const unsigned char *NewRatchet::get_current_dh_public() {
+const unsigned char *NewRatchet::get_current_dh_public() const {
     return local_dh_public;
 }
 
