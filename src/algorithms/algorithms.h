@@ -69,7 +69,7 @@ unsigned char* generate_unique_id_pair(std::string *input_one, std::string *inpu
 std::vector<unsigned char> encrypt_bytes(
     const QByteArray &data,
     const std::unique_ptr<SecureMemoryBuffer> &key,
-    const std::vector<unsigned char> &nonce
+    const unsigned char nonce[CHA_CHA_NONCE_LEN]
 );
 
 std::vector<unsigned char> decrypt_bytes(

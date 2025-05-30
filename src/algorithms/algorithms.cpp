@@ -224,7 +224,7 @@ unsigned char *generate_unique_id_pair(std::string *input_one, std::string *inpu
 std::vector<unsigned char> encrypt_bytes(
     const QByteArray &data,
     const std::unique_ptr<SecureMemoryBuffer> &key,
-    const std::vector<unsigned char> &nonce
+    const unsigned char nonce[CHA_CHA_NONCE_LEN]
 ) {
     const auto encrypted_len = data.size() + ENC_OVERHEAD;
     std::vector<unsigned char> encrypted_bytes;
@@ -236,7 +236,7 @@ std::vector<unsigned char> encrypt_bytes(
             data.size(),
             nullptr, 0, // No associated data
             nullptr, // Always null for this algorithm
-            nonce.data(), key->data()
+            nonce, key->data()
         ) != 0) {
        throw std::runtime_error("Failed to encrypt file");
     }
