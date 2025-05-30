@@ -28,16 +28,26 @@ void IdentityManager::update_or_create_identity_sessions(std::vector<KeyBundle*>
     delete[] session_id;
 }
 
-void IdentityManager::update_or_create_identity_sessions(std::vector<KeyBundle*> bundles, unsigned char* identity_session_id) {
-    // Check if a session already exists for this identity pair
-    if (_sessions.find(identity_session_id) == _sessions.end()) {
-        std::cout << "Session creating... (identity manager)" << std::endl;
-        // Create a new session with the bundles
-        auto session = std::make_unique<IdentitySession>(bundles, identity_session_id);
-        _sessions[identity_session_id] = std::move(session);
-    } else {
-        // Update existing session with new bundles
-        _sessions[identity_session_id]->updateFromBundles(bundles);
+void IdentityManager::update_or_create_identity_sessions(std::vector<std::tuple<unsigned char*, KeyBundle*>> bundles_with_ids) {
+    // Group bundles by their identity session ID
+    std::map<unsigned char*, std::vector<KeyBundle*>, IdentityIdComparator> bundles_by_id;
+    
+    // First pass: group bundles by their identity session ID
+    for (const auto& [id, bundle] : bundles_with_ids) {
+        bundles_by_id[id].push_back(bundle);
+    }
+    
+    // Second pass: create or update sessions for each ID
+    for (const auto& [id, bundles] : bundles_by_id) {
+        if (_sessions.find(id) == _sessions.end()) {
+            std::cout << "Session creating... (identity manager)" << std::endl;
+            // Create a new session with the bundles
+            auto session = std::make_unique<IdentitySession>(bundles, id);
+            _sessions[id] = std::move(session);
+        } else {
+            // Update existing session with new bundles
+            _sessions[id]->updateFromBundles(bundles);
+        }
     }
 }
 

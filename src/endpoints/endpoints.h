@@ -46,7 +46,7 @@ void post_handshake_device(
     const unsigned char *my_ephemeral_key_public
 );
 
-std::tuple<std::vector<KeyBundle*>, unsigned char*> get_handshake_backlog();
+std::vector<std::tuple<unsigned char*, KeyBundle*>> get_handshake_backlog();
 
 std::vector<DeviceMessage*> get_messages();
 

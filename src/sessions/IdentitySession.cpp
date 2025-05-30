@@ -25,6 +25,7 @@ void IdentitySession::updateFromBundles(std::vector<KeyBundle*> bundles) {
     }
 }
 
+
 void IdentitySession::create_ratchet_if_needed(const unsigned char* device_id_one, const unsigned char* device_id_two, KeyBundle* bundle) {
     std::cout << "IdentitySession::create_ratchet_if_needed" << std::endl;
     size_t out_len;

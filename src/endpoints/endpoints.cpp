@@ -274,7 +274,7 @@ void post_handshake_device(
     post(body, "/handshake");
 }
 
-std::tuple<std::vector<KeyBundle*>, unsigned char*> get_handshake_backlog() {
+std::vector<std::tuple<unsigned char*, KeyBundle*>> get_handshake_backlog() {
     json response = get("/incomingHandshakes");
     std::cout << "Raw response: " << response.dump() << std::endl;
     std::cout << "Response keys: ";
@@ -283,10 +283,10 @@ std::tuple<std::vector<KeyBundle*>, unsigned char*> get_handshake_backlog() {
     }
     std::cout << std::endl;
 
-    std::vector<KeyBundle*> bundles;
-    auto identity_session_id = new unsigned char[crypto_hash_sha256_BYTES];  // 32 bytes for final hash
+    std::vector<std::tuple<unsigned char*, KeyBundle*>> bundles;
 
     for (const auto& handshake : response["data"]) {
+        auto identity_session_id = new unsigned char[crypto_hash_sha256_BYTES];  // 32 bytes for final hash
         auto initator_dev_key = new unsigned char[crypto_box_PUBLICKEYBYTES];
         auto initiator_eph_pub = new unsigned char[crypto_box_PUBLICKEYBYTES];
         auto recip_onetime_pub = new unsigned char[crypto_box_PUBLICKEYBYTES];
@@ -326,10 +326,10 @@ std::tuple<std::vector<KeyBundle*>, unsigned char*> get_handshake_backlog() {
             recip_onetime_pub
         );
 
-        bundles.push_back(new_bundle);
+        bundles.push_back(std::make_tuple(identity_session_id, new_bundle));
     }
 
-    return std::make_tuple(bundles, identity_session_id);
+    return bundles;
 }
 
 void post_new_keybundles(std::tuple<QByteArray, std::unique_ptr<SecureMemoryBuffer> > device_keypair,

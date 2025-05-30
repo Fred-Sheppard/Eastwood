@@ -9,6 +9,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <tuple>
 #include "IdentitySession.h"
 
 // Custom comparator for unsigned char* keys
@@ -29,7 +30,7 @@ public:
         return instance;
     }
     void update_or_create_identity_sessions(std::vector<KeyBundle*> bundles, std::string username_one, std::string username_two);
-    void update_or_create_identity_sessions(std::vector<KeyBundle*> bundles, unsigned char* identity_session_id);
+    void update_or_create_identity_sessions(std::vector<std::tuple<unsigned char*, KeyBundle*>> bundles_with_ids);
     void send_to_user(std::string username, unsigned char* msg);
 };
 
