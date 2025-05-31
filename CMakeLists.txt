@@ -14,18 +14,12 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets UiTools)
 find_package(OpenSSL REQUIRED)
 
-# Add Google Test
-include(FetchContent)
-FetchContent_Declare(
-        googletest
-        GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG release-1.12.1
-)
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+# Enable testing and find GTest
+enable_testing()
+find_package(GTest REQUIRED)
 
 # Add nlohmann_json
+include(FetchContent)
 FetchContent_Declare(
         json
         URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
@@ -137,6 +131,7 @@ target_include_directories(Eastwood PRIVATE
         ${SODIUM_INCLUDE_DIR}
         ${SQLCIPHER_INCLUDE_DIRS}
         ${CMAKE_CURRENT_SOURCE_DIR}
+        ${GTEST_INCLUDE_DIRS}
 )
 
 target_link_libraries(Eastwood PRIVATE
@@ -149,6 +144,7 @@ target_link_libraries(Eastwood PRIVATE
         OpenSSL::Crypto
         nlohmann_json::nlohmann_json
         ${SQLCIPHER_LIBRARIES}
+        ${GTEST_LIBRARIES}
 )
 
 # Create test executable
@@ -175,14 +171,12 @@ target_include_directories(EastwoodTests PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/keys
         ${CMAKE_CURRENT_SOURCE_DIR}/src/database
         ${CMAKE_CURRENT_SOURCE_DIR}/external/cereal/include
+        ${GTEST_INCLUDE_DIRS}
 )
 
 # Link libraries using proper CMake targets
 target_link_libraries(EastwoodTests PRIVATE
-        gtest
-        gtest_main
-        gmock
-        gmock_main
+        ${GTEST_LIBRARIES}
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets
