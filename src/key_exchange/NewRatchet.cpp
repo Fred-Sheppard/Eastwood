@@ -6,12 +6,13 @@
 
 #include <sstream>
 
+#include "XChaCha20-Poly1305.h"
 #include "src/keys/kek_manager.h"
 #include "src/sql/queries.h"
 
 // other key is initiator ephemeral for recipient
 // other key is receiver signed prekey for initiator
-NewRatchet::NewRatchet(const unsigned char *shared_secret, const unsigned char *other_key, bool is_sender, unsigned char* ratchet_id_in, unsigned char* identity_session_id_in) {
+NewRatchet::NewRatchet(const unsigned char *shared_secret, const unsigned char *other_key, bool is_sender, unsigned char ratchet_id_in[32], unsigned char identity_session_id_in[32]) {
     memcpy(root_key, shared_secret, 32);
     memcpy(ratchet_id, ratchet_id_in, 32);
     memcpy(identity_session_id, identity_session_id_in, 32);
@@ -27,7 +28,11 @@ NewRatchet::NewRatchet(const unsigned char *shared_secret, const unsigned char *
 }
 
 //serialised
-NewRatchet::NewRatchet(std::istream& in) {
+NewRatchet::NewRatchet(const std::vector<unsigned char> &serialised_ratchet) {
+    std::istringstream in(std::string(
+        reinterpret_cast<const char*>(serialised_ratchet.data()),
+        serialised_ratchet.size()
+    ));
     deserialise(in);
 }
 
@@ -295,16 +300,28 @@ void NewRatchet::save() {
     std::string str = oss.str();
     QByteArray bytes(str.data(), static_cast<int>(str.size()));
 
-    auto nonce = new unsigned char[CHA_CHA_NONCE_LEN];
-    randombytes_buf(nonce, CHA_CHA_NONCE_LEN);
+    auto nonce_data = new unsigned char[CHA_CHA_NONCE_LEN];
+    randombytes_buf(nonce_data, CHA_CHA_NONCE_LEN);
+
+    auto nonce_key = new unsigned char[CHA_CHA_NONCE_LEN];
+    randombytes_buf(nonce_key, CHA_CHA_NONCE_LEN);
 
     std::unique_ptr<SecureMemoryBuffer> kek_buffer = SecureMemoryBuffer::create(32);
     memcpy(kek_buffer->data(), KekManager::instance().getKEK(), 32);
 
-    std::vector<unsigned char> encrypted_bytes = encrypt_bytes(bytes, std::move(kek_buffer), nonce);
-    save_ratchet(reinterpret_cast<const char*>(ratchet_id), identity_session_id, encrypted_bytes, nonce);
+    auto encryption_key = SecureMemoryBuffer::create(32);
+    crypto_stream_chacha20_keygen(encryption_key->data());
 
-    delete[] nonce;
+    auto copy_encryption_key = SecureMemoryBuffer::create(32);
+    memcpy(copy_encryption_key->data(), encryption_key->data(), 32);
+
+    auto encrypted_data = encrypt_bytes(bytes, std::move(copy_encryption_key), nonce_data);
+    auto encrypted_encryption_key = encrypt_symmetric_key(encryption_key, nonce_key);
+
+    save_ratchet_and_key(reinterpret_cast<const char*>(ratchet_id), identity_session_id, encrypted_data, nonce_data, std::move(encrypted_encryption_key), nonce_key);
+
+    delete[] nonce_data;
+    delete[] nonce_key;
 }
 
 

@@ -76,7 +76,7 @@ inline void init_schema() {
         ratchet_id       BLOB PRIMARY KEY,
         identity_session_id BLOB UNIQUE,
         nonce         BLOB UNIQUE,
-        data         BLOB UNIQUE,
+        encrypted_data         BLOB UNIQUE,
         created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
         last_modified DATETIME DEFAULT CURRENT_TIMESTAMP
     );
@@ -86,6 +86,21 @@ inline void init_schema() {
     FOR EACH ROW
     BEGIN
         UPDATE ratchets SET last_modified = CURRENT_TIMESTAMP WHERE label = OLD.label;
+    END;
+
+    CREATE TABLE IF NOT EXISTS ratchet_keys (
+        ratchet_id       BLOB PRIMARY KEY,
+        nonce         BLOB UNIQUE,
+        encrypted_key         BLOB UNIQUE,
+        created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+        last_modified DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TRIGGER IF NOT EXISTS ratchet_keys_last_modified_trigger
+    AFTER UPDATE ON ratchet_keys
+    FOR EACH ROW
+    BEGIN
+        UPDATE ratchet_keys SET last_modified = CURRENT_TIMESTAMP WHERE label = OLD.label;
     END;
 )sql";
 

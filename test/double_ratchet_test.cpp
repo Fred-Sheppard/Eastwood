@@ -247,7 +247,7 @@ TEST_F(DoubleRatchetTest, RatchetBothSidesTest) {
     // Initialize both parties
     switch_to_alice_db();
     auto ratchet_id = new unsigned char[32];
-    randombytes_buf(ratchet_id, sizeof(ratchet_id));
+    randombytes_buf(ratchet_id, 32);
     NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true, ratchet_id, ratchet_id);
 
     switch_to_bob_db();
@@ -279,7 +279,7 @@ TEST_F(DoubleRatchetTest, TwoMessageFromOneSideTest) {
     switch_to_alice_db();
 
     auto ratchet_id = new unsigned char[32];
-    randombytes_buf(ratchet_id, sizeof(ratchet_id));
+    randombytes_buf(ratchet_id, 32);
     NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true, ratchet_id, ratchet_id);
 
     switch_to_bob_db();
@@ -311,7 +311,7 @@ TEST_F(DoubleRatchetTest, MessageIndexResetTest) {
     // Initialize both parties
     switch_to_alice_db();
     auto ratchet_id = new unsigned char[32];
-    randombytes_buf(ratchet_id, sizeof(ratchet_id));
+    randombytes_buf(ratchet_id, 32);
     NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true, ratchet_id, ratchet_id);
 
     switch_to_bob_db();
@@ -346,7 +346,7 @@ TEST_F(DoubleRatchetTest, OneMessageFromEitherSideTest) {
     // Initialize both parties
     switch_to_alice_db();
     auto ratchet_id = new unsigned char[32];
-    randombytes_buf(ratchet_id, sizeof(ratchet_id));
+    randombytes_buf(ratchet_id, 32);
     NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true, ratchet_id, ratchet_id);
 
     switch_to_bob_db();
@@ -369,7 +369,7 @@ TEST_F(DoubleRatchetTest, MultipleMessageFromOneSideThenMultipleSwitchTest) {
     // Initialize both parties
     switch_to_alice_db();
     auto ratchet_id = new unsigned char[32];
-    randombytes_buf(ratchet_id, sizeof(ratchet_id));
+    randombytes_buf(ratchet_id, 32);
     NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true, ratchet_id, ratchet_id);
 
     switch_to_bob_db();
@@ -404,7 +404,7 @@ TEST_F(DoubleRatchetTest, OutOfOrderMessageTest) {
     // Initialize both parties
     switch_to_alice_db();
     auto ratchet_id = new unsigned char[32];
-    randombytes_buf(ratchet_id, sizeof(ratchet_id));
+    randombytes_buf(ratchet_id, 32);
     NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true, ratchet_id, ratchet_id);
 
     switch_to_bob_db();
@@ -429,7 +429,7 @@ TEST_F(DoubleRatchetTest, OutOfOrderMessageTest) {
 TEST_F(DoubleRatchetTest, SkippedMessagesAcrossRatchetTest) {
     switch_to_alice_db();
     auto ratchet_id = new unsigned char[32];
-    randombytes_buf(ratchet_id, sizeof(ratchet_id));
+    randombytes_buf(ratchet_id, 32);
     NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true, ratchet_id, ratchet_id);
 
     switch_to_bob_db();
@@ -457,18 +457,16 @@ TEST_F(DoubleRatchetTest, SkippedMessagesAcrossRatchetTest) {
     delete[] ratchet_id;
 }
 
-TEST_F(DoubleRatchetTest, Serialisation) {
+TEST_F(DoubleRatchetTest, SavingAndLoadingFromDB) {
     // Create initial ratchet
     switch_to_alice_db();
     auto ratchet_id = new unsigned char[32];
-    randombytes_buf(ratchet_id, sizeof(ratchet_id));
+    randombytes_buf(ratchet_id, 32);
     NewRatchet ratchet1(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true, ratchet_id, ratchet_id);
 
-    std::stringstream ss;
-    ratchet1.serialise(ss);
-
-    switch_to_bob_db();
-    NewRatchet ratchet2(ss);
+    ratchet1.save();
+    auto decrypted_ratchet = get_decrypted_ratchet(reinterpret_cast<const char*>(ratchet_id));
+    auto ratchet2 = NewRatchet(decrypted_ratchet);
 
     EXPECT_EQ(0, memcmp(ratchet1.local_dh_priv->data(), ratchet2.local_dh_priv->data(), 32));
     EXPECT_EQ(0, memcmp(ratchet1.local_dh_public, ratchet2.local_dh_public, 32));
@@ -477,17 +475,6 @@ TEST_F(DoubleRatchetTest, Serialisation) {
     EXPECT_EQ(ratchet1.send_chain.index, ratchet2.send_chain.index);
     EXPECT_EQ(0, memcmp(ratchet1.receive_chain.key, ratchet2.receive_chain.key, 32));
     EXPECT_EQ(ratchet1.receive_chain.index, ratchet2.receive_chain.index);
-    delete[] ratchet_id;
-}
-
-TEST_F(DoubleRatchetTest, SavingToDB) {
-    // Create initial ratchet
-    switch_to_alice_db();
-    auto ratchet_id = new unsigned char[32];
-    randombytes_buf(ratchet_id, sizeof(ratchet_id));
-    NewRatchet ratchet1(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true, ratchet_id, ratchet_id);
-
-    ratchet1.save();
     delete[] ratchet_id;
 }
 
