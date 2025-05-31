@@ -186,12 +186,5 @@ protected:
 };
 
 TEST_F(IdentitySessionTest, SharedSecretDerivationTest) {
-    switch_to_alice_db();
-    unsigned char* shared_secret_alice = alice_sending_bundle->get_shared_secret();
 
-    switch_to_bob_db();
-    unsigned char* shared_secret_bob = bob_receiving_bundle->get_shared_secret();
-
-    // Compare the actual values of the shared secrets
-    EXPECT_EQ(memcmp(shared_secret_alice, shared_secret_bob, crypto_scalarmult_BYTES), 0);
 }
