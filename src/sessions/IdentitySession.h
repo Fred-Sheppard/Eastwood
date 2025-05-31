@@ -15,7 +15,7 @@
 
 class IdentitySession {
 private:
-    unsigned char* identity_session_id[32];
+    unsigned char identity_session_id[32];
     std::map<unsigned char*, std::unique_ptr<NewRatchet>> ratchets;
 
 public:
@@ -23,9 +23,11 @@ public:
     ~IdentitySession();
 
     void updateFromBundles(std::vector<KeyBundle*> bundles);
-    void create_ratchet_if_needed(const unsigned char* device_id_one, const unsigned char* device_id_two, KeyBundle* bundle);
+    std::vector<std::tuple<IdentitySessionId, SendingKeyBundle*>> create_ratchet_if_needed(KeyBundle* bundle);
     std::vector<std::tuple<IdentitySessionId, std::unique_ptr<DeviceMessage>>> send_message(const unsigned char* message, size_t message_len);
     std::vector<unsigned char> receive_message(DeviceMessage *message);
+
+    const std::map<unsigned char*, std::unique_ptr<NewRatchet>>& get_ratchets() const { return ratchets; };
 };
 
 #endif //EASTWOOD_IDENTITY_SESSION_H

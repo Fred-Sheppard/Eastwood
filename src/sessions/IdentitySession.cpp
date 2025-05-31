@@ -3,7 +3,6 @@
 //
 
 #include "IdentitySession.h"
-
 #include "src/endpoints/endpoints.h"
 #include "src/key_exchange/utils.h"
 #include "src/key_exchange/XChaCha20-Poly1305.h"
@@ -22,21 +21,21 @@ void IdentitySession::updateFromBundles(std::vector<KeyBundle*> bundles) {
     std::cout << "IdentitySession::updateFromBundles" << std::endl;
     std::cout << bundles.size() << std::endl;
     for (KeyBundle* bundle: bundles) {
-        std::cout << "IdentitySession::updateFromBundles in loop" << std::endl;
-        unsigned char* my_dev_pub = bundle->get_my_device_public();
-        unsigned char* their_dev_pub = bundle->get_their_device_public();
-        
-        create_ratchet_if_needed(my_dev_pub, their_dev_pub, bundle);
+        create_ratchet_if_needed(bundle);
     }
 }
 
-void IdentitySession::create_ratchet_if_needed(const unsigned char* device_id_one, const unsigned char* device_id_two, KeyBundle* bundle) {
+// returns handshakes to post if needed
+// post_handshake(session_id, jadjfajdfja)
+std::vector<std::tuple<IdentitySessionId, SendingKeyBundle*>> IdentitySession::create_ratchet_if_needed(KeyBundle* bundle) {
     size_t message_len = 32;
-    auto ratchet_id = concat_ordered(device_id_one, 32, device_id_two, 32, message_len);
+    auto ratchet_id = bundle->get_ratchet_id();
 
     bool exists = ratchets.find(ratchet_id) != ratchets.end();
     std::cout << "Ratchets exists: " << exists << std::endl;
-    
+
+    std::vector<std::tuple<IdentitySessionId, SendingKeyBundle*>> posts_to_send;
+
     if (!exists) {
         // Create new DoubleRatchet instance with the bundle
         std::cout << "Creating ratchet" << std::endl;
@@ -47,9 +46,11 @@ void IdentitySession::create_ratchet_if_needed(const unsigned char* device_id_on
             auto sender = dynamic_cast<SendingKeyBundle*>(bundle);
             IdentitySessionId session_id;
             memcpy(session_id.data.data(), identity_session_id, crypto_hash_sha256_BYTES);
-            post_handshake_device(session_id, sender->get_their_device_public(), sender->get_their_signed_public(), sender->get_their_signed_signature(), sender->get_their_onetime_public(), sender->get_my_device_public(), sender->get_my_ephemeral_public());
+            posts_to_send.push_back(std::make_tuple(session_id, sender));
         }
     }
+
+    return posts_to_send;
 }
 
 std::vector<std::tuple<IdentitySessionId, std::unique_ptr<DeviceMessage>>> IdentitySession::send_message(const unsigned char* message, size_t message_len) {

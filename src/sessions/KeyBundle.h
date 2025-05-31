@@ -9,6 +9,7 @@
 #include <memory>
 
 #include "src/key_exchange/NewRatchet.h"
+#include "src/key_exchange/utils.h"
 #include "src/key_exchange/x3dh.h"
 #include "src/sql/queries.h"
 
@@ -30,6 +31,10 @@ class KeyBundle {
     virtual Role get_role() const = 0;
 
     virtual unsigned char* get_shared_secret() = 0;
+    unsigned char* get_ratchet_id() const {
+        size_t size = 32;
+       return concat_ordered(my_device_public, 32, their_device_public, 32, size);
+    };
 
     unsigned char *get_my_device_public() const { return my_device_public; }
     unsigned char *get_their_device_public() const { return their_device_public; }

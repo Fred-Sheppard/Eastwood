@@ -189,6 +189,7 @@ target_link_libraries(Eastwood PRIVATE
 add_executable(EastwoodTests
         test/identity_communication_session_test.cpp
         test/double_ratchet_test.cpp
+        test/identity_session_test.cpp
         ${CRYPTO_SOURCES}
         src/database/database.cpp
         src/sessions/KeyBundle.h
