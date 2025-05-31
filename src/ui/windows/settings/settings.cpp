@@ -38,7 +38,7 @@ void Settings::setupConnections()
 {
     // Connect passphrase fields to validation
     connect(ui->currentPassphrase, &QLineEdit::textChanged, this, &Settings::validatePassphrase);
-    connect(ui->newPassphrase, &QLineEdit::textChanged, this, &Settings::validatePassphrase);
+    connect(ui->currentPassphrase, &QLineEdit::textChanged, this, &Settings::validatePassphrase);
     connect(ui->confirmPassphrase, &QLineEdit::textChanged, this, &Settings::validatePassphrase);
 
     // Connect passphrase section buttons
@@ -49,7 +49,9 @@ void Settings::setupConnections()
     connect(ui->authCancelButton, &QPushButton::clicked, this, &Settings::onAuthCancelClicked);
     connect(ui->authSaveButton, &QPushButton::clicked, this, &Settings::onAuthSaveClicked);
 
-    if (NavBar* navbar = findChild<NavBar*>()) {
+    // Connect NavBar signals
+    NavBar* navbar = findChild<NavBar*>();
+    if (navbar) {
         connect(navbar, &NavBar::receivedClicked, this, &Settings::onReceivedButtonClicked);
         connect(navbar, &NavBar::sentClicked, this, &Settings::onSentButtonClicked);
         connect(navbar, &NavBar::sendFileClicked, this, &Settings::onSendFileButtonClicked);
@@ -118,10 +120,11 @@ void Settings::onSettingsButtonClicked()
     ui->confirmPassphrase->clear();
 }
 
-void Settings::onWindowShown(const QString& windowName) const
+void Settings::onWindowShown(const QString& windowName)
 {
     // Find the navbar and update its active button
-    if (auto navbar = findChild<NavBar*>()) {
+    NavBar* navbar = findChild<NavBar*>();
+    if (navbar) {
         navbar->setActiveButton(windowName);
     }
 }
@@ -166,6 +169,7 @@ void Settings::onLogoutButtonClicked() {
 void Settings::onScanQRButtonClicked()
 {
     m_scanDialog = createScanDialog();
+    if (!m_scanDialog) return;
 
     if (!initializeCamera()) {
         cleanupScanDialog();
@@ -178,11 +182,11 @@ void Settings::onScanQRButtonClicked()
 
 QDialog* Settings::createScanDialog()
 {
-    auto dialog = new QDialog(this);
+    QDialog* dialog = new QDialog(this);
     dialog->setWindowTitle("Scan QR Code");
     dialog->setMinimumSize(640, 480);
 
-    auto layout = new QVBoxLayout(dialog);
+    QVBoxLayout* layout = new QVBoxLayout(dialog);
     
     // Create and setup camera preview label
     m_cameraLabel = new QLabel(dialog);
@@ -201,7 +205,7 @@ QDialog* Settings::createScanDialog()
 
 QPushButton* Settings::createCloseButton(QWidget* parent)
 {
-    auto button = new QPushButton("Close", parent);
+    QPushButton* button = new QPushButton("Close", parent);
     button->setStyleSheet(R"(
         QPushButton {
             font-size: 14px;
@@ -223,7 +227,7 @@ QPushButton* Settings::createCloseButton(QWidget* parent)
     return button;
 }
 
-void Settings::setupDialogConnections(const QDialog* dialog, const QPushButton* closeButton)
+void Settings::setupDialogConnections(QDialog* dialog, QPushButton* closeButton)
 {
     connect(closeButton, &QPushButton::clicked, dialog, &QDialog::close);
     connect(dialog, &QDialog::finished, this, [this]() {
@@ -250,7 +254,7 @@ void Settings::setupCameraTimer()
     m_timer->start(30); // 30ms = ~33fps
 }
 
-void Settings::showScanDialog() const
+void Settings::showScanDialog()
 {
     m_scanDialog->exec();
 }
