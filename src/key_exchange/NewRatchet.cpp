@@ -59,7 +59,7 @@ void NewRatchet::set_up_initial_state_for_recipient(const unsigned char *initiat
 };
 
 void NewRatchet::set_up_initial_chain_keys() {
-    std::unique_ptr<unsigned char[]> dh_output(dh());
+    auto dh_output = dh();
 
     unsigned char kdf_key[32];
     crypto_generichash(kdf_key, sizeof(kdf_key), dh_output.get(), 32, nullptr, 0);
@@ -91,7 +91,7 @@ void NewRatchet::set_up_initial_chain_keys() {
 }
 
 void NewRatchet::dh_ratchet_step(const bool received_new_dh) {
-    std::unique_ptr<unsigned char[]> dh_output(dh());
+    auto dh_output = dh();
 
     unsigned char kdf_key[32];
     crypto_generichash(kdf_key, sizeof(kdf_key), dh_output.get(), 32, nullptr, 0);
@@ -136,14 +136,13 @@ void NewRatchet::generate_new_local_dh_keypair() {
     crypto_box_keypair(local_dh_public, local_dh_priv->data());
 };
 
-unsigned char* NewRatchet::dh() const {
-    auto result = new unsigned char[32];
-    if (crypto_scalarmult(result, local_dh_priv->data(), remote_dh_public) != 0) {
-        delete[] result;
+std::unique_ptr<unsigned char[]> NewRatchet::dh() const {
+    auto result = std::make_unique<unsigned char[]>(32);
+    if (crypto_scalarmult(result.get(), local_dh_priv->data(), remote_dh_public) != 0) {
         throw std::runtime_error("Failed to perform dh");
-    };
+    }
     return result;
-};
+}
 
 std::tuple<unsigned char*, MessageHeader*> NewRatchet::advance_send() {
 

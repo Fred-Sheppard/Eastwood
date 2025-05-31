@@ -66,7 +66,7 @@ private:
     std::tuple<unsigned char*, MessageHeader*> progress_sending_ratchet();
 
     // dh output of local dh private * remote dh public
-    unsigned char* dh() const;
+    std::unique_ptr<unsigned char[]> dh() const;
 
     //serialisation
     void serialise(std::ostream& os) const;
