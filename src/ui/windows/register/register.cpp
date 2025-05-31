@@ -9,7 +9,9 @@
 #include "src/utils/JsonParser.h"
 #include <QScreen>
 #include <QApplication>
-#include "src/ui/utils/qr_code_generation/QRCodeGenerator.h"
+#include <sodium.h>
+#include <QByteArray>
+#include "src/key_exchange/utils.h"
 
 
 Register::Register(QWidget *parent)
@@ -18,6 +20,12 @@ Register::Register(QWidget *parent)
 {
     ui->setupUi(this);
     setupConnections();
+    
+    QScreen *screen = QApplication::primaryScreen();
+    QRect screenGeometry = screen->geometry();
+    int x = (screenGeometry.width() - width()) / 2;
+    int y = (screenGeometry.height() - height()) / 2;
+    move(x, y);
     
     QScreen *screen = QApplication::primaryScreen();
     QRect screenGeometry = screen->geometry();
@@ -36,6 +44,7 @@ void Register::setupConnections()
     connect(ui->loginButton, &QPushButton::clicked, this, &Register::onLoginButtonClicked);
     connect(ui->togglePassphraseButton, &QPushButton::clicked, this, &Register::onTogglePassphraseClicked);
     connect(ui->registerButton, &QPushButton::clicked, this, &Register::onRegisterButtonClicked);
+    connect(ui->deviceRegisterButton, &QPushButton::clicked, this, &Register::onDeviceRegisterButtonClicked);
     connect(ui->deviceRegisterButton, &QPushButton::clicked, this, &Register::onDeviceRegisterButtonClicked);
 }
 
@@ -93,6 +102,7 @@ void Register::onRegisterButtonClicked()
         StyledMessageBox::info(this, "Success", "Registration successful!");
         WindowManager::instance().showLogin();
         
+        
     } catch (const webwood::HttpError& e) {
         const std::string errorBody = e.what();
         const bool isHtmlError = errorBody.find("<!DOCTYPE HTML") != std::string::npos;
@@ -113,6 +123,7 @@ void Register::onLoginButtonClicked()
 {
     WindowManager::instance().showLogin();
     
+    
 }
 
 void Register::onTogglePassphraseClicked()
@@ -125,24 +136,23 @@ void Register::onTogglePassphraseClicked()
 
 void Register::onDeviceRegisterButtonClicked()
 {
-    try {
-        register_first_device();
-        std::string auth_code = "12425525151551";
-        QImage qr_code = getQRCodeForMyDevicePublicKey();
-        
-        if (auth_code.empty()) {
-            StyledMessageBox::error(this, "Device Registration Failed", "Failed to generate authentication code");
-            return;
-        }
-        
-        if (qr_code.isNull()) {
-            StyledMessageBox::error(this, "Device Registration Failed", "Failed to generate QR code");
-            return;
-        }
-        
-        WindowManager::instance().showDeviceRegister(auth_code, qr_code);
-    } catch (const std::exception& e) {
-        StyledMessageBox::error(this, "Device Registration Failed", 
-            QString("An error occurred: %1").arg(e.what()));
+    unsigned char pk_device[crypto_sign_PUBLICKEYBYTES];
+    unsigned char sk_device[crypto_sign_SECRETKEYBYTES];
+    crypto_sign_keypair(pk_device, sk_device);
+    // public key as hex string
+    std::string auth_code = bin2base64(pk_device, crypto_sign_PUBLICKEYBYTES);
+    QImage qr_code = QImage(":/icons/logos/nightwood.png");
+    
+    if (auth_code.empty()) {
+        StyledMessageBox::error(this, "Device Registration Failed", "Failed to generate authentication code");
+        return;
     }
+    
+    if (qr_code.isNull()) {
+        StyledMessageBox::error(this, "Device Registration Failed", "Failed to generate QR code");
+        return;
+    }
+    
+    WindowManager::instance().showDeviceRegister(auth_code, qr_code);
+    
 } 

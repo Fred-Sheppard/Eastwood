@@ -33,12 +33,37 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    auto master_password = std::make_unique<std::string>("correct horse battery stapler");
+    // auto master_password = std::make_unique<std::string>("correct horse battery stapler");
 
-    // TODO: Debugging only
-    if (refresh_database) drop_all_tables();
+    // // TODO: Debugging only
+    // if (refresh_database) drop_all_tables();
 
-    init_schema();
+    // init_schema();
+
+    // register_user("sloggotest22223", std::make_unique<std::string>("1250"));
+    // register_first_device();
+    // login_user("sloggotest22223");
+    // post_new_keybundles(
+    //     get_decrypted_keypair("device"),
+    //     generate_signed_prekey(),
+    //     generate_onetime_keys(100)
+    // );
+
+    // std::cout << "Press Enter to run /incomingMessages";
+    // std::cin.get();
+
+    // auto backlog = get_handshake_backlog();
+    // IdentityManager::getInstance().update_or_create_identity_sessions(backlog);
+
+    // std::cout << "Press Enter to run";
+    // std::cin.get();
+
+    // auto random_bytes = new unsigned char[5];
+    // randombytes_buf(random_bytes, 5);
+
+    // auto backlog2 = IdentityManager::getInstance().send_to_user("nialltest22", random_bytes);
+    // post_ratchet_message(backlog2);
+    // delete[] random_bytes;
 
     WindowManager::instance().showLogin();
     return app.exec();

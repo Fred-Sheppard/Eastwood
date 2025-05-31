@@ -6,13 +6,13 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>440</width>
+    <width>550</width>
     <height>650</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>440</width>
+    <width>550</width>
     <height>650</height>
    </size>
   </property>
@@ -20,41 +20,28 @@
    <string>Nightwood - Register Device</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: white;</string>
+   <string notr="true">background-color: #f8f9fa;</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
-    <number>22</number>
+    <number>24</number>
    </property>
    <property name="leftMargin">
-    <number>50</number>
+    <number>40</number>
    </property>
    <property name="topMargin">
-    <number>45</number>
+    <number>36</number>
    </property>
    <property name="rightMargin">
-    <number>50</number>
+    <number>40</number>
    </property>
    <property name="bottomMargin">
-    <number>45</number>
+    <number>36</number>
    </property>
-   <item>
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Orientation::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
    <item>
     <widget class="QLabel" name="titleLabel">
      <property name="styleSheet">
-      <string notr="true">font-size: 40px; font-weight: bold; color: #2d3436; letter-spacing: 1.2px; padding-bottom: 10px;</string>
+      <string notr="true">font-size: 36px; font-weight: bold; color: #2d3436; letter-spacing: 1.2px; padding-bottom: 8px;</string>
      </property>
      <property name="text">
       <string>Register Device</string>
@@ -63,17 +50,17 @@
       <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
      <property name="minimumHeight">
-      <number>55</number>
+      <number>48</number>
      </property>
     </widget>
    </item>
    <item>
     <widget class="QLabel" name="subtitleLabel">
      <property name="styleSheet">
-      <string notr="true">font-size: 14px; color: #636e72; margin-top: 0px; margin-bottom: 10px;</string>
+      <string notr="true">font-size: 15px; color: #636e72; margin-bottom: 8px;</string>
      </property>
      <property name="text">
-      <string>Scan the QR code with your device or enter the code manually</string>
+      <string>Scan the QR code with your device or enter the codes manually</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignmentFlag::AlignCenter</set>
@@ -84,6 +71,71 @@
     </widget>
    </item>
    <item>
+    <spacer name="verticalSpacer_1">
+     <property name="orientation">
+      <enum>Qt::Orientation::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>10</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="qrCodeLayout">
+     <item>
+      <spacer name="hSpacerLeft">
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QLabel" name="qrCodeLabel">
+       <property name="minimumSize">
+        <size>
+         <width>200</width>
+         <height>200</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>240</width>
+         <height>240</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: white; border: 1.5px solid #dfe6e9; border-radius: 16px;</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignmentFlag::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="hSpacerRight">
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
     <spacer name="verticalSpacer_2">
      <property name="orientation">
       <enum>Qt::Orientation::Vertical</enum>
@@ -91,32 +143,94 @@
      <property name="sizeHint" stdset="0">
       <size>
        <width>20</width>
-       <height>20</height>
+       <height>10</height>
       </size>
      </property>
     </spacer>
    </item>
    <item>
-    <widget class="QLabel" name="qrCodeLabel">
-     <property name="minimumSize">
-      <size>
-       <width>200</width>
-       <height>200</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>200</width>
-       <height>200</height>
-      </size>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">background-color: white; border: 1px solid #dfe6e9; border-radius: 10px;</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignmentFlag::AlignCenter</set>
-     </property>
-    </widget>
+    <layout class="QVBoxLayout" name="authCodeBoxLayout">
+     <item>
+      <layout class="QHBoxLayout" name="codeRow1">
+       <item>
+        <widget class="QLineEdit" name="codeEdit1">
+         <property name="readOnly"><bool>true</bool></property>
+         <property name="alignment"><set>Qt::AlignmentFlag::AlignCenter</set></property>
+         <property name="maxLength"><number>11</number></property>
+         <property name="font">
+          <font>
+           <family>Courier New</family>
+           <pointsize>18</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background: #f5f6fa; border-radius: 8px; border: 1.5px solid #dfe6e9; padding: 8px; color: #222; letter-spacing: 2px;</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="codeEdit2">
+         <property name="readOnly"><bool>true</bool></property>
+         <property name="alignment"><set>Qt::AlignmentFlag::AlignCenter</set></property>
+         <property name="maxLength"><number>11</number></property>
+         <property name="font">
+          <font>
+           <family>Courier New</family>
+           <pointsize>18</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background: #f5f6fa; border-radius: 8px; border: 1.5px solid #dfe6e9; padding: 8px; color: #222; letter-spacing: 2px;</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="codeRow2">
+       <item>
+        <widget class="QLineEdit" name="codeEdit3">
+         <property name="readOnly"><bool>true</bool></property>
+         <property name="alignment"><set>Qt::AlignmentFlag::AlignCenter</set></property>
+         <property name="maxLength"><number>11</number></property>
+         <property name="font">
+          <font>
+           <family>Courier New</family>
+           <pointsize>18</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background: #f5f6fa; border-radius: 8px; border: 1.5px solid #dfe6e9; padding: 8px; color: #222; letter-spacing: 2px;</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="codeEdit4">
+         <property name="readOnly"><bool>true</bool></property>
+         <property name="alignment"><set>Qt::AlignmentFlag::AlignCenter</set></property>
+         <property name="maxLength"><number>11</number></property>
+         <property name="font">
+          <font>
+           <family>Courier New</family>
+           <pointsize>18</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background: #f5f6fa; border-radius: 8px; border: 1.5px solid #dfe6e9; padding: 8px; color: #222; letter-spacing: 2px;</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
    </item>
    <item>
     <spacer name="verticalSpacer_3">
@@ -127,35 +241,6 @@
       <size>
        <width>20</width>
        <height>20</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item>
-    <widget class="QLabel" name="authCodeLabel">
-     <property name="styleSheet">
-      <string notr="true">font-size: 24px; font-weight: bold; color: #2d3436; letter-spacing: 2px; padding: 10px; background-color: #f5f6fa; border-radius: 10px;</string>
-     </property>
-     <property name="text">
-      <string>XXXX-XXXX-XXXX</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignmentFlag::AlignCenter</set>
-     </property>
-     <property name="minimumHeight">
-      <number>60</number>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <spacer name="verticalSpacer_4">
-     <property name="orientation">
-      <enum>Qt::Orientation::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
       </size>
      </property>
     </spacer>
@@ -185,19 +270,19 @@ QPushButton:pressed {
 }</string>
      </property>
      <property name="text">
-      <string>Close</string>
+      <string>Back</string>
      </property>
     </widget>
    </item>
    <item>
-    <spacer name="verticalSpacer_5">
+    <spacer name="verticalSpacer_4">
      <property name="orientation">
       <enum>Qt::Orientation::Vertical</enum>
      </property>
      <property name="sizeHint" stdset="0">
       <size>
        <width>20</width>
-       <height>40</height>
+       <height>30</height>
       </size>
      </property>
     </spacer>

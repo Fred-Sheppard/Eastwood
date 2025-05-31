@@ -32,7 +32,13 @@ void DeviceRegister::displayQRCode(const QImage& qr_code)
 
 void DeviceRegister::displayAuthCode(const std::string& auth_code)
 {
-    ui->authCodeLabel->setText(QString::fromStdString(auth_code));
+    // Split the code into 4 parts
+    int partLen = auth_code.length() / 4;
+    QString code = QString::fromStdString(auth_code);
+    ui->codeEdit1->setText(code.mid(0, partLen));
+    ui->codeEdit2->setText(code.mid(partLen, partLen));
+    ui->codeEdit3->setText(code.mid(2 * partLen, partLen));
+    ui->codeEdit4->setText(code.mid(3 * partLen));
 }
 
 void DeviceRegister::onBackButtonClicked()
