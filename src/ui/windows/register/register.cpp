@@ -140,8 +140,7 @@ void Register::onDeviceRegisterButtonClicked()
 
     crypto_sign_keypair(pk_device, sk_device->data());
     std::string auth_code = bin2base64(pk_device, crypto_sign_PUBLICKEYBYTES);
-    QByteArray pk_device_bytearray(reinterpret_cast<const char*>(pk_device), crypto_sign_PUBLICKEYBYTES);
-    QImage qr_code = getQRCodeForMyDevicePublicKey(pk_device_bytearray);
+    QImage qr_code = getQRCodeForMyDevicePublicKey(auth_code);
     
     if (auth_code.empty()) {
         StyledMessageBox::error(this, "Device Registration Failed", "Failed to generate authentication code");

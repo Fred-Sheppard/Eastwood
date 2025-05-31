@@ -8,6 +8,7 @@
 #include <sstream>
 
 #include "src/sql/queries.h"
+#include "src/key_exchange/utils.h"
 
 std::string toSvgString(const qrcodegen::QrCode &qr, int border) {
     if (border < 0)
@@ -58,8 +59,19 @@ QImage getQRCodeImage(std::string input) {
     return qrCodeToImage(qr0, 10);
 }
 
-QImage getQRCodeForMyDevicePublicKey(const QByteArray public_key) {
-    qrcodegen::QrCode qr0 = qrcodegen::QrCode::encodeText(public_key, qrcodegen::QrCode::Ecc::MEDIUM);
+QImage getQRCodeForMyDevicePublicKey(const std::string& public_key_b64) {
+    // Debug output
+    std::cout << "Encoding QR code with base64 string: " << public_key_b64 << std::endl;
+    std::cout << "Base64 string length: " << public_key_b64.length() << std::endl;
+    
+    // Ensure the string is properly terminated and encoded
+    std::string input = public_key_b64;
+    if (input.back() != '\0') {
+        input += '\0';
+    }
+    
+    // Generate QR code with base64 string
+    qrcodegen::QrCode qr0 = qrcodegen::QrCode::encodeText(input.c_str(), qrcodegen::QrCode::Ecc::HIGH);
     return qrCodeToImage(qr0, 10);
 }
 

@@ -11,8 +11,9 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 # Find Qt
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets UiTools)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets UiTools Multimedia MultimediaWidgets)
 find_package(OpenSSL REQUIRED)
+find_package(OpenCV REQUIRED)
 
 # Enable testing and find GTest
 enable_testing()
@@ -132,6 +133,15 @@ add_executable(Eastwood
         ${AUTH_SOURCES}
 )
 
+# I hope this works nially
+if(APPLE)
+    set_target_properties(Eastwood PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist
+        MACOSX_BUNDLE_ENTITLEMENTS ${CMAKE_CURRENT_SOURCE_DIR}/Eastwood.entitlements
+    )
+endif()
+
 # Include directories and link libraries for main executable
 target_include_directories(Eastwood PRIVATE
         ${SODIUM_INCLUDE_DIR}
@@ -144,6 +154,7 @@ target_include_directories(Eastwood PRIVATE
         ${Qt6UiTools_INCLUDE_DIRS}
         ${Qt6Svg_INCLUDE_DIRS}
         ${CMAKE_CURRENT_SOURCE_DIR}/external/qrcodegen/cpp
+        ${OpenCV_INCLUDE_DIRS}
 )
 
 target_link_libraries(Eastwood PRIVATE
@@ -151,12 +162,15 @@ target_link_libraries(Eastwood PRIVATE
         Qt6::Gui
         Qt6::Widgets
         Qt6::UiTools
+        Qt6::Multimedia
+        Qt6::MultimediaWidgets
         ${SODIUM_LIBRARY}
         OpenSSL::SSL
         OpenSSL::Crypto
         nlohmann_json::nlohmann_json
         ${SQLCIPHER_LIBRARIES}
         ${GTEST_LIBRARIES}
+        ${OpenCV_LIBS}
 )
 
 # Create test executable
