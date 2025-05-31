@@ -32,7 +32,7 @@ void Database::initialize(
         throw std::runtime_error("Failed to access datapath");
     };
     // $APP_DIR 
-    const QString dbPath = dataPath + "/ " + QString(username.c_str()) + (encrypted ? "/encrypted.db" : "/db.db");
+    const QString dbPath = dataPath + "/ " + QString(username.c_str()) + (encrypted ? "-encrypted.db" : "-db.db");
     std::cerr << "DB saved at " << dbPath.toStdString() << std::endl;
 
     // Open the database
