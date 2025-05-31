@@ -11,36 +11,21 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 # Find Qt
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets UiTools Svg)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets UiTools)
 find_package(OpenSSL REQUIRED)
 
-# Add Google Test
-include(FetchContent)
-FetchContent_Declare(
-        googletest
-        GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG release-1.12.1
-)
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+# Enable testing and find GTest
+enable_testing()
+find_package(GTest REQUIRED)
 
 # Add nlohmann_json
+include(FetchContent)
 FetchContent_Declare(
         json
         URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
         DOWNLOAD_EXTRACT_TIMESTAMP true
 )
 FetchContent_MakeAvailable(json)
-
-# Add Nayuki QR Code generator library
-include(FetchContent)
-FetchContent_Declare(
-    qrcodegen
-    GIT_REPOSITORY https://github.com/nayuki/QR-Code-generator.git
-    GIT_TAG master
-)
-FetchContent_MakeAvailable(qrcodegen)
 
 # Find pkg-config and SQLCipher
 find_package(PkgConfig REQUIRED)
@@ -128,9 +113,6 @@ set(AUTH_SOURCES
         src/sessions/KeyBundle.h
         src/sessions/IdentitySession.cpp
         src/sessions/IdentityManager.cpp
-        src/sessions/IdentityManager.h
-        src/ui/QRCodeGenerator.cpp
-        src/ui/QRCodeGenerator.h
         src/files/upload_file.cpp
         src/auth/salt.cpp
 )
@@ -142,7 +124,6 @@ add_executable(Eastwood
         ${DATABASE_SOURCES}
         ${CRYPTO_SOURCES}
         ${AUTH_SOURCES}
-        ${qrcodegen_SOURCE_DIR}/cpp/qrcodegen.cpp
 )
 
 # Include directories and link libraries for main executable
@@ -150,7 +131,7 @@ target_include_directories(Eastwood PRIVATE
         ${SODIUM_INCLUDE_DIR}
         ${SQLCIPHER_INCLUDE_DIRS}
         ${CMAKE_CURRENT_SOURCE_DIR}
-        ${qrcodegen_SOURCE_DIR}/cpp
+        ${GTEST_INCLUDE_DIRS}
 )
 
 target_link_libraries(Eastwood PRIVATE
@@ -158,12 +139,12 @@ target_link_libraries(Eastwood PRIVATE
         Qt6::Gui
         Qt6::Widgets
         Qt6::UiTools
-        Qt6::Svg
         ${SODIUM_LIBRARY}
         OpenSSL::SSL
         OpenSSL::Crypto
         nlohmann_json::nlohmann_json
         ${SQLCIPHER_LIBRARIES}
+        ${GTEST_LIBRARIES}
 )
 
 # Create test executable
@@ -190,14 +171,12 @@ target_include_directories(EastwoodTests PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/keys
         ${CMAKE_CURRENT_SOURCE_DIR}/src/database
         ${CMAKE_CURRENT_SOURCE_DIR}/external/cereal/include
+        ${GTEST_INCLUDE_DIRS}
 )
 
 # Link libraries using proper CMake targets
 target_link_libraries(EastwoodTests PRIVATE
-        gtest
-        gtest_main
-        gmock
-        gmock_main
+        ${GTEST_LIBRARIES}
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets
