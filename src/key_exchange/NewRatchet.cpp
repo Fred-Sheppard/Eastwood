@@ -132,7 +132,7 @@ unsigned char* NewRatchet::dh() const {
 std::tuple<unsigned char*, MessageHeader*> NewRatchet::advance_send() {
 
     if (due_to_send_new_dh) {
-        dh_ratchet_step(false);
+        dh_ratchet_step(false); // we are sending the new dh not receiving
         due_to_send_new_dh = false;
     }
 
