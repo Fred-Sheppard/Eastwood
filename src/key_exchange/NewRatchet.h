@@ -19,7 +19,7 @@ public:
     NewRatchet(const unsigned char* shared_secret, const unsigned char* other_key, bool is_sender);
 
     std::tuple<unsigned char*, MessageHeader*> advance_send();
-    unsigned char* advance_receive(MessageHeader* header);
+    unsigned char* advance_receive(const MessageHeader* header);
 
     std::tuple<int,int> get_chain_lengths();
 
@@ -51,6 +51,8 @@ private:
     void generate_new_local_dh_keypair();
 
     void dh_ratchet_step(bool received_new_dh);
+    unsigned char* progress_receive_ratchet();
+    std::tuple<unsigned char*, MessageHeader*> progress_sending_ratchet();
 
     // dh output of local dh private * remote dh public
     unsigned char* dh() const;
