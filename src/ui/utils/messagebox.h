@@ -133,6 +133,53 @@ public:
         
         return msgBox.exec() == QMessageBox::Yes;
     }
+
+    static bool confirmDialog(QWidget* parent, const QString& title, const QString& text) {
+        QMessageBox msgBox(QMessageBox::Question, title, text, 
+                          QMessageBox::Yes | QMessageBox::No, parent);
+        applyStyle(&msgBox);
+        
+        // Style Accept/Deny buttons
+        QList<QAbstractButton*> buttons = msgBox.buttons();
+        for (QAbstractButton* button : buttons) {
+            QPushButton* pushButton = dynamic_cast<QPushButton*>(button);
+            if (pushButton) {
+                if (msgBox.buttonRole(pushButton) == QMessageBox::YesRole) {
+                    pushButton->setText("Accept");
+                    pushButton->setStyleSheet(R"(
+                        QPushButton {
+                            background-color: #27ae60;
+                            color: white;
+                            border: none;
+                        }
+                        QPushButton:hover {
+                            background-color: #219a52;
+                        }
+                        QPushButton:pressed {
+                            background-color: #1e8449;
+                        }
+                    )");
+                } else if (msgBox.buttonRole(pushButton) == QMessageBox::NoRole) {
+                    pushButton->setText("Deny");
+                    pushButton->setStyleSheet(R"(
+                        QPushButton {
+                            background-color: #e74c3c;
+                            color: white;
+                            border: none;
+                        }
+                        QPushButton:hover {
+                            background-color: #c0392b;
+                        }
+                        QPushButton:pressed {
+                            background-color: #a93226;
+                        }
+                    )");
+                }
+            }
+        }
+        
+        return msgBox.exec() == QMessageBox::Yes;
+    }
 };
 
 #endif // MESSAGEBOX_H 

@@ -60,11 +60,7 @@ QImage getQRCodeImage(std::string input) {
 }
 
 QImage getQRCodeForMyDevicePublicKey(const std::string& public_key_b64) {
-    // Debug output
-    std::cout << "Encoding QR code with base64 string: " << public_key_b64 << std::endl;
-    std::cout << "Base64 string length: " << public_key_b64.length() << std::endl;
-    
-    // Ensure the string is properly terminated and encoded
+
     std::string input = public_key_b64;
     if (input.back() != '\0') {
         input += '\0';

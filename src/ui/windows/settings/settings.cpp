@@ -16,6 +16,7 @@
 #include <QLabel>
 #include <opencv2/opencv.hpp>
 #include <nlohmann/json.hpp>
+#include <QDebug>
 
 Settings::Settings(QWidget *parent)
     : QWidget(parent)
@@ -120,7 +121,7 @@ void Settings::onSettingsButtonClicked()
     ui->confirmPassphrase->clear();
 }
 
-void Settings::onWindowShown(const QString& windowName)
+void Settings::onWindowShown(const QString& windowName) const
 {
     // Find the navbar and update its active button
     NavBar* navbar = findChild<NavBar*>();
@@ -227,7 +228,7 @@ QPushButton* Settings::createCloseButton(QWidget* parent)
     return button;
 }
 
-void Settings::setupDialogConnections(QDialog* dialog, QPushButton* closeButton)
+void Settings::setupDialogConnections(const QDialog* dialog, const QPushButton* closeButton)
 {
     connect(closeButton, &QPushButton::clicked, dialog, &QDialog::close);
     connect(dialog, &QDialog::finished, this, [this]() {
@@ -254,7 +255,7 @@ void Settings::setupCameraTimer()
     m_timer->start(30); // 30ms = ~33fps
 }
 
-void Settings::showScanDialog()
+void Settings::showScanDialog() const
 {
     m_scanDialog->exec();
 }
@@ -307,6 +308,7 @@ void Settings::processFrame()
             std::cout << "Decoded QR code: " << decodedInfo << std::endl;
 
             if (isValidQRCodeData(decodedInfo)) {
+                // Lock camera settings to prevent auto-adjustment
                 m_camera.set(cv::CAP_PROP_AUTOFOCUS, 0);
                 m_camera.set(cv::CAP_PROP_AUTO_EXPOSURE, 0);
 
@@ -322,21 +324,26 @@ void Settings::processFrame()
                 }
                 m_camera.release();
                 
-                // Close the dialog
                 if (m_scanDialog) {
                     m_scanDialog->close();
                 }
                 
-                // Show the message after cleanup
                 if (!safeDecodedInfo.isEmpty()) {
-                    StyledMessageBox::info(this, "QR Code Detected", 
-                        "Found public key: " + safeDecodedInfo);
+                    if (StyledMessageBox::confirmDialog(this, "Connection Request", 
+                        "A new device wants to connect with you.\n\nDo you wish to accept this connection?")) {
+                        StyledMessageBox::success(this, "Connection Accepted", 
+                            "Connection request has been accepted.");
+                        qDebug() << "Connection accepted with public key:" << safeDecodedInfo;
+                    } else {
+                        StyledMessageBox::info(this, "Connection Denied", 
+                            "Connection request has been denied.");
+                        // TODO: Implement connection denial logic
+                    }
                 } else {
                     StyledMessageBox::error(this, "QR Code Error", 
                         "Failed to decode QR code data");
                 }
                 
-                // Final cleanup
                 cleanupScanDialog();
                 return;
             } else {
