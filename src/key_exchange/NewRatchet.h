@@ -65,7 +65,7 @@ private:
     void deserialise(std::istream &in);
     void save(unsigned char* identity_session_id);
     friend class DoubleRatchetTest_Serialisation_Test;
-    friend class DoubleRatchetTest_SkippedMessagesAcrossRatchetTest_Test;
+    friend class DoubleRatchetTest_SavingToDB_Test;
 };
 
 

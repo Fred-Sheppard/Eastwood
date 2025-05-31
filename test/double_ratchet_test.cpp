@@ -432,10 +432,6 @@ TEST_F(DoubleRatchetTest, SkippedMessagesAcrossRatchetTest) {
     randombytes_buf(ratchet_id, sizeof(ratchet_id));
     NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true, ratchet_id);
 
-    auto identity_session_id = new unsigned char[32];
-    randombytes_buf(identity_session_id, sizeof(identity_session_id));
-    alice.save(identity_session_id);
-
     switch_to_bob_db();
     NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false, ratchet_id);
 
@@ -483,6 +479,18 @@ TEST_F(DoubleRatchetTest, Serialisation) {
     EXPECT_EQ(ratchet1.receive_chain.index, ratchet2.receive_chain.index);
     delete[] ratchet_id;
 }
+
+TEST_F(DoubleRatchetTest, SavingToDB) {
+    // Create initial ratchet
+    switch_to_alice_db();
+    auto ratchet_id = new unsigned char[32];
+    randombytes_buf(ratchet_id, sizeof(ratchet_id));
+    NewRatchet ratchet1(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true, ratchet_id);
+
+    ratchet1.save(ratchet_id);
+    delete[] ratchet_id;
+}
+
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
