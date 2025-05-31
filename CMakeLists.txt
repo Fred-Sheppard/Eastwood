@@ -145,6 +145,8 @@ set(AUTH_SOURCES
         src/files/upload_file.cpp
         src/auth/salt.cpp
         src/key_exchange/MessageStructs.h
+        src/auth/set_up_client.cpp
+
 )
 
 # Create main executable
@@ -237,6 +239,8 @@ add_executable(IntegrationTests
         src/auth/register_device/register_device.cpp
         src/auth/login/login.cpp
         src/files/upload_file.cpp
+        src/auth/salt.cpp
+        src/auth/set_up_client.cpp
 )
 
 target_include_directories(IntegrationTests PRIVATE
