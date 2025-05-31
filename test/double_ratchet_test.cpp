@@ -246,11 +246,12 @@ TEST_F(DoubleRatchetTest, SharedSecretDerivationTestNoOnetime) {
 TEST_F(DoubleRatchetTest, RatchetBothSidesTest) {
     // Initialize both parties
     switch_to_alice_db();
-
-    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true);
+    auto ratchet_id = new unsigned char[32];
+    randombytes_buf(ratchet_id, sizeof(ratchet_id));
+    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true, ratchet_id);
 
     switch_to_bob_db();
-    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false);
+    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false, ratchet_id);
 
     // Alice sends first message
     switch_to_alice_db();
@@ -270,16 +271,19 @@ TEST_F(DoubleRatchetTest, RatchetBothSidesTest) {
     switch_to_bob_db();
     auto bob_key3 = bob.advance_receive(header3);
     ASSERT_EQ(memcmp(alice_key3, bob_key3, 32), 0);
+    delete[] ratchet_id;
 }
 
 TEST_F(DoubleRatchetTest, TwoMessageFromOneSideTest) {
     // Initialize both parties
     switch_to_alice_db();
 
-    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true);
+    auto ratchet_id = new unsigned char[32];
+    randombytes_buf(ratchet_id, sizeof(ratchet_id));
+    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true, ratchet_id);
 
     switch_to_bob_db();
-    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false);
+    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false, ratchet_id);
 
     // Alice sends first message
     switch_to_alice_db();
@@ -300,16 +304,18 @@ TEST_F(DoubleRatchetTest, TwoMessageFromOneSideTest) {
     ASSERT_EQ(memcmp(alice_key1, bob_key1, 32), 0);
     ASSERT_EQ(memcmp(alice_key2, bob_key2, 32), 0);
     ASSERT_EQ(memcmp(alice_key3, bob_key3, 32), 0);
-
+    delete[] ratchet_id;
 }
 
 TEST_F(DoubleRatchetTest, MessageIndexResetTest) {
     // Initialize both parties
     switch_to_alice_db();
-    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true);
+    auto ratchet_id = new unsigned char[32];
+    randombytes_buf(ratchet_id, sizeof(ratchet_id));
+    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true, ratchet_id);
 
     switch_to_bob_db();
-    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false);
+    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false, ratchet_id);
 
     // alice sends a few
     auto [alice_key1, header1] = alice.advance_send();
@@ -333,15 +339,18 @@ TEST_F(DoubleRatchetTest, MessageIndexResetTest) {
 
     ASSERT_EQ(std::get<0>(alice.get_chain_lengths()), 0);
     ASSERT_EQ(std::get<1>(alice.get_chain_lengths()), 1);
+    delete[] ratchet_id;
 }
 
 TEST_F(DoubleRatchetTest, OneMessageFromEitherSideTest) {
     // Initialize both parties
     switch_to_alice_db();
-    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true);
+    auto ratchet_id = new unsigned char[32];
+    randombytes_buf(ratchet_id, sizeof(ratchet_id));
+    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true, ratchet_id);
 
     switch_to_bob_db();
-    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false);
+    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false, ratchet_id);
 
     auto [alice_key1, header1] = alice.advance_send();
 
@@ -353,15 +362,18 @@ TEST_F(DoubleRatchetTest, OneMessageFromEitherSideTest) {
     auto alice_key2 = alice.advance_receive(header2);
 
     ASSERT_EQ(memcmp(alice_key2, bob_key2, 32), 0);
+    delete[] ratchet_id;
 }
 
 TEST_F(DoubleRatchetTest, MultipleMessageFromOneSideThenMultipleSwitchTest) {
     // Initialize both parties
     switch_to_alice_db();
-    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true);
+    auto ratchet_id = new unsigned char[32];
+    randombytes_buf(ratchet_id, sizeof(ratchet_id));
+    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true, ratchet_id);
 
     switch_to_bob_db();
-    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false);
+    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false, ratchet_id);
 
     // alice sends a few
     auto [alice_key1, header1] = alice.advance_send();
@@ -384,15 +396,19 @@ TEST_F(DoubleRatchetTest, MultipleMessageFromOneSideThenMultipleSwitchTest) {
 
     ASSERT_EQ(memcmp(bob_key3, alice_key3, 32), 0);
     ASSERT_EQ(memcmp(alice_key4, bob_key4, 32), 0);
+    delete[] ratchet_id;
+
 }
 
 TEST_F(DoubleRatchetTest, OutOfOrderMessageTest) {
     // Initialize both parties
     switch_to_alice_db();
-    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true);
+    auto ratchet_id = new unsigned char[32];
+    randombytes_buf(ratchet_id, sizeof(ratchet_id));
+    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true, ratchet_id);
 
     switch_to_bob_db();
-    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false);
+    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false, ratchet_id);
 
     // alice sends a few
     auto [alice_key1, header1] = alice.advance_send();
@@ -407,14 +423,21 @@ TEST_F(DoubleRatchetTest, OutOfOrderMessageTest) {
     ASSERT_EQ(memcmp(alice_key1, bob_key1, 32), 0);
     ASSERT_EQ(memcmp(alice_key2, bob_key2, 32), 0);
     ASSERT_EQ(memcmp(alice_key3, bob_key3, 32), 0);
+    delete[] ratchet_id;
 }
 
 TEST_F(DoubleRatchetTest, SkippedMessagesAcrossRatchetTest) {
     switch_to_alice_db();
-    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true);
+    auto ratchet_id = new unsigned char[32];
+    randombytes_buf(ratchet_id, sizeof(ratchet_id));
+    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true, ratchet_id);
+
+    auto identity_session_id = new unsigned char[32];
+    randombytes_buf(identity_session_id, sizeof(identity_session_id));
+    alice.save(identity_session_id);
 
     switch_to_bob_db();
-    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false);
+    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false, ratchet_id);
 
     // alice sends two messages
     auto [alice_key1, header1] = alice.advance_send();
@@ -434,12 +457,16 @@ TEST_F(DoubleRatchetTest, SkippedMessagesAcrossRatchetTest) {
     // bob receives previous ratchet message
     auto bob_key1 = bob.advance_receive(header1);
     ASSERT_EQ(memcmp(alice_key1, bob_key1, 32), 0);
+
+    delete[] ratchet_id;
 }
 
 TEST_F(DoubleRatchetTest, Serialisation) {
     // Create initial ratchet
     switch_to_alice_db();
-    NewRatchet ratchet1(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true);
+    auto ratchet_id = new unsigned char[32];
+    randombytes_buf(ratchet_id, sizeof(ratchet_id));
+    NewRatchet ratchet1(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true, ratchet_id);
 
     std::stringstream ss;
     ratchet1.serialise(ss);
@@ -454,8 +481,8 @@ TEST_F(DoubleRatchetTest, Serialisation) {
     EXPECT_EQ(ratchet1.send_chain.index, ratchet2.send_chain.index);
     EXPECT_EQ(0, memcmp(ratchet1.receive_chain.key, ratchet2.receive_chain.key, 32));
     EXPECT_EQ(ratchet1.receive_chain.index, ratchet2.receive_chain.index);
+    delete[] ratchet_id;
 }
-
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);

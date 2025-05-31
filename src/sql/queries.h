@@ -214,4 +214,17 @@ inline std::unique_ptr<SecureMemoryBuffer> get_decrypted_file_key(
     return decrypted_key;
 }
 
+inline void save_ratchet(const char* ratchet_id, unsigned char* identity_session_id, std::vector<unsigned char> encrypted_ratchet, unsigned char* nonce) {
+    const auto &db = Database::get();
+    sqlite3_stmt *stmt;
+    db.prepare_or_throw(
+        "INSERT INTO ratchets (ratchet_id, identity_session_id, nonce, data) VALUES (?, ?, ?, ?);", &stmt
+    );
+    sqlite3_bind_text(stmt, 1, ratchet_id, 32, SQLITE_TRANSIENT);
+    sqlite3_bind_blob(stmt, 2, identity_session_id, 32, SQLITE_TRANSIENT);
+    sqlite3_bind_blob(stmt, 3, nonce, CHA_CHA_NONCE_LEN, SQLITE_TRANSIENT);
+    sqlite3_bind_blob(stmt, 4, encrypted_ratchet.data(), encrypted_ratchet.size(), SQLITE_TRANSIENT);
+    db.execute(stmt);
+}
+
 #endif //QUERIES_H

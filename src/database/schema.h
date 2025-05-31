@@ -69,7 +69,23 @@ inline void init_schema() {
     AFTER UPDATE ON file_keys
     FOR EACH ROW
     BEGIN
-        UPDATE keys SET last_modified = CURRENT_TIMESTAMP WHERE label = OLD.label;
+        UPDATE file_keys SET last_modified = CURRENT_TIMESTAMP WHERE label = OLD.label;
+    END;
+
+    CREATE TABLE IF NOT EXISTS ratchets (
+        ratchet_id       BLOB PRIMARY KEY,
+        identity_session_id BLOB UNIQUE,
+        nonce         BLOB UNIQUE,
+        data         BLOB UNIQUE,
+        created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+        last_modified DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TRIGGER IF NOT EXISTS ratchets_last_modified_trigger
+    AFTER UPDATE ON ratchets
+    FOR EACH ROW
+    BEGIN
+        UPDATE ratchets SET last_modified = CURRENT_TIMESTAMP WHERE label = OLD.label;
     END;
 )sql";
 

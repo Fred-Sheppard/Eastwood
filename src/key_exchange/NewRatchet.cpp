@@ -4,12 +4,16 @@
 
 #include "NewRatchet.h"
 
+#include <sstream>
+
+#include "src/keys/kek_manager.h"
 #include "src/sql/queries.h"
 
 // other key is initiator ephemeral for recipient
 // other key is receiver signed prekey for initiator
-NewRatchet::NewRatchet(const unsigned char *shared_secret, const unsigned char *other_key, bool is_sender) {
+NewRatchet::NewRatchet(const unsigned char *shared_secret, const unsigned char *other_key, bool is_sender, unsigned char* ratchet_id_in) {
     memcpy(root_key, shared_secret, 32);
+    memcpy(ratchet_id, ratchet_id_in, 32);
 
     if (is_sender) {
         set_up_initial_state_for_initiator(other_key);
@@ -278,6 +282,26 @@ void NewRatchet::deserialise(std::istream &in) {
     in.read((char*)&due_to_send_new_dh, sizeof(due_to_send_new_dh));
     in.read((char*)&reversed, sizeof(reversed));
 }
+
+void NewRatchet::save(unsigned char* identity_session_id) {
+    std::ostringstream oss(std::ios::binary);
+    serialise(oss);
+
+    std::string str = oss.str();
+    QByteArray bytes(str.data(), static_cast<int>(str.size()));
+
+    auto nonce = new unsigned char[CHA_CHA_NONCE_LEN];
+    randombytes_buf(nonce, CHA_CHA_NONCE_LEN);
+
+    std::unique_ptr<SecureMemoryBuffer> kek_buffer = SecureMemoryBuffer::create(32);
+    memcpy(kek_buffer->data(), KekManager::instance().getKEK(), 32);
+
+    std::vector<unsigned char> encrypted_bytes = encrypt_bytes(bytes, std::move(kek_buffer), nonce);
+    save_ratchet(reinterpret_cast<const char*>(ratchet_id), identity_session_id, encrypted_bytes, nonce);
+
+    delete[] nonce;
+}
+
 
 
 

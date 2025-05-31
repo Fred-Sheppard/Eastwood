@@ -16,7 +16,7 @@ struct NewChain {
 
 class NewRatchet {
 public:
-    NewRatchet(const unsigned char* shared_secret, const unsigned char* other_key, bool is_sender);
+    NewRatchet(const unsigned char* shared_secret, const unsigned char* other_key, bool is_sender, unsigned char* ratchet_id_in);
     NewRatchet(std::istream& in);
 
     std::tuple<unsigned char*, MessageHeader*> advance_send();
@@ -26,6 +26,8 @@ public:
 
     const unsigned char *get_current_dh_public() const; //testing!!
 private:
+    unsigned char ratchet_id[32];
+
     bool reversed;
     bool due_to_send_new_dh;
     unsigned char root_key[32];
@@ -60,9 +62,10 @@ private:
 
     //serialisation
     void serialise(std::ostream& os) const;
-
     void deserialise(std::istream &in);
+    void save(unsigned char* identity_session_id);
     friend class DoubleRatchetTest_Serialisation_Test;
+    friend class DoubleRatchetTest_SkippedMessagesAcrossRatchetTest_Test;
 };
 
 
