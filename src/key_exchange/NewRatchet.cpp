@@ -157,7 +157,11 @@ unsigned char* NewRatchet::advance_receive(const MessageHeader* header) {
         int skipped_count = receive_chain.index;
         // if we need to forward cache keys due to prev chain length being longer than expected
         for (int i = header->prev_chain_length; i < skipped_count; ++i) {
-            skipped_keys[i] = progress_receive_ratchet();
+            auto key = progress_receive_ratchet();
+            if (skipped_keys.find(i) != skipped_keys.end()) {
+                delete[] skipped_keys[i];  // Delete old key if it exists
+            }
+            skipped_keys[i] = key;
         }
         memcpy(remote_dh_public, header->dh_public, 32);
         dh_ratchet_step(true); // true as we received the new dh
@@ -166,15 +170,13 @@ unsigned char* NewRatchet::advance_receive(const MessageHeader* header) {
 
     // if we've already computed the key
     if (header->message_index < receive_chain.index) {
-        if (header->message_index < receive_chain.index) {
-            if (skipped_keys.find(header->message_index) == skipped_keys.end()) {
-                throw std::runtime_error("Key not found in backlog");
-            }
-            auto key = skipped_keys[header->message_index];
-            skipped_keys.erase(header->message_index);
-            save();
-            return key;
+        if (skipped_keys.find(header->message_index) == skipped_keys.end()) {
+            throw std::runtime_error("Key not found in backlog");
         }
+        auto key = skipped_keys[header->message_index];
+        skipped_keys.erase(header->message_index);
+        save();
+        return key;
     }
 
     // get the key normally
@@ -184,6 +186,9 @@ unsigned char* NewRatchet::advance_receive(const MessageHeader* header) {
             receive_chain.index = i + 1;
             save();
             return message_key;
+        }
+        if (skipped_keys.find(i) != skipped_keys.end()) {
+            delete[] skipped_keys[i];  // Delete old key if it exists
         }
         skipped_keys[i] = message_key;
     }
