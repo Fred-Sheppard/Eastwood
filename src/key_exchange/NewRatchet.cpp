@@ -61,8 +61,6 @@ void NewRatchet::set_up_initial_chain_keys() {
     unsigned char kdf_key[32];
     crypto_generichash(kdf_key, sizeof(kdf_key), dh_output, sizeof(dh_output), nullptr, 0);
 
-    delete[] dh_output;
-
     // run kdf
     crypto_kdf_derive_from_key(
         send_chain.key,
@@ -87,10 +85,10 @@ void NewRatchet::set_up_initial_chain_keys() {
         "DRXroot1",
         kdf_key
         );
-};
+}
 
 void NewRatchet::dh_ratchet_step(const bool received_new_dh) {
-    unsigned char *dh_output = dh();
+    const auto dh_output = dh();
 
     unsigned char kdf_key[32];
     crypto_generichash(kdf_key, sizeof(kdf_key), dh_output, sizeof(dh_output), nullptr, 0);
@@ -129,9 +127,7 @@ void NewRatchet::dh_ratchet_step(const bool received_new_dh) {
 
         send_chain.index = 0;
     }
-
-    delete[] dh_output;
-};
+}
 
 void NewRatchet::generate_new_local_dh_keypair() {
     crypto_box_keypair(local_dh_public, local_dh_priv->data());
