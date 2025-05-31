@@ -23,9 +23,12 @@ private slots:
     void onSendFileButtonClicked();
     void onLogoutButtonClicked();
     void validatePassphrase();
-    void onCancelClicked();
+    void onPassphraseCancelClicked();
+    void onPassphraseSaveClicked();
+    void onAuthCancelClicked();
+    void onAuthSaveClicked();
     void onSettingsButtonClicked();
-    void onSaveChangesClicked();
+    void onScanQRButtonClicked();
 
 private:
     Ui::Settings *ui;

@@ -4,5 +4,6 @@
         <file>logos/check.svg</file>
         <file>logos/download.svg</file>
         <file>logos/nightwood.png</file>
+        <file>logos/tick.svg</file>
     </qresource>
 </RCC> 

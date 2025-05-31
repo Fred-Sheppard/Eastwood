@@ -15,13 +15,6 @@ WindowManager& WindowManager::instance()
 }
 
 WindowManager::WindowManager()
-    : m_received(nullptr)
-    , m_sent(nullptr)
-    , m_sendFile(nullptr)
-    , m_settings(nullptr)
-    , m_login(nullptr)
-    , m_register(nullptr)
-    , m_deviceRegister(nullptr)
 {
 }
 
@@ -32,6 +25,15 @@ WindowManager::~WindowManager()
 
 void WindowManager::cleanup()
 {
+    // Close all windows first
+    for (const QPointer<QWidget>& window : m_windows) {
+        if (!window.isNull()) {
+            window->close();
+        }
+    }
+    m_windows.clear();
+
+    // Then clean up individual pointers
     deleteWindow(m_received);
     deleteWindow(m_sent);
     deleteWindow(m_sendFile);
@@ -39,20 +41,19 @@ void WindowManager::cleanup()
     deleteWindow(m_login);
     deleteWindow(m_register);
     deleteWindow(m_deviceRegister);
-    
-    // Clean up any remaining windows in the list
-    for (QWidget* window : m_windows) {
-        if (window) {
-            window->hide();
-            window->deleteLater();
-        }
-    }
-    m_windows.clear();
 }
 
 void WindowManager::showReceived()
 {
-    if (!m_received) {
+    // Close all existing windows
+    for (const QPointer<QWidget>& window : m_windows) {
+        if (!window.isNull()) {
+            window->close();
+        }
+    }
+    m_windows.clear();
+
+    if (m_received.isNull()) {
         m_received = new Received();
         m_received->setAttribute(Qt::WA_DeleteOnClose);
         m_windows.append(m_received);
@@ -67,7 +68,15 @@ void WindowManager::showReceived()
 
 void WindowManager::showSent()
 {
-    if (!m_sent) {
+    // Close all existing windows
+    for (const QPointer<QWidget>& window : m_windows) {
+        if (!window.isNull()) {
+            window->close();
+        }
+    }
+    m_windows.clear();
+
+    if (m_sent.isNull()) {
         m_sent = new Sent();
         m_sent->setAttribute(Qt::WA_DeleteOnClose);
         m_windows.append(m_sent);
@@ -82,7 +91,15 @@ void WindowManager::showSent()
 
 void WindowManager::showSendFile()
 {
-    if (!m_sendFile) {
+    // Close all existing windows
+    for (const QPointer<QWidget>& window : m_windows) {
+        if (!window.isNull()) {
+            window->close();
+        }
+    }
+    m_windows.clear();
+
+    if (m_sendFile.isNull()) {
         m_sendFile = new SendFile();
         m_sendFile->setAttribute(Qt::WA_DeleteOnClose);
         m_windows.append(m_sendFile);
@@ -97,7 +114,15 @@ void WindowManager::showSendFile()
 
 void WindowManager::showSettings()
 {
-    if (!m_settings) {
+    // Close all existing windows
+    for (const QPointer<QWidget>& window : m_windows) {
+        if (!window.isNull()) {
+            window->close();
+        }
+    }
+    m_windows.clear();
+
+    if (m_settings.isNull()) {
         m_settings = new Settings();
         m_settings->setAttribute(Qt::WA_DeleteOnClose);
         m_windows.append(m_settings);
@@ -113,12 +138,14 @@ void WindowManager::showSettings()
 void WindowManager::showLogin()
 {
     // Close all existing windows
-    for (QWidget* window : m_windows) {
-        window->close();
+    for (const QPointer<QWidget>& window : m_windows) {
+        if (!window.isNull()) {
+            window->close();
+        }
     }
     m_windows.clear();
 
-    if (!m_login) {
+    if (m_login.isNull()) {
         m_login = new Login();
         m_login->setAttribute(Qt::WA_DeleteOnClose);
         m_windows.append(m_login);
@@ -134,12 +161,14 @@ void WindowManager::showLogin()
 void WindowManager::showRegister()
 {
     // Close all existing windows
-    for (QWidget* window : m_windows) {
-        window->close();
+    for (const QPointer<QWidget>& window : m_windows) {
+        if (!window.isNull()) {
+            window->close();
+        }
     }
     m_windows.clear();
 
-    if (!m_register) {
+    if (m_register.isNull()) {
         m_register = new Register();
         m_register->setAttribute(Qt::WA_DeleteOnClose);
         m_windows.append(m_register);
@@ -155,12 +184,14 @@ void WindowManager::showRegister()
 void WindowManager::showDeviceRegister(const std::string& auth_code, const QImage& qr_code)
 {
     // Close all existing windows
-    for (QWidget* window : m_windows) {
-        window->close();
+    for (const QPointer<QWidget>& window : m_windows) {
+        if (!window.isNull()) {
+            window->close();
+        }
     }
     m_windows.clear();
 
-    if (!m_deviceRegister) {
+    if (m_deviceRegister.isNull()) {
         m_deviceRegister = new DeviceRegister(auth_code, qr_code);
         m_deviceRegister->setAttribute(Qt::WA_DeleteOnClose);
         m_windows.append(m_deviceRegister);
@@ -168,11 +199,8 @@ void WindowManager::showDeviceRegister(const std::string& auth_code, const QImag
             m_deviceRegister = nullptr;
             m_windows.removeOne(m_deviceRegister);
         });
-    } else {
-        // Update existing window with new data
-        m_deviceRegister->displayQRCode(qr_code);
-        m_deviceRegister->displayAuthCode(auth_code);
     }
+    
     m_deviceRegister->show();
     emit windowShown("deviceRegisterButton");
 }

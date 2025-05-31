@@ -5,9 +5,10 @@
 #ifndef QRCODEGENERATOR_H
 #define QRCODEGENERATOR_H
 #include <QImage>
+#include <QByteArray>
 
 QImage getQRCodeImage(std::string input);
 
-QImage getQRCodeForMyDevicePublicKey();
+QImage getQRCodeForMyDevicePublicKey(const QByteArray public_key);
 
 #endif //QRCODEGENERATOR_H

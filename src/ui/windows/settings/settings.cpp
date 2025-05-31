@@ -37,9 +37,13 @@ void Settings::setupConnections()
     connect(ui->newPassphrase, &QLineEdit::textChanged, this, &Settings::validatePassphrase);
     connect(ui->confirmPassphrase, &QLineEdit::textChanged, this, &Settings::validatePassphrase);
 
-    // Connect buttons
-    connect(ui->cancelButton, &QPushButton::clicked, this, &Settings::onCancelClicked);
-    connect(ui->saveButton, &QPushButton::clicked, this, &Settings::onSaveChangesClicked);
+    // Connect passphrase section buttons
+    connect(ui->passphraseCancelButton, &QPushButton::clicked, this, &Settings::onPassphraseCancelClicked);
+    connect(ui->passphraseSaveButton, &QPushButton::clicked, this, &Settings::onPassphraseSaveClicked);
+
+    // Connect auth section buttons
+    connect(ui->authCancelButton, &QPushButton::clicked, this, &Settings::onAuthCancelClicked);
+    connect(ui->authSaveButton, &QPushButton::clicked, this, &Settings::onAuthSaveClicked);
 
     // Connect NavBar signals
     NavBar* navbar = findChild<NavBar*>();
@@ -50,6 +54,7 @@ void Settings::setupConnections()
         connect(navbar, &NavBar::logoutClicked, this, &Settings::onLogoutButtonClicked);
         connect(navbar, &NavBar::settingsClicked, this, &Settings::onSettingsButtonClicked);
     }
+    connect(ui->scanQRButton, &QPushButton::clicked, this, &Settings::onScanQRButtonClicked);
 }
 
 void Settings::validatePassphrase()
@@ -96,14 +101,12 @@ void Settings::onSentButtonClicked()
     WindowManager::instance().showSent();
 }
 
-// navbar button
 void Settings::onSendFileButtonClicked()
 {   
     ui->currentPassphrase->clear();
     ui->newPassphrase->clear();
     ui->confirmPassphrase->clear();
     WindowManager::instance().showSendFile();
-    
 }
 
 void Settings::onSettingsButtonClicked()
@@ -122,7 +125,7 @@ void Settings::onWindowShown(const QString& windowName)
     }
 }
 
-void Settings::onCancelClicked()
+void Settings::onPassphraseCancelClicked()
 {
     // Clear all passphrase fields
     ui->currentPassphrase->clear();
@@ -133,12 +136,34 @@ void Settings::onCancelClicked()
     WindowManager::instance().showReceived();
 }
 
+void Settings::onPassphraseSaveClicked()
+{
+    // TODO: Implement passphrase change functionality
+    StyledMessageBox::info(this, "Not Implemented", "Passphrase change functionality is not yet implemented.");
+}
+
+void Settings::onAuthCancelClicked()
+{
+    // Clear auth code input
+    ui->authCodeInput->clear();
+    
+    // Navigate back to the previous window
+    WindowManager::instance().showReceived();
+}
+
+void Settings::onAuthSaveClicked()
+{
+    // TODO: Implement auth code verification functionality
+    StyledMessageBox::info(this, "Not Implemented", "Auth code verification functionality is not yet implemented.");
+}
+
 void Settings::onLogoutButtonClicked() {
     // TODO: Implement logout functionality
     StyledMessageBox::info(this, "Not Implemented", "Logout functionality is not yet implemented.");
 }
 
-void Settings::onSaveChangesClicked()
+void Settings::onScanQRButtonClicked()
 {
-    StyledMessageBox::info(this, "Not Implemented", "Save Changes functionality is not yet implemented.");
+    // TODO: Implement QR code scanning functionality
+    StyledMessageBox::info(this, "Not Implemented", "QR code scanning functionality is not yet implemented.");
 }

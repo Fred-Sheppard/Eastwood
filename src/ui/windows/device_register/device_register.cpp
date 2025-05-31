@@ -1,10 +1,15 @@
 #include "./device_register.h"
 #include "ui_device_register.h"
 #include "src/ui/utils/window_manager/window_manager.h"
+#include <iostream>
+#include <QClipboard>
+#include <QApplication>
+#include "src/ui/utils/messagebox.h"
 
 DeviceRegister::DeviceRegister(const std::string& auth_code, const QImage& qr_code, QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::DeviceRegister)
+    , m_auth_code(auth_code)
 {
     ui->setupUi(this);
     setupConnections();
@@ -20,6 +25,7 @@ DeviceRegister::~DeviceRegister()
 void DeviceRegister::setupConnections()
 {
     connect(ui->backButton, &QPushButton::clicked, this, &DeviceRegister::onBackButtonClicked);
+    connect(ui->copyButton, &QPushButton::clicked, this, &DeviceRegister::onCopyButtonClicked);
 }
 
 void DeviceRegister::displayQRCode(const QImage& qr_code)
@@ -27,12 +33,13 @@ void DeviceRegister::displayQRCode(const QImage& qr_code)
     if (!qr_code.isNull()) {
         QPixmap pixmap = QPixmap::fromImage(qr_code);
         ui->qrCodeLabel->setPixmap(pixmap.scaled(200, 200, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    } else {
+        std::cout << "QR code is null!" << std::endl;
     }
 }
 
 void DeviceRegister::displayAuthCode(const std::string& auth_code)
 {
-    // Split the code into 4 parts
     int partLen = auth_code.length() / 4;
     QString code = QString::fromStdString(auth_code);
     ui->codeEdit1->setText(code.mid(0, partLen));
@@ -44,4 +51,15 @@ void DeviceRegister::displayAuthCode(const std::string& auth_code)
 void DeviceRegister::onBackButtonClicked()
 {
     WindowManager::instance().showRegister();
+}
+
+void DeviceRegister::onCopyButtonClicked()
+{
+    try {
+    QClipboard *clipboard = QApplication::clipboard();
+    clipboard->setText(QString::fromStdString(m_auth_code));
+    StyledMessageBox::success(this, "Copied to Clipboard", "All codes have been successfully copied to your clipboard");
+    } catch (const std::exception& e) {
+        StyledMessageBox::error(this, "Copy Failed", "Failed to copy codes to clipboard");
+    }
 }

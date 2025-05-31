@@ -12,6 +12,8 @@
 #include <sodium.h>
 #include <QByteArray>
 #include "src/key_exchange/utils.h"
+#include "src/ui/utils/qr_code_generation/QRCodeGenerator.h"
+#include "src/keys/secure_memory_buffer.h"
 
 
 Register::Register(QWidget *parent)
@@ -20,12 +22,6 @@ Register::Register(QWidget *parent)
 {
     ui->setupUi(this);
     setupConnections();
-    
-    QScreen *screen = QApplication::primaryScreen();
-    QRect screenGeometry = screen->geometry();
-    int x = (screenGeometry.width() - width()) / 2;
-    int y = (screenGeometry.height() - height()) / 2;
-    move(x, y);
     
     QScreen *screen = QApplication::primaryScreen();
     QRect screenGeometry = screen->geometry();
@@ -44,7 +40,6 @@ void Register::setupConnections()
     connect(ui->loginButton, &QPushButton::clicked, this, &Register::onLoginButtonClicked);
     connect(ui->togglePassphraseButton, &QPushButton::clicked, this, &Register::onTogglePassphraseClicked);
     connect(ui->registerButton, &QPushButton::clicked, this, &Register::onRegisterButtonClicked);
-    connect(ui->deviceRegisterButton, &QPushButton::clicked, this, &Register::onDeviceRegisterButtonClicked);
     connect(ui->deviceRegisterButton, &QPushButton::clicked, this, &Register::onDeviceRegisterButtonClicked);
 }
 
@@ -99,7 +94,7 @@ void Register::onRegisterButtonClicked()
     try {
         register_user(username.toStdString(), std::make_unique<std::string>(passphrase.toStdString()));
         register_first_device();
-        StyledMessageBox::info(this, "Success", "Registration successful!");
+        StyledMessageBox::success(this, "Success", "Hey " + username + "! You're registered and ready to go!");
         WindowManager::instance().showLogin();
         
         
@@ -136,12 +131,17 @@ void Register::onTogglePassphraseClicked()
 
 void Register::onDeviceRegisterButtonClicked()
 {
+    if (sodium_init() < 0) {
+        throw std::runtime_error("Libsodium initialization failed");
+    }
+
     unsigned char pk_device[crypto_sign_PUBLICKEYBYTES];
-    unsigned char sk_device[crypto_sign_SECRETKEYBYTES];
-    crypto_sign_keypair(pk_device, sk_device);
-    // public key as hex string
+    auto sk_device = SecureMemoryBuffer::create(crypto_sign_SECRETKEYBYTES);
+
+    crypto_sign_keypair(pk_device, sk_device->data());
     std::string auth_code = bin2base64(pk_device, crypto_sign_PUBLICKEYBYTES);
-    QImage qr_code = QImage(":/icons/logos/nightwood.png");
+    QByteArray pk_device_bytearray(reinterpret_cast<const char*>(pk_device), crypto_sign_PUBLICKEYBYTES);
+    QImage qr_code = getQRCodeForMyDevicePublicKey(pk_device_bytearray);
     
     if (auth_code.empty()) {
         StyledMessageBox::error(this, "Device Registration Failed", "Failed to generate authentication code");
@@ -154,5 +154,4 @@ void Register::onDeviceRegisterButtonClicked()
     }
     
     WindowManager::instance().showDeviceRegister(auth_code, qr_code);
-    
 } 

@@ -58,9 +58,8 @@ QImage getQRCodeImage(std::string input) {
     return qrCodeToImage(qr0, 10);
 }
 
-QImage getQRCodeForMyDevicePublicKey() {
-    const QByteArray my_device_public = get_public_key("device");
-    qrcodegen::QrCode qr0 = qrcodegen::QrCode::encodeText(my_device_public, qrcodegen::QrCode::Ecc::MEDIUM);
+QImage getQRCodeForMyDevicePublicKey(const QByteArray public_key) {
+    qrcodegen::QrCode qr0 = qrcodegen::QrCode::encodeText(public_key, qrcodegen::QrCode::Ecc::MEDIUM);
     return qrCodeToImage(qr0, 10);
 }
 

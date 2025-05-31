@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QImage>
+#include <QClipboard>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class DeviceRegister; }
@@ -19,10 +20,12 @@ public:
 
 private slots:
     void onBackButtonClicked();
+    void onCopyButtonClicked();
 
 private:
     Ui::DeviceRegister *ui;
     void setupConnections();
+    std::string m_auth_code; // Store the full auth code
 };
 
 #endif // DEVICE_REGISTER_H

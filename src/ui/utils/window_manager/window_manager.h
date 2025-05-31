@@ -5,6 +5,7 @@
 #include <QString>
 #include <QList>
 #include <QWidget>
+#include <QPointer>
 
 // Forward declarations to reduce includes
 class Received;
@@ -44,22 +45,22 @@ private:
 
     // Template function to handle different window types
     template<typename T>
-    void deleteWindow(T*& window) {
-        if (window) {
+    void deleteWindow(QPointer<T>& window) {
+        if (!window.isNull()) {
             window->hide();
             window->deleteLater();
             window = nullptr;
         }
     }
 
-    Received* m_received;
-    Sent* m_sent;
-    SendFile* m_sendFile;
-    Settings* m_settings;
-    Login* m_login;
-    Register* m_register;
-    DeviceRegister* m_deviceRegister;
-    QList<QWidget*> m_windows;  // List to track all windows
+    QPointer<Received> m_received;
+    QPointer<Sent> m_sent;
+    QPointer<SendFile> m_sendFile;
+    QPointer<Settings> m_settings;
+    QPointer<Login> m_login;
+    QPointer<Register> m_register;
+    QPointer<DeviceRegister> m_deviceRegister;
+    QList<QPointer<QWidget>> m_windows;
 };
 
 #endif // WINDOW_MANAGER_H
