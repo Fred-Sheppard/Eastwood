@@ -56,14 +56,11 @@ void Login::onLoginButtonClicked()
         return;
     }
     WindowManager::instance().showReceived();
-    hide();
-
 }
 
 void Login::onRegisterButtonClicked()
 {
     WindowManager::instance().showRegister();
-    hide();
 }
 
 void Login::onTogglePassphraseClicked()

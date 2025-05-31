@@ -22,6 +22,7 @@ private slots:
     void onRegisterButtonClicked();
     void onLoginButtonClicked();
     void onTogglePassphraseClicked();
+    void onDeviceRegisterButtonClicked();
 
 private:
     Ui::Register *ui;

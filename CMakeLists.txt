@@ -63,6 +63,9 @@ set(FRONTEND_SOURCES
         src/ui/windows/register/register.cpp
         src/ui/windows/register/register.h
         src/ui/windows/register/register.ui
+        src/ui/windows/device_register/device_register.cpp
+        src/ui/windows/device_register/device_register.h
+        src/ui/windows/device_register/device_register.ui
         src/ui/utils/messagebox.h
         src/ui/windows/received_dashboard/received_dash.cpp
         src/ui/windows/received_dashboard/received_dash.h

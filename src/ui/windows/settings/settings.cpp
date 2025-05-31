@@ -86,7 +86,6 @@ void Settings::onReceivedButtonClicked()
     ui->newPassphrase->clear();
     ui->confirmPassphrase->clear();
     WindowManager::instance().showReceived();
-    hide();
 }
 
 void Settings::onSentButtonClicked()
@@ -95,7 +94,6 @@ void Settings::onSentButtonClicked()
     ui->newPassphrase->clear();
     ui->confirmPassphrase->clear();
     WindowManager::instance().showSent();
-    hide();
 }
 
 // navbar button
@@ -105,7 +103,7 @@ void Settings::onSendFileButtonClicked()
     ui->newPassphrase->clear();
     ui->confirmPassphrase->clear();
     WindowManager::instance().showSendFile();
-    hide();
+    
 }
 
 void Settings::onSettingsButtonClicked()
@@ -133,7 +131,6 @@ void Settings::onCancelClicked()
     
     // Navigate back to the previous window
     WindowManager::instance().showReceived();
-    hide();
 }
 
 void Settings::onLogoutButtonClicked() {

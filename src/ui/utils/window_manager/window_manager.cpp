@@ -5,6 +5,8 @@
 #include "../../windows/settings/settings.h"
 #include "../../windows/login/login.h"
 #include "../../windows/register/register.h"
+#include "../../windows/device_register/device_register.h"
+#include <QImage>
 
 WindowManager& WindowManager::instance()
 {
@@ -19,6 +21,7 @@ WindowManager::WindowManager()
     , m_settings(nullptr)
     , m_login(nullptr)
     , m_register(nullptr)
+    , m_deviceRegister(nullptr)
 {
 }
 
@@ -35,6 +38,7 @@ void WindowManager::cleanup()
     deleteWindow(m_settings);
     deleteWindow(m_login);
     deleteWindow(m_register);
+    deleteWindow(m_deviceRegister);
     
     // Clean up any remaining windows in the list
     for (QWidget* window : m_windows) {
@@ -146,4 +150,29 @@ void WindowManager::showRegister()
     }
     m_register->show();
     emit windowShown("registerButton");
+}
+
+void WindowManager::showDeviceRegister(const std::string& auth_code, const QImage& qr_code)
+{
+    // Close all existing windows
+    for (QWidget* window : m_windows) {
+        window->close();
+    }
+    m_windows.clear();
+
+    if (!m_deviceRegister) {
+        m_deviceRegister = new DeviceRegister(auth_code, qr_code);
+        m_deviceRegister->setAttribute(Qt::WA_DeleteOnClose);
+        m_windows.append(m_deviceRegister);
+        connect(m_deviceRegister, &DeviceRegister::destroyed, this, [this]() {
+            m_deviceRegister = nullptr;
+            m_windows.removeOne(m_deviceRegister);
+        });
+    } else {
+        // Update existing window with new data
+        m_deviceRegister->displayQRCode(qr_code);
+        m_deviceRegister->displayAuthCode(auth_code);
+    }
+    m_deviceRegister->show();
+    emit windowShown("deviceRegisterButton");
 }

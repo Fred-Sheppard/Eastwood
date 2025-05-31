@@ -89,25 +89,21 @@ void NavBar::updateButtonStyle(QPushButton* button, bool isActive) {
 void NavBar::onReceivedButtonClicked() {
     WindowManager::instance().showReceived();
     setActiveButton("receivedButton");
-    hide();
 }
 
 void NavBar::onSentButtonClicked() {
     WindowManager::instance().showSent();
     setActiveButton("sentButton");
-    hide();
 }
 
 void NavBar::onSendFileButtonClicked() {
     WindowManager::instance().showSendFile();
     setActiveButton("sendFileButton");
-    hide();
 }
 
 void NavBar::onSettingsButtonClicked() {
     WindowManager::instance().showSettings();
     setActiveButton("settingsButton");
-    hide();
 }
 
 void NavBar::onLogoutButtonClicked() {

@@ -13,6 +13,7 @@ class SendFile;
 class Settings;
 class Login;
 class Register;
+class DeviceRegister;
 
 class WindowManager : public QObject
 {
@@ -26,6 +27,7 @@ public:
     void showSettings();
     void showLogin();
     void showRegister();
+    void showDeviceRegister(const std::string& auth_code, const QImage& qr_code);
     void cleanup();
 
 signals:
@@ -56,6 +58,7 @@ private:
     Settings* m_settings;
     Login* m_login;
     Register* m_register;
+    DeviceRegister* m_deviceRegister;
     QList<QWidget*> m_windows;  // List to track all windows
 };
 
