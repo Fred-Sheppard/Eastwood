@@ -18,11 +18,17 @@ public:
         m_loginWindow = loginWindow;
     }
 
+signals:
+    void registrationSuccess();
+    void registrationError(const QString& title, const QString& message);
+
 private slots:
     void onRegisterButtonClicked();
     void onLoginButtonClicked();
     void onTogglePassphraseClicked();
     void onDeviceRegisterButtonClicked();
+    void onRegistrationSuccess();
+    void onRegistrationError(const QString& title, const QString& message);
 
 private:
     Ui::Register *ui;

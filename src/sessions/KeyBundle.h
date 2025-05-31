@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <memory>
 
+#include "src/key_exchange/NewRatchet.h"
 #include "src/key_exchange/x3dh.h"
 #include "src/sql/queries.h"
 
@@ -32,6 +33,8 @@ class KeyBundle {
 
     unsigned char *get_my_device_public() const { return my_device_public; }
     unsigned char *get_their_device_public() const { return their_device_public; }
+
+    virtual std::unique_ptr<NewRatchet> create_ratchet(unsigned char *identity_session_id, unsigned char *device_session_id) = 0;
 protected:
     unsigned char *my_device_public;
     unsigned char *their_device_public;
@@ -86,6 +89,10 @@ public:
     unsigned char* get_their_onetime_public() const { return their_onetime_public; }
     unsigned char* get_their_signed_signature() const { return their_signed_signature; }
 
+    std::unique_ptr<NewRatchet> create_ratchet(unsigned char *identity_session_id, unsigned char *device_session_id) override {
+        return std::make_unique<NewRatchet>(get_shared_secret(), their_signed_public, true, device_session_id, identity_session_id);
+    };
+
 private:
     unsigned char* my_ephemeral_public;
     std::shared_ptr<SecureMemoryBuffer> my_ephemeral_private;
@@ -124,6 +131,9 @@ public:
     static std::unique_ptr<SecureMemoryBuffer> get_my_signed_private() { return get_decrypted_sk("signed"); }
     static std::unique_ptr<SecureMemoryBuffer> get_my_onetime_private(const unsigned char* my_onetime_public) { return get_onetime_private_key(my_onetime_public); }
 
+    std::unique_ptr<NewRatchet> create_ratchet(unsigned char *identity_session_id, unsigned char *device_session_id) override {
+        return std::make_unique<NewRatchet>(get_shared_secret(), their_ephemeral_public, true, device_session_id, identity_session_id);
+    };
 private:
     unsigned char* their_ephemeral_public;
     unsigned char* my_onetime_public = nullptr;

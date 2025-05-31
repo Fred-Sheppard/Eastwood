@@ -69,7 +69,38 @@ inline void init_schema() {
     AFTER UPDATE ON file_keys
     FOR EACH ROW
     BEGIN
-        UPDATE keys SET last_modified = CURRENT_TIMESTAMP WHERE label = OLD.label;
+        UPDATE file_keys SET last_modified = CURRENT_TIMESTAMP WHERE label = OLD.label;
+    END;
+
+    CREATE TABLE IF NOT EXISTS ratchets (
+        ratchet_id       BLOB PRIMARY KEY,
+        identity_session_id BLOB UNIQUE,
+        nonce         BLOB UNIQUE,
+        encrypted_data         BLOB UNIQUE,
+        created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+        last_modified DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TRIGGER IF NOT EXISTS ratchets_last_modified_trigger
+    AFTER UPDATE ON ratchets
+    FOR EACH ROW
+    BEGIN
+        UPDATE ratchets SET last_modified = CURRENT_TIMESTAMP WHERE label = OLD.label;
+    END;
+
+    CREATE TABLE IF NOT EXISTS ratchet_keys (
+        ratchet_id       BLOB PRIMARY KEY,
+        nonce         BLOB UNIQUE,
+        encrypted_key         BLOB UNIQUE,
+        created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+        last_modified DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TRIGGER IF NOT EXISTS ratchet_keys_last_modified_trigger
+    AFTER UPDATE ON ratchet_keys
+    FOR EACH ROW
+    BEGIN
+        UPDATE ratchet_keys SET last_modified = CURRENT_TIMESTAMP WHERE label = OLD.label;
     END;
 )sql";
 
@@ -83,15 +114,18 @@ inline void init_schema() {
 }
 
 inline void drop_all_tables() {
+    if (!Database::get().isInitialized()) {
+        return;
+    }
     std::cerr << "DROPPING ALL TABLES" << std::endl;
-    auto &db = Database::get();
+    const auto &db = Database::get();
     sqlite3 *sqlite = db.getDatabase();
-    const char *sql = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';";
+    const auto sql = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';";
     sqlite3_stmt *stmt = nullptr;
     std::set<std::string> tables;
     if (sqlite3_prepare_v2(sqlite, sql, -1, &stmt, nullptr) == SQLITE_OK) {
         while (sqlite3_step(stmt) == SQLITE_ROW) {
-            const char *name = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0));
+            const auto name = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0));
             if (name) tables.insert(name);
         }
         sqlite3_finalize(stmt);
@@ -99,7 +133,7 @@ inline void drop_all_tables() {
         std::cerr << "Failed to query tables: " << sqlite3_errmsg(sqlite) << std::endl;
         return;
     }
-    for (const auto &table : tables) {
+    for (const auto &table: tables) {
         std::string drop_sql = "DROP TABLE IF EXISTS '" + table + "';";
         char *errmsg = nullptr;
         if (sqlite3_exec(sqlite, drop_sql.c_str(), nullptr, nullptr, &errmsg) != SQLITE_OK) {

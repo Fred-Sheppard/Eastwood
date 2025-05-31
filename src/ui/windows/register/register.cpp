@@ -4,8 +4,8 @@
 #include "src/ui/utils/window_manager/window_manager.h"
 #include "src/auth/register_user/register_user.h"
 #include <iostream>
+#include "src/auth/login/login.h"
 #include "src/auth/register_device/register_device.h"
-#include "src/endpoints/endpoints.h"
 #include "src/utils/JsonParser.h"
 #include <QScreen>
 #include <QApplication>
@@ -15,14 +15,14 @@
 #include "src/ui/utils/qr_code_generation/QRCodeGenerator.h"
 #include "src/keys/secure_memory_buffer.h"
 
+#include <QtConcurrent>
 
 Register::Register(QWidget *parent)
     : QWidget(parent)
-    , ui(new Ui::Register)
-{
+      , ui(new Ui::Register) {
     ui->setupUi(this);
     setupConnections();
-    
+
     QScreen *screen = QApplication::primaryScreen();
     QRect screenGeometry = screen->geometry();
     int x = (screenGeometry.width() - width()) / 2;
@@ -30,21 +30,34 @@ Register::Register(QWidget *parent)
     move(x, y);
 }
 
-Register::~Register()
-{
+Register::~Register() {
     delete ui;
 }
 
-void Register::setupConnections()
-{
+void Register::setupConnections() {
     connect(ui->loginButton, &QPushButton::clicked, this, &Register::onLoginButtonClicked);
     connect(ui->togglePassphraseButton, &QPushButton::clicked, this, &Register::onTogglePassphraseClicked);
     connect(ui->registerButton, &QPushButton::clicked, this, &Register::onRegisterButtonClicked);
     connect(ui->deviceRegisterButton, &QPushButton::clicked, this, &Register::onDeviceRegisterButtonClicked);
+
+    connect(this, &Register::registrationSuccess, this, &Register::onRegistrationSuccess);
+    connect(this, &Register::registrationError, this, &Register::onRegistrationError);
 }
 
-void Register::onRegisterButtonClicked()
-{
+void Register::onRegistrationSuccess() {
+    ui->registerButton->setText("Register");
+    ui->registerButton->setEnabled(true);
+    WindowManager::instance().showReceived();
+    hide();
+}
+
+void Register::onRegistrationError(const QString& title, const QString& message) {
+    ui->registerButton->setText("Register");
+    ui->registerButton->setEnabled(true);
+    StyledMessageBox::error(this, title, message);
+}
+
+void Register::onRegisterButtonClicked() {
     // passphrase requirements as per NIST SP 800-63B guidelines
     const int MAX_PASSPHRASE_LENGTH = 64;
     const int MIN_PASSPHRASE_LENGTH = 20;
@@ -91,38 +104,41 @@ void Register::onRegisterButtonClicked()
         return;
     }
 
-    try {
-        register_user(username.toStdString(), std::make_unique<std::string>(passphrase.toStdString()));
-        register_first_device();
-        StyledMessageBox::success(this, "Success", "Hey " + username + "! You're registered and ready to go!");
-        WindowManager::instance().showLogin();
-        
-        
-    } catch (const webwood::HttpError& e) {
-        const std::string errorBody = e.what();
-        const bool isHtmlError = errorBody.find("<!DOCTYPE HTML") != std::string::npos;
-        
-        const QString title = isHtmlError ? "Server Unavailable" : "Registration Failed";
-        const QString message = isHtmlError 
-            ? "The server is currently unavailable. Please try again later."
-            : QString("Registration failed: %1").arg(QString::fromStdString(errorBody));
-        
-        StyledMessageBox::error(this, title, message);
-    } catch (const std::exception& e) {
-        StyledMessageBox::error(this, "Registration Failed", 
-            QString("An error occurred: %1").arg(e.what()));
-    }
+    // Update button state to show registration in progress
+    ui->registerButton->setText("Registering...");
+    ui->registerButton->setEnabled(false);
+
+    // Run registration in separate thread to avoid blocking UI
+    const auto _ = QtConcurrent::run([this, username, passphrase]() {
+        try {
+            register_user(username.toStdString(), std::make_unique<std::string>(passphrase.toStdString()));
+            register_first_device();
+            login_user(username.toStdString(), std::make_unique<std::string>(passphrase.toStdString()));
+            emit registrationSuccess();
+
+        } catch (const webwood::HttpError &e) {
+            const std::string errorBody = e.what();
+            const bool isHtmlError = errorBody.find("<!DOCTYPE HTML") != std::string::npos;
+            const QString title = isHtmlError ? "Server Unavailable" : "Registration Failed";
+            const QString message = isHtmlError
+                                        ? "The server is currently unavailable. Please try again later."
+                                        : QString("Registration failed: %1").arg(QString::fromStdString(errorBody));
+            emit registrationError(title, message);
+
+        } catch (const std::exception &e) {
+            const QString errorMsg = QString("An error occurred: %1").arg(e.what());
+            emit registrationError("Registration Failed", errorMsg);
+        }
+    });
 }
 
-void Register::onLoginButtonClicked()
-{
+void Register::onLoginButtonClicked() {
     WindowManager::instance().showLogin();
-    
-    
+
+
 }
 
-void Register::onTogglePassphraseClicked()
-{
+void Register::onTogglePassphraseClicked() {
     m_passphraseVisible = !m_passphraseVisible;
     ui->passphraseEdit->setEchoMode(m_passphraseVisible ? QLineEdit::Normal : QLineEdit::Password);
     ui->confirmPassphraseEdit->setEchoMode(m_passphraseVisible ? QLineEdit::Normal : QLineEdit::Password);
@@ -141,16 +157,16 @@ void Register::onDeviceRegisterButtonClicked()
     crypto_sign_keypair(pk_device, sk_device->data());
     std::string auth_code = bin2base64(pk_device, crypto_sign_PUBLICKEYBYTES);
     QImage qr_code = getQRCodeForMyDevicePublicKey(auth_code);
-    
+
     if (auth_code.empty()) {
         StyledMessageBox::error(this, "Device Registration Failed", "Failed to generate authentication code");
         return;
     }
-    
+
     if (qr_code.isNull()) {
         StyledMessageBox::error(this, "Device Registration Failed", "Failed to generate QR code");
         return;
     }
-    
+
     WindowManager::instance().showDeviceRegister(auth_code, qr_code);
-} 
+}

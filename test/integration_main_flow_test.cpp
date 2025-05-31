@@ -46,13 +46,9 @@ int main() {
     constexpr bool encrypted = false;
     constexpr bool refresh_database = true;
 
-    auto &db = Database::get();
-    if (db.initialize("master key", encrypted)) {
-        std::cout << "Database initialized successfully." << std::endl;
-    } else {
-        std::cerr << "Failed to initialize database." << std::endl;
-        return 1;
-    }
+    const auto master_key = SecureMemoryBuffer::create(MASTER_KEY_LEN);
+    randombytes_buf(master_key->data(), MASTER_KEY_LEN);
+    Database::get().initialize("username", master_key, encrypted);
 
     auto master_password = std::make_unique<std::string>("correct horse battery stapler");
 
@@ -60,10 +56,12 @@ int main() {
 
     init_schema();
 
+    auto password = std::make_unique<const std::string>("password1234");
+
     const std::string username = generateRandomString(8);
-    register_user(username, std::make_unique<std::string>("1234"));
+    register_user(username, password);
     register_first_device();
-    login_user(username);
+    login_user(username, password);
     post_new_keybundles(
         get_decrypted_keypair("device"),
         generate_signed_prekey(),
