@@ -291,10 +291,15 @@ void post_handshake_device(
             "recipient_signed_public_prekey_signature",
             bin2hex(recipient_signed_prekey_signature, crypto_box_PUBLICKEYBYTES)
         },
-        {"recipient_onetime_public_prekey", bin2hex(recipient_onetime_prekey_public, crypto_box_PUBLICKEYBYTES)},
         {"initiator_ephemeral_public_key", bin2hex(my_ephemeral_key_public, crypto_box_PUBLICKEYBYTES)},
         {"initiator_device_public_key", bin2hex(my_device_key_public, crypto_box_PUBLICKEYBYTES)},
     };
+
+    // Only add one-time prekey if it exists
+    if (recipient_onetime_prekey_public != nullptr) {
+        body["recipient_onetime_public_prekey"] = bin2hex(recipient_onetime_prekey_public, crypto_box_PUBLICKEYBYTES);
+    }
+
     post("/handshake", body);
 }
 
@@ -313,32 +318,32 @@ std::vector<std::tuple<IdentitySessionId, KeyBundle *> > get_handshake_backlog()
         IdentitySessionId identity_session_id;
         auto initator_dev_key = new unsigned char[crypto_box_PUBLICKEYBYTES];
         auto initiator_eph_pub = new unsigned char[crypto_box_PUBLICKEYBYTES];
-        auto recip_onetime_pub = new unsigned char[crypto_box_PUBLICKEYBYTES];
+        unsigned char* recip_onetime_pub = nullptr;
 
         std::string dev_key_str = handshake["initiator_device_public_key"].get<std::string>();
         std::string eph_pub_str = handshake["initiator_ephemeral_public_key"].get<std::string>();
-        std::string onetime_pub_str = handshake["recipient_onetime_public_prekey"].get<std::string>();
         std::string session_id_str = handshake["identity_session_id"].get<std::string>();
-
-        std::cout << "Session ID hex length: " << session_id_str.length() << std::endl;
-        std::cout << "Expected binary size: " << crypto_hash_sha256_BYTES << std::endl;
-        std::cout << "Session ID hex: " << session_id_str << std::endl;
 
         bool success = hex_to_bin(dev_key_str, initator_dev_key, crypto_box_PUBLICKEYBYTES) &&
                        hex_to_bin(eph_pub_str, initiator_eph_pub, crypto_box_PUBLICKEYBYTES) &&
-                       hex_to_bin(onetime_pub_str, recip_onetime_pub, crypto_box_PUBLICKEYBYTES) &&
                        hex_to_bin(session_id_str, identity_session_id.data.data(), crypto_hash_sha256_BYTES);
 
         if (!success) {
-            std::cout << "Failed to decode hex strings:" << std::endl;
-            std::cout << "Device key hex length: " << dev_key_str.length() << std::endl;
-            std::cout << "Ephemeral key hex length: " << eph_pub_str.length() << std::endl;
-            std::cout << "One-time key hex length: " << onetime_pub_str.length() << std::endl;
-            std::cout << "Session ID hex length: " << session_id_str.length() << std::endl;
             delete[] initator_dev_key;
             delete[] initiator_eph_pub;
-            delete[] recip_onetime_pub;
             throw std::runtime_error("Failed to decode handshake backlog data");
+        }
+
+        // Only process one-time prekey if it exists in the response
+        if (handshake.contains("recipient_onetime_public_prekey")) {
+            std::string onetime_pub_str = handshake["recipient_onetime_public_prekey"].get<std::string>();
+            recip_onetime_pub = new unsigned char[crypto_box_PUBLICKEYBYTES];
+            if (!hex_to_bin(onetime_pub_str, recip_onetime_pub, crypto_box_PUBLICKEYBYTES)) {
+                delete[] initator_dev_key;
+                delete[] initiator_eph_pub;
+                delete[] recip_onetime_pub;
+                throw std::runtime_error("Failed to decode one-time prekey data");
+            }
         }
 
         auto device_key = get_public_key("device");
