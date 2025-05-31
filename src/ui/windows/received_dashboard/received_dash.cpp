@@ -137,7 +137,7 @@ void Received::onWindowShown(const QString& windowName)
 
 void Received::onLogoutButtonClicked()
 {
-    StyledMessageBox::info(this, "Not Implemented", "Logout functionality is not yet implemented.");
+    WindowManager::instance().showLogin();
 }
 
 void Received::onDownloadFileClicked(FileItemWidget* widget)

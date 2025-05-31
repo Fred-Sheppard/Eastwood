@@ -107,6 +107,7 @@ void NavBar::onSettingsButtonClicked() {
 }
 
 void NavBar::onLogoutButtonClicked() {
+    WindowManager::instance().showLogin();
     // TODO: Implement logout functionality
     // - Show confirmation dialog
     // - Clear sensitive data

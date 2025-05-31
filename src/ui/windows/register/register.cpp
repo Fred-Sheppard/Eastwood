@@ -9,6 +9,7 @@
 #include "src/utils/JsonParser.h"
 #include <QScreen>
 #include <QApplication>
+#include "src/ui/utils/qr_code_generation/QRCodeGenerator.h"
 
 
 Register::Register(QWidget *parent)
@@ -124,19 +125,24 @@ void Register::onTogglePassphraseClicked()
 
 void Register::onDeviceRegisterButtonClicked()
 {
-    std::string auth_code = get_public_key("device");
-    QImage qr_code = QImage(":/icons/logos/nightwood.png");
-    
-    if (auth_code.empty()) {
-        StyledMessageBox::error(this, "Device Registration Failed", "Failed to generate authentication code");
-        return;
+    try {
+        register_first_device();
+        std::string auth_code = "12425525151551";
+        QImage qr_code = getQRCodeForMyDevicePublicKey();
+        
+        if (auth_code.empty()) {
+            StyledMessageBox::error(this, "Device Registration Failed", "Failed to generate authentication code");
+            return;
+        }
+        
+        if (qr_code.isNull()) {
+            StyledMessageBox::error(this, "Device Registration Failed", "Failed to generate QR code");
+            return;
+        }
+        
+        WindowManager::instance().showDeviceRegister(auth_code, qr_code);
+    } catch (const std::exception& e) {
+        StyledMessageBox::error(this, "Device Registration Failed", 
+            QString("An error occurred: %1").arg(e.what()));
     }
-    
-    if (qr_code.isNull()) {
-        StyledMessageBox::error(this, "Device Registration Failed", "Failed to generate QR code");
-        return;
-    }
-    
-    WindowManager::instance().showDeviceRegister(auth_code, qr_code);
-    
 } 
