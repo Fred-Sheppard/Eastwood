@@ -31,7 +31,7 @@ void Database::initialize(
     if (!QDir().mkpath(dataPath)) {
         throw std::runtime_error("Failed to access datapath");
     };
-    // $APP_DIR 
+    // $APP_DIR/alice-encrypted.db
     const QString dbPath = dataPath + "/ " + QString(username.c_str()) + (encrypted ? "-encrypted.db" : "-db.db");
     std::cerr << "DB saved at " << dbPath.toStdString() << std::endl;
 
