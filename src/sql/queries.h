@@ -218,7 +218,7 @@ inline void save_ratchet(const char* ratchet_id, unsigned char* identity_session
     const auto &db = Database::get();
     sqlite3_stmt *stmt;
     db.prepare_or_throw(
-        "INSERT INTO ratchets (ratchet_id, identity_session_id, nonce, data) VALUES (?, ?, ?, ?);", &stmt
+        "INSERT OR REPLACE INTO ratchets (ratchet_id, identity_session_id, nonce, data) VALUES (?, ?, ?, ?);", &stmt
     );
     sqlite3_bind_text(stmt, 1, ratchet_id, 32, SQLITE_TRANSIENT);
     sqlite3_bind_blob(stmt, 2, identity_session_id, 32, SQLITE_TRANSIENT);
