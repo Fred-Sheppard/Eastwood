@@ -18,6 +18,13 @@ class NewRatchet {
 public:
     NewRatchet(const unsigned char* shared_secret, const unsigned char* other_key, bool is_sender, unsigned char* ratchet_id_in, unsigned char* identity_session_id_in);
     explicit NewRatchet(const std::vector<unsigned char> &serialised_ratchet);
+    ~NewRatchet() {
+        // Clean up skipped_keys
+        for (auto& pair : skipped_keys) {
+            delete[] pair.second;
+        }
+        skipped_keys.clear();
+    }
 
     std::tuple<unsigned char*, MessageHeader*> advance_send();
     unsigned char* advance_receive(const MessageHeader* header);
