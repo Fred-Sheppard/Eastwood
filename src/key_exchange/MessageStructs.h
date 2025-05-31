@@ -2,9 +2,10 @@
 // Created by Josh Sloggett on 31/05/2025.
 //
 
-#ifndef MESSAGESTRUCTS_H
-#define MESSAGESTRUCTS_H
+#pragma once
+
 #include "sodium.h"
+#include <cstring>
 
 struct MessageHeader {
     unsigned char dh_public[crypto_kx_PUBLICKEYBYTES]; // Sender's current ratchet public key
@@ -105,5 +106,4 @@ public:
     unsigned char* ciphertext;
     size_t length;
 };
-#endif //MESSAGESTRUCTS_H
 
