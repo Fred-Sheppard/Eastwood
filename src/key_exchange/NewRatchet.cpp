@@ -11,9 +11,10 @@
 
 // other key is initiator ephemeral for recipient
 // other key is receiver signed prekey for initiator
-NewRatchet::NewRatchet(const unsigned char *shared_secret, const unsigned char *other_key, bool is_sender, unsigned char* ratchet_id_in) {
+NewRatchet::NewRatchet(const unsigned char *shared_secret, const unsigned char *other_key, bool is_sender, unsigned char* ratchet_id_in, unsigned char* identity_session_id_in) {
     memcpy(root_key, shared_secret, 32);
     memcpy(ratchet_id, ratchet_id_in, 32);
+    memcpy(identity_session_id, identity_session_id_in, 32);
 
     if (is_sender) {
         set_up_initial_state_for_initiator(other_key);
@@ -22,6 +23,7 @@ NewRatchet::NewRatchet(const unsigned char *shared_secret, const unsigned char *
     }
 
     set_up_initial_chain_keys();
+    save();
 }
 
 //serialised
@@ -169,6 +171,7 @@ unsigned char* NewRatchet::advance_receive(const MessageHeader* header) {
             }
             auto key = skipped_keys[header->message_index];
             skipped_keys.erase(header->message_index);
+            save();
             return key;
         }
     }
@@ -178,6 +181,7 @@ unsigned char* NewRatchet::advance_receive(const MessageHeader* header) {
         const auto message_key = progress_receive_ratchet();
         if (i == header->message_index) {
             receive_chain.index = i + 1;
+            save();
             return message_key;
         }
         skipped_keys[i] = message_key;
@@ -213,6 +217,7 @@ std::tuple<unsigned char*, MessageHeader*> NewRatchet::progress_sending_ratchet(
     memcpy(send_chain.key, next_send_key, 32);
     send_chain.index = send_chain.index + 1;
 
+    save();
     return std::make_tuple(message_key, header);
 }
 
@@ -283,7 +288,7 @@ void NewRatchet::deserialise(std::istream &in) {
     in.read((char*)&reversed, sizeof(reversed));
 }
 
-void NewRatchet::save(unsigned char* identity_session_id) {
+void NewRatchet::save() {
     std::ostringstream oss(std::ios::binary);
     serialise(oss);
 
