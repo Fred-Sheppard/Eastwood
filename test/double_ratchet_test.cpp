@@ -492,9 +492,3 @@ TEST_F(DoubleRatchetTest, SavingAndLoadingFromDB) {
     EXPECT_EQ(0, memcmp(ratchet1.receive_chain.key, ratchet2.receive_chain.key, 32));
     EXPECT_EQ(ratchet1.receive_chain.index, ratchet2.receive_chain.index);
 }
-
-
-int main(int argc, char **argv) {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

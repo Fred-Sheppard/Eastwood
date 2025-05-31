@@ -186,7 +186,6 @@ target_link_libraries(Eastwood PRIVATE
 
 # Create test executable
 add_executable(EastwoodTests
-        test/identity_communication_session_test.cpp
         test/double_ratchet_test.cpp
         ${CRYPTO_SOURCES}
         src/database/database.cpp
@@ -195,6 +194,7 @@ add_executable(EastwoodTests
         src/sessions/IdentityManager.cpp
         src/sessions/IdentitySession.cpp
         src/endpoints/endpoints.cpp
+        test/identity_session_test.cpp
 )
 
 # Configure test target
