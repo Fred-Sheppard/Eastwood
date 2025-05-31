@@ -3,12 +3,29 @@
 //
 
 #include <gtest/gtest.h>
+#include <tuple>
 
 #include "kek_manager.h"
 #include "NewRatchet.h"
 #include "utils.h"
 #include "database/schema.h"
 #include "src/key_exchange/DoubleRatchet.h"
+#include "key_exchange/x3dh.h"
+#include "key_exchange/XChaCha20-Poly1305.h"
+#include "utils/ConversionUtils.h"
+#include "utils/JsonParser.h"
+#include "client_api_interactions/MakeAuthReq.h"
+#include "client_api_interactions/MakeUnauthReq.h"
+#include "libraries/BaseClient.h"
+#include "libraries/HTTPSClient.h"
+#include "endpoints/endpoints.h"
+#include "keys/secure_memory_buffer.h"
+#include "keys/session_token_manager.h"
+#include "algorithms/algorithms.h"
+#include "database/database.h"
+#include "sessions/KeyBundle.h"
+#include "sessions/IdentityManager.h"
+#include "sessions/IdentitySession.h"
 
 // Test fixture class for DoubleRatchet tests
 class DoubleRatchetTest : public ::testing::Test {
@@ -257,24 +274,24 @@ TEST_F(DoubleRatchetTest, MessageIndexResetTest) {
     auto [alice_key1, header1] = alice.advance_send();
     auto [alice_key2, header2] = alice.advance_send();
 
-    ASSERT_EQ(get<0>(alice.get_chain_lengths()), 2);
-    ASSERT_EQ(get<1>(alice.get_chain_lengths()), 0);
+    ASSERT_EQ(std::get<0>(alice.get_chain_lengths()), 2);
+    ASSERT_EQ(std::get<1>(alice.get_chain_lengths()), 0);
 
     bob.advance_receive(header1);
     bob.advance_receive(header2);
 
-    ASSERT_EQ(get<0>(bob.get_chain_lengths()), 0);
-    ASSERT_EQ(get<1>(bob.get_chain_lengths()), 2);
+    ASSERT_EQ(std::get<0>(bob.get_chain_lengths()), 0);
+    ASSERT_EQ(std::get<1>(bob.get_chain_lengths()), 2);
 
     auto [bob_key3, header3] = bob.advance_send();
 
-    ASSERT_EQ(get<0>(bob.get_chain_lengths()), 1);
-    ASSERT_EQ(get<1>(bob.get_chain_lengths()), 2);
+    ASSERT_EQ(std::get<0>(bob.get_chain_lengths()), 1);
+    ASSERT_EQ(std::get<1>(bob.get_chain_lengths()), 2);
 
     alice.advance_receive(header3);
 
-    ASSERT_EQ(get<0>(alice.get_chain_lengths()), 0);
-    ASSERT_EQ(get<1>(alice.get_chain_lengths()), 1);
+    ASSERT_EQ(std::get<0>(alice.get_chain_lengths()), 0);
+    ASSERT_EQ(std::get<1>(alice.get_chain_lengths()), 1);
 }
 
 TEST_F(DoubleRatchetTest, OneMessageFromEitherSideTest) {
