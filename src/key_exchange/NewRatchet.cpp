@@ -311,9 +311,6 @@ void NewRatchet::save() {
     auto nonce_key = new unsigned char[CHA_CHA_NONCE_LEN];
     randombytes_buf(nonce_key, CHA_CHA_NONCE_LEN);
 
-    std::unique_ptr<SecureMemoryBuffer> kek_buffer = SecureMemoryBuffer::create(32);
-    memcpy(kek_buffer->data(), KekManager::instance().getKEK(), 32);
-
     auto encryption_key = SecureMemoryBuffer::create(32);
     crypto_stream_chacha20_keygen(encryption_key->data());
 
@@ -323,7 +320,7 @@ void NewRatchet::save() {
     auto encrypted_data = encrypt_bytes(bytes, std::move(copy_encryption_key), nonce_data);
     auto encrypted_encryption_key = encrypt_symmetric_key(encryption_key, nonce_key);
 
-    save_ratchet_and_key(reinterpret_cast<const char*>(ratchet_id), identity_session_id, encrypted_data, nonce_data, std::move(encrypted_encryption_key), nonce_key);
+    save_ratchet_and_key(ratchet_id, identity_session_id, encrypted_data, nonce_data, std::move(encrypted_encryption_key), nonce_key);
 
     delete[] nonce_data;
     delete[] nonce_key;

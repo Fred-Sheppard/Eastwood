@@ -214,7 +214,7 @@ inline std::unique_ptr<SecureMemoryBuffer> get_decrypted_file_key(
     return decrypted_key;
 }
 
-inline void save_ratchet_and_key(const char* ratchet_id, unsigned char* identity_session_id, std::vector<unsigned char> encrypted_ratchet, unsigned char* ratchet_nonce, std::unique_ptr<SecureMemoryBuffer> encrypted_key, unsigned char* sk_nonce) {
+inline void save_ratchet_and_key(const unsigned char* ratchet_id, const unsigned char* identity_session_id, const std::vector<unsigned char> &encrypted_ratchet, const unsigned char* ratchet_nonce, const std::unique_ptr<SecureMemoryBuffer> &encrypted_key, const unsigned char* sk_nonce) {
     const auto &db = Database::get();
     sqlite3_stmt *stmt;
     db.prepare_or_throw(
@@ -236,7 +236,7 @@ inline void save_ratchet_and_key(const char* ratchet_id, unsigned char* identity
     db.execute(stmt2);
 }
 
-inline std::vector<unsigned char> get_decrypted_ratchet(const char* ratchet_id) {
+inline std::vector<unsigned char> get_decrypted_ratchet(const unsigned char* ratchet_id) {
     const auto &db = Database::get();
     sqlite3_stmt *stmt;
     

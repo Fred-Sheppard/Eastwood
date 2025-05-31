@@ -465,7 +465,7 @@ TEST_F(DoubleRatchetTest, SavingAndLoadingFromDB) {
     NewRatchet ratchet1(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true, ratchet_id, ratchet_id);
 
     ratchet1.save();
-    auto decrypted_ratchet = get_decrypted_ratchet(reinterpret_cast<const char*>(ratchet_id));
+    auto decrypted_ratchet = get_decrypted_ratchet(ratchet_id);
     auto ratchet2 = NewRatchet(decrypted_ratchet);
 
     EXPECT_EQ(0, memcmp(ratchet1.local_dh_priv->data(), ratchet2.local_dh_priv->data(), 32));
