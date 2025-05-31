@@ -50,6 +50,8 @@ FetchContent_MakeAvailable(json googletest qrcodegen)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SQLCIPHER REQUIRED sqlcipher)
 
+link_directories(${SQLCIPHER_LIBRARY_DIRS})
+
 # Find libsodium
 find_path(SODIUM_INCLUDE_DIR sodium.h
         PATHS 

@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include "MessageStructs.h"
 #include "src/keys/secure_memory_buffer.h"
+#include <vector>
 
 struct NewChain {
     int index = 0;
@@ -17,7 +18,8 @@ struct NewChain {
 class NewRatchet {
 public:
     NewRatchet(const unsigned char* shared_secret, const unsigned char* other_key, bool is_sender, unsigned char* ratchet_id_in, unsigned char* identity_session_id_in);
-    explicit NewRatchet(const std::vector<unsigned char> &serialised_ratchet);
+    NewRatchet(const std::vector<unsigned char, std::allocator<unsigned char>> &serialised_ratchet);
+
     ~NewRatchet() {
         // Clean up skipped_keys
         for (auto& pair : skipped_keys) {
