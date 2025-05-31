@@ -24,6 +24,22 @@ void Register::setupConnections() {
     connect(ui->loginButton, &QPushButton::clicked, this, &Register::onLoginButtonClicked);
     connect(ui->togglePassphraseButton, &QPushButton::clicked, this, &Register::onTogglePassphraseClicked);
     connect(ui->registerButton, &QPushButton::clicked, this, &Register::onRegisterButtonClicked);
+
+    connect(this, &Register::registrationSuccess, this, &Register::onRegistrationSuccess);
+    connect(this, &Register::registrationError, this, &Register::onRegistrationError);
+}
+
+void Register::onRegistrationSuccess() {
+    ui->registerButton->setText("Register");
+    ui->registerButton->setEnabled(true);
+    WindowManager::instance().showReceived();
+    hide();
+}
+
+void Register::onRegistrationError(const QString& title, const QString& message) {
+    ui->registerButton->setText("Register");
+    ui->registerButton->setEnabled(true);
+    StyledMessageBox::error(this, title, message);
 }
 
 void Register::onRegisterButtonClicked() {
@@ -78,19 +94,12 @@ void Register::onRegisterButtonClicked() {
     ui->registerButton->setEnabled(false);
 
     // Run registration in separate thread to avoid blocking UI
-    auto future = QtConcurrent::run([this, username, passphrase]() {
+    const auto _ = QtConcurrent::run([this, username, passphrase]() {
         try {
             register_user(username.toStdString(), std::make_unique<std::string>(passphrase.toStdString()));
             register_first_device();
             login_user(username.toStdString(), std::make_unique<std::string>(passphrase.toStdString()));
-
-            // Use QMetaObject::invokeMethod to safely update UI from worker thread
-            QMetaObject::invokeMethod(this, [this]() {
-                ui->registerButton->setText("Register");
-                ui->registerButton->setEnabled(true);
-                WindowManager::instance().showReceived();
-                hide();
-            }, Qt::QueuedConnection);
+            emit registrationSuccess();
 
         } catch (const webwood::HttpError &e) {
             const std::string errorBody = e.what();
@@ -99,24 +108,13 @@ void Register::onRegisterButtonClicked() {
             const QString message = isHtmlError
                                         ? "The server is currently unavailable. Please try again later."
                                         : QString("Registration failed: %1").arg(QString::fromStdString(errorBody));
-
-            QMetaObject::invokeMethod(this, [this, title, message]() {
-                ui->registerButton->setText("Register");
-                ui->registerButton->setEnabled(true);
-                StyledMessageBox::error(this, title, message);
-            }, Qt::QueuedConnection);
+            emit registrationError(title, message);
 
         } catch (const std::exception &e) {
             const QString errorMsg = QString("An error occurred: %1").arg(e.what());
-
-            QMetaObject::invokeMethod(this, [this, errorMsg]() {
-                ui->registerButton->setText("Register");
-                ui->registerButton->setEnabled(true);
-                StyledMessageBox::error(this, "Registration Failed", errorMsg);
-            }, Qt::QueuedConnection);
+            emit registrationError("Registration Failed", errorMsg);
         }
     });
-    Q_UNUSED(future); // Suppress unused variable warning
 }
 
 void Register::onLoginButtonClicked() {
