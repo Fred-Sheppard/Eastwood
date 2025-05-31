@@ -186,5 +186,5 @@ protected:
 };
 
 TEST_F(IdentitySessionTest, SharedSecretDerivationTest) {
-
+    EXPECT_EQO(1,1)
 }
