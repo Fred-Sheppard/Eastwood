@@ -287,10 +287,10 @@ void NewRatchet::deserialise(std::istream &in) {
     skipped_keys.clear();
     for (uint32_t i = 0; i < skipped_count; ++i) {
         int key;
-        unsigned char *val = new unsigned char[32];
+        auto val = std::make_unique<unsigned char[]>(32);
         in.read((char*)&key, sizeof(key));
-        in.read((char*)val, 32);
-        skipped_keys[key] = val;
+        in.read((char*)val.get(), 32);
+        skipped_keys[key] = val.release();  // Transfer ownership to the map
     }
 
     in.read((char*)&due_to_send_new_dh, sizeof(due_to_send_new_dh));
@@ -304,11 +304,11 @@ void NewRatchet::save() {
     std::string str = oss.str();
     QByteArray bytes(str.data(), static_cast<int>(str.size()));
 
-    auto nonce_data = new unsigned char[CHA_CHA_NONCE_LEN];
-    randombytes_buf(nonce_data, CHA_CHA_NONCE_LEN);
+    auto nonce_data = std::make_unique<unsigned char[]>(CHA_CHA_NONCE_LEN);
+    randombytes_buf(nonce_data.get(), CHA_CHA_NONCE_LEN);
 
-    auto nonce_key = new unsigned char[CHA_CHA_NONCE_LEN];
-    randombytes_buf(nonce_key, CHA_CHA_NONCE_LEN);
+    auto nonce_key = std::make_unique<unsigned char[]>(CHA_CHA_NONCE_LEN);
+    randombytes_buf(nonce_key.get(), CHA_CHA_NONCE_LEN);
 
     auto encryption_key = SecureMemoryBuffer::create(32);
     crypto_stream_chacha20_keygen(encryption_key->data());
@@ -316,13 +316,10 @@ void NewRatchet::save() {
     auto copy_encryption_key = SecureMemoryBuffer::create(32);
     memcpy(copy_encryption_key->data(), encryption_key->data(), 32);
 
-    auto encrypted_data = encrypt_bytes(bytes, std::move(copy_encryption_key), nonce_data);
-    auto encrypted_encryption_key = encrypt_symmetric_key(encryption_key, nonce_key);
+    auto encrypted_data = encrypt_bytes(bytes, std::move(copy_encryption_key), nonce_data.get());
+    auto encrypted_encryption_key = encrypt_symmetric_key(encryption_key, nonce_key.get());
 
-    save_ratchet_and_key(ratchet_id, identity_session_id, encrypted_data, nonce_data, std::move(encrypted_encryption_key), nonce_key);
-
-    delete[] nonce_data;
-    delete[] nonce_key;
+    save_ratchet_and_key(ratchet_id, identity_session_id, encrypted_data, nonce_data.get(), std::move(encrypted_encryption_key), nonce_key.get());
 }
 
 
