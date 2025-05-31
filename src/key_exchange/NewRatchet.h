@@ -44,8 +44,6 @@ private:
     std::unordered_map<int, unsigned char*> skipped_keys;
     int prev_chain_length;
 
-    // std::vector<NewRatchet*> old_chains = {}; if we want idk
-
     //methods
     void set_up_initial_state_for_initiator(const unsigned char* recipient_signed_public);
     void set_up_initial_state_for_recipient(const unsigned char* initiator_ephemeral_public);
