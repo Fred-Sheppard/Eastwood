@@ -56,7 +56,8 @@ void Login::onLoginButtonClicked()
         return;
     }
 
-    login_user(username, passphrase);
+
+    login_user(username.toStdString(), std::make_unique<std::string>(passphrase.toStdString()));
     WindowManager::instance().showReceived();
     hide();
 

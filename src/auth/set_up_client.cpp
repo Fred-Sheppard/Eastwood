@@ -27,6 +27,7 @@ void set_up_client_for_user(
 
     Database::get().initialize(username, master_key);;
     if (DEBUG_REFRESH_TABLES) drop_all_tables();
+    init_schema();
 
     auto kek = SecureMemoryBuffer::create(SYM_KEY_LEN);
     crypto_secretbox_keygen(kek->data());

@@ -1,7 +1,7 @@
 #include "login.h"
 
-#include "kek_manager.h"
-#include "auth/salt.h"
+#include "src/keys/kek_manager.h"
+#include "src/auth/salt.h"
 #include "src/endpoints/endpoints.h"
 #include "src/keys/session_token_manager.h"
 #include "src/sql/queries.h"
