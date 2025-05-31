@@ -14,18 +14,37 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets UiTools)
 find_package(OpenSSL REQUIRED)
 
-# Enable testing and find GTest
+# Enable testing
 enable_testing()
-find_package(GTest REQUIRED)
 
-# Add nlohmann_json
+# Add nlohmann_json and GoogleTest via FetchContent
 include(FetchContent)
+
+# Fetch nlohmann_json
 FetchContent_Declare(
         json
         URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
         DOWNLOAD_EXTRACT_TIMESTAMP true
 )
-FetchContent_MakeAvailable(json)
+
+# Fetch GoogleTest
+FetchContent_Declare(
+    googletest
+    URL https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
+    DOWNLOAD_EXTRACT_TIMESTAMP true
+)
+
+# Fetch QR Code Generator
+FetchContent_Declare(
+    qrcodegen
+    GIT_REPOSITORY https://github.com/nayuki/QR-Code-generator.git
+    GIT_TAG master
+)
+
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+FetchContent_MakeAvailable(json googletest qrcodegen)
 
 # Find pkg-config and SQLCipher
 find_package(PkgConfig REQUIRED)
@@ -33,21 +52,31 @@ pkg_check_modules(SQLCIPHER REQUIRED sqlcipher)
 
 # Find libsodium
 find_path(SODIUM_INCLUDE_DIR sodium.h
-        PATHS /opt/homebrew/include
-        /usr/local/include
+        PATHS 
         /usr/include
+        /usr/local/include
+        /opt/homebrew/include
+        /usr/include/x86_64-linux-gnu
+        /usr/include/aarch64-linux-gnu
+        NO_DEFAULT_PATH
 )
 find_library(SODIUM_LIBRARY
         NAMES sodium libsodium
-        PATHS /opt/homebrew/lib
-        /usr/local/lib
+        PATHS 
         /usr/lib
+        /usr/local/lib
+        /opt/homebrew/lib
+        /usr/lib/x86_64-linux-gnu
+        /usr/lib/aarch64-linux-gnu
+        NO_DEFAULT_PATH
 )
-link_directories(${SQLCIPHER_LIBRARY_DIRS})
 
 if (NOT SODIUM_INCLUDE_DIR OR NOT SODIUM_LIBRARY)
     message(FATAL_ERROR "libsodium not found. Please install it using your package manager.")
 endif ()
+
+message(STATUS "Found libsodium: ${SODIUM_LIBRARY}")
+message(STATUS "Found sodium.h: ${SODIUM_INCLUDE_DIR}")
 
 # Define frontend sources
 set(FRONTEND_SOURCES
@@ -78,6 +107,7 @@ set(FRONTEND_SOURCES
         src/ui/windows/settings/settings.cpp
         src/ui/windows/settings/settings.h
         src/ui/windows/settings/settings.ui
+        src/ui/QRCodeGenerator.cpp
 )
 
 # Define database sources
@@ -88,7 +118,6 @@ set(DATABASE_SOURCES
 
 # Define cryptography sources and headers
 set(CRYPTO_SOURCES
-        src/key_exchange/DoubleRatchet.cpp
         src/key_exchange/x3dh.cpp
         src/key_exchange/XChaCha20-Poly1305.cpp
         src/key_exchange/NewRatchet.cpp
@@ -115,6 +144,7 @@ set(AUTH_SOURCES
         src/sessions/IdentityManager.cpp
         src/files/upload_file.cpp
         src/auth/salt.cpp
+        src/key_exchange/MessageStructs.h
 )
 
 # Create main executable
@@ -124,6 +154,7 @@ add_executable(Eastwood
         ${DATABASE_SOURCES}
         ${CRYPTO_SOURCES}
         ${AUTH_SOURCES}
+        ${qrcodegen_SOURCE_DIR}/cpp/qrcodegen.cpp
 )
 
 # Include directories and link libraries for main executable
@@ -131,13 +162,12 @@ target_include_directories(Eastwood PRIVATE
         ${SODIUM_INCLUDE_DIR}
         ${SQLCIPHER_INCLUDE_DIRS}
         ${CMAKE_CURRENT_SOURCE_DIR}
-        ${GTEST_INCLUDE_DIRS}
         ${Qt6Core_INCLUDE_DIRS}
         ${Qt6Gui_INCLUDE_DIRS}
         ${Qt6Widgets_INCLUDE_DIRS}
         ${Qt6UiTools_INCLUDE_DIRS}
         ${Qt6Svg_INCLUDE_DIRS}
-        ${CMAKE_CURRENT_SOURCE_DIR}/external/qrcodegen/cpp
+        ${qrcodegen_SOURCE_DIR}/cpp
 )
 
 target_link_libraries(Eastwood PRIVATE
@@ -150,7 +180,6 @@ target_link_libraries(Eastwood PRIVATE
         OpenSSL::Crypto
         nlohmann_json::nlohmann_json
         ${SQLCIPHER_LIBRARIES}
-        ${GTEST_LIBRARIES}
 )
 
 # Create test executable
@@ -178,12 +207,12 @@ target_include_directories(EastwoodTests PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/database
         ${CMAKE_CURRENT_SOURCE_DIR}/external/cereal/include
         ${CMAKE_CURRENT_SOURCE_DIR}/external/qrcodegen/cpp
-        ${GTEST_INCLUDE_DIRS}
 )
 
 # Link libraries using proper CMake targets
 target_link_libraries(EastwoodTests PRIVATE
-        ${GTEST_LIBRARIES}
+        gtest_main
+        gtest
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets
@@ -222,6 +251,8 @@ target_include_directories(IntegrationTests PRIVATE
 )
 
 target_link_libraries(IntegrationTests PRIVATE
+        gtest_main
+        gtest
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets
