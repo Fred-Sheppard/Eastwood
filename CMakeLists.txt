@@ -11,7 +11,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 # Find Qt
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets UiTools Concurrent Multimedia MultimediaWidgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets UiTools)
 find_package(OpenSSL REQUIRED)
 find_package(OpenCV REQUIRED)
 
@@ -195,9 +195,6 @@ target_link_libraries(Eastwood PRIVATE
         Qt6::Gui
         Qt6::Widgets
         Qt6::UiTools
-        Qt6::Concurrent
-        Qt6::Multimedia
-        Qt6::MultimediaWidgets
         ${SODIUM_LIBRARY}
         OpenSSL::SSL
         OpenSSL::Crypto
