@@ -48,7 +48,6 @@ void Register::onRegistrationSuccess() {
     ui->registerButton->setText("Register");
     ui->registerButton->setEnabled(true);
     WindowManager::instance().showReceived();
-    hide();
 }
 
 void Register::onRegistrationError(const QString& title, const QString& message) {
