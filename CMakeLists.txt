@@ -33,6 +33,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(json)
 
+# Add Nayuki QR Code generator library
+include(FetchContent)
+FetchContent_Declare(
+    qrcodegen
+    GIT_REPOSITORY https://github.com/nayuki/QR-Code-generator.git
+    GIT_TAG master
+)
+FetchContent_MakeAvailable(qrcodegen)
+
 # Find pkg-config and SQLCipher
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SQLCIPHER REQUIRED sqlcipher)
@@ -54,24 +63,6 @@ link_directories(${SQLCIPHER_LIBRARY_DIRS})
 if (NOT SODIUM_INCLUDE_DIR OR NOT SODIUM_LIBRARY)
     message(FATAL_ERROR "libsodium not found. Please install it using your package manager.")
 endif ()
-
-# Add nlohmann_json
-include(FetchContent)
-FetchContent_Declare(
-        json
-        URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
-        DOWNLOAD_EXTRACT_TIMESTAMP true
-)
-FetchContent_MakeAvailable(json)
-
-# Add Nayuki QR Code generator library
-include(FetchContent)
-FetchContent_Declare(
-    qrcodegen
-    GIT_REPOSITORY https://github.com/nayuki/QR-Code-generator.git
-    GIT_TAG master
-)
-FetchContent_MakeAvailable(qrcodegen)
 
 # Define frontend sources
 set(FRONTEND_SOURCES
