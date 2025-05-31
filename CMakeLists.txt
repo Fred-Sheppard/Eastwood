@@ -18,8 +18,11 @@ find_package(OpenSSL REQUIRED)
 include(FetchContent)
 FetchContent_Declare(
         googletest
-        URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG release-1.12.1
 )
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 # Add nlohmann_json
@@ -112,6 +115,8 @@ set(CRYPTO_SOURCES
         src/key_exchange/DoubleRatchet.cpp
         src/key_exchange/x3dh.cpp
         src/key_exchange/XChaCha20-Poly1305.cpp
+        src/key_exchange/NewRatchet.cpp
+        src/key_exchange/NewRatchet.h
         src/utils/ConversionUtils.cpp
         src/utils/JsonParser.cpp
         src/client_api_interactions/MakeAuthReq.cpp
@@ -131,11 +136,12 @@ set(AUTH_SOURCES
         src/auth/login/login.cpp
         src/sessions/KeyBundle.h
         src/sessions/IdentitySession.cpp
-        src/sessions/IdentitySession.h
         src/sessions/IdentityManager.cpp
         src/sessions/IdentityManager.h
         src/ui/QRCodeGenerator.cpp
         src/ui/QRCodeGenerator.h
+        src/files/upload_file.cpp
+        src/auth/salt.cpp
 )
 
 # Create main executable
@@ -172,6 +178,7 @@ target_link_libraries(Eastwood PRIVATE
 # Create test executable
 add_executable(EastwoodTests
         test/identity_communication_session_test.cpp
+        test/double_ratchet_test.cpp
         ${CRYPTO_SOURCES}
         src/database/database.cpp
         src/sessions/KeyBundle.h
@@ -190,12 +197,16 @@ target_include_directories(EastwoodTests PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/key_exchange
         ${CMAKE_CURRENT_SOURCE_DIR}/src/sessions
         ${CMAKE_CURRENT_SOURCE_DIR}/src/keys
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/database
         ${CMAKE_CURRENT_SOURCE_DIR}/external/cereal/include
-        ${CMAKE_CURRENT_BINARY_DIR}/_deps/googletest-src/googletest/include
 )
 
+# Link libraries using proper CMake targets
 target_link_libraries(EastwoodTests PRIVATE
-        GTest::gtest_main
+        gtest
+        gtest_main
+        gmock
+        gmock_main
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets
@@ -219,6 +230,7 @@ add_executable(IntegrationTests
         src/auth/register_user/register_user.cpp
         src/auth/register_device/register_device.cpp
         src/auth/login/login.cpp
+        src/files/upload_file.cpp
 )
 
 target_include_directories(IntegrationTests PRIVATE
@@ -250,3 +262,7 @@ enable_testing()
 # Add test
 add_test(NAME EastwoodTests COMMAND EastwoodTests)
 add_test(NAME IntegrationTests COMMAND IntegrationTests)
+
+# Add tests to CTest
+include(GoogleTest)
+gtest_discover_tests(EastwoodTests)

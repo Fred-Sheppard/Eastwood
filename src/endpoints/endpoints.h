@@ -33,8 +33,7 @@ std::string post_authenticate(
 );
 
 void post_ratchet_message(
-    const DeviceMessage *msg,
-    const IdentitySessionId& identity_session_id
+    const std::vector<std::tuple<IdentitySessionId&, DeviceMessage*>>
 );
 
 void post_handshake_device(
@@ -58,5 +57,7 @@ void post_new_keybundles(
     std::tuple<unsigned char *, std::unique_ptr<SecureMemoryBuffer> > signed_prekeypair,
     const std::vector<std::tuple<unsigned char *, std::unique_ptr<SecureMemoryBuffer>, unsigned char *> > &otks
 );
+
+std::string post_upload_file(std::vector<unsigned char> encrypted_bytes);
 
 #endif //ENDPOINTS_H
