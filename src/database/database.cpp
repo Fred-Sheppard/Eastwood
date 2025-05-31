@@ -4,7 +4,7 @@
 #include <QStandardPaths>
 #include <iostream>
 
-#include "secure_memory_buffer.h"
+#include "src/keys/secure_memory_buffer.h"
 #include "src/utils/utils.h"
 
 Database &Database::get() {
