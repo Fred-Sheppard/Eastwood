@@ -55,6 +55,8 @@ void Login::onLoginButtonClicked()
         StyledMessageBox::warning(this, "Error", "Passphrase cannot be longer than 64 characters");
         return;
     }
+
+    login_user(username, passphrase);
     WindowManager::instance().showReceived();
     hide();
 

@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
         throw std::runtime_error("Libsodium initialization failed");
     }
 
-    constexpr bool encrypted = true;
+    constexpr bool encrypted = false;
     constexpr bool refresh_database = true;
 
     const auto master_key = SecureMemoryBuffer::create(MASTER_KEY_LEN);

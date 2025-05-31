@@ -7,6 +7,6 @@
 #define AUTH_LOGIN_H
 #include <string>
 
-void login_user(const std::string &username);
+void login_user(const std::string &username, const std::unique_ptr<const std::string> &master_password);
 
 #endif //AUTH_LOGIN_H
