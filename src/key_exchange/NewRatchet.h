@@ -5,7 +5,7 @@
 #ifndef NEWRATCHET_H
 #define NEWRATCHET_H
 #include <memory>
-
+#include <unordered_map>
 #include "DoubleRatchet.h"
 #include "src/keys/secure_memory_buffer.h"
 
@@ -41,7 +41,7 @@ private:
     // recipient -> initiator ephemeral
     unsigned char remote_dh_public[32];
 
-    std::tuple<int, unsigned char*> skipped_keys;
+    std::unordered_map<int, unsigned char*> skipped_keys;
     int prev_chain_length;
 
     // std::vector<NewRatchet*> old_chains = {}; if we want idk

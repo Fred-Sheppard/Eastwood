@@ -167,38 +167,56 @@ std::tuple<unsigned char*, MessageHeader*> NewRatchet::advance_send() {
 }
 
 unsigned char* NewRatchet::advance_receive(MessageHeader* header) {
-
     if (memcmp(remote_dh_public, header->dh_public, 32) != 0) {
+        int skipped_count = receive_chain.index;
+
+        for (int i = header->prev_chain_length; i < skipped_count; ++i) {
+            auto skipped_key = new unsigned char[32];
+            unsigned char next_receive_key[32];
+            const char *ctx = reversed ? "DRRcvKey" : "DRSndKey";
+
+            crypto_kdf_derive_from_key(skipped_key, 32, 0, ctx, receive_chain.key);
+            crypto_kdf_derive_from_key(next_receive_key, 32, 1, ctx, receive_chain.key);
+
+            memcpy(receive_chain.key, next_receive_key, 32);
+            skipped_keys[i] = skipped_key;
+        }
+
         memcpy(remote_dh_public, header->dh_public, 32);
         dh_ratchet_step(true); // true as we received the new dh
         due_to_send_new_dh = true;
     }
 
-    auto message_key = new unsigned char[32];
-    unsigned char next_receive_key[32];
-    const char *ctx = reversed ? "DRRcvKey" : "DRSndKey";
+    if (header->message_index < receive_chain.index) {
+        if (header->message_index < receive_chain.index) {
+            if (skipped_keys.find(header->message_index) == skipped_keys.end()) {
+                throw std::runtime_error("Key not found in backlog");
+            }
+            return skipped_keys[header->message_index];
+        }
+    }
 
-    receive_chain.index = receive_chain.index + 1;
+    for (int i = receive_chain.index; i <= header->message_index; i++) {
+        auto message_key = new unsigned char[32];
+        unsigned char next_receive_key[32];
+        const char *ctx = reversed ? "DRRcvKey" : "DRSndKey";
 
-    crypto_kdf_derive_from_key(
-        message_key,
-        32,
-        0,
-        ctx,
-        receive_chain.key
-    );
+        crypto_kdf_derive_from_key(message_key, 32, 0, ctx, receive_chain.key);
+        crypto_kdf_derive_from_key(next_receive_key, 32, 1, ctx, receive_chain.key);
+        memcpy(receive_chain.key, next_receive_key, 32);
 
-    crypto_kdf_derive_from_key(
-        next_receive_key,
-        32,
-        1,
-        ctx,
-        receive_chain.key
-    );
+        if (i == header->message_index) {
+            receive_chain.index = i + 1;
+            return message_key;
+        }
 
-    memcpy(receive_chain.key, next_receive_key, 32);
-    return message_key;
+        skipped_keys[i] = message_key;
+    }
+
+    // Should never reach here
+    throw std::runtime_error("Unexpected error in advance_receive");
 }
+
 
 //remove this is for tesitng
 const unsigned char *NewRatchet::get_current_dh_public() const {
