@@ -54,7 +54,7 @@ link_directories(${SQLCIPHER_LIBRARY_DIRS})
 
 # Find libsodium
 find_path(SODIUM_INCLUDE_DIR sodium.h
-        PATHS 
+        PATHS
         /usr/include
         /usr/local/include
         /opt/homebrew/include
@@ -64,7 +64,7 @@ find_path(SODIUM_INCLUDE_DIR sodium.h
 )
 find_library(SODIUM_LIBRARY
         NAMES sodium libsodium
-        PATHS 
+        PATHS
         /usr/lib
         /usr/local/lib
         /opt/homebrew/lib
@@ -72,6 +72,7 @@ find_library(SODIUM_LIBRARY
         /usr/lib/aarch64-linux-gnu
         NO_DEFAULT_PATH
 )
+link_directories(${SQLCIPHER_LIBRARY_DIRS})
 
 if (NOT SODIUM_INCLUDE_DIR OR NOT SODIUM_LIBRARY)
     message(FATAL_ERROR "libsodium not found. Please install it using your package manager.")
@@ -147,6 +148,8 @@ set(AUTH_SOURCES
         src/files/upload_file.cpp
         src/auth/salt.cpp
         src/key_exchange/MessageStructs.h
+        src/auth/set_up_client.cpp
+
 )
 
 # Create main executable
@@ -239,6 +242,8 @@ add_executable(IntegrationTests
         src/auth/register_device/register_device.cpp
         src/auth/login/login.cpp
         src/files/upload_file.cpp
+        src/auth/salt.cpp
+        src/auth/set_up_client.cpp
 )
 
 target_include_directories(IntegrationTests PRIVATE
