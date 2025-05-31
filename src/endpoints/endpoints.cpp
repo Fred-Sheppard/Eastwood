@@ -192,55 +192,44 @@ void get_keybundles(const std::string &username) {
 
     // Process each key bundle
     for (const auto &bundle: response["data"]["key_bundles"]) {
-        // Convert hex strings to binary
         std::string their_device_public_hex = bundle["device_public_key"];
         their_identity_public_hex = bundle["identity_public_key"];
-        std::string their_onetime_public_hex = bundle["one_time_key"];
         std::string their_signed_public_hex = bundle["signedpre_key"];
         std::string their_signed_signature_hex = bundle["signedpk_signature"];
 
         // Allocate memory for binary data
         auto their_device_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
         auto their_identity_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
-        auto their_onetime_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
         auto their_signed_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
-        auto their_signed_signature = new unsigned char[crypto_sign_BYTES]; // Use correct size for signature
-
-        // Convert hex to binary
-        std::cout << "Converting hex to binary:" << std::endl;
-        std::cout << "Device public key hex length: " << their_device_public_hex.length() << ", expected binary size: "
-                << crypto_sign_PUBLICKEYBYTES << std::endl;
-        std::cout << "Identity public key hex length: " << their_identity_public_hex.length() <<
-                ", expected binary size: " << crypto_sign_PUBLICKEYBYTES << std::endl;
-        std::cout << "One-time key hex length: " << their_onetime_public_hex.length() << ", expected binary size: " <<
-                crypto_sign_PUBLICKEYBYTES << std::endl;
-        std::cout << "Signed prekey hex length: " << their_signed_public_hex.length() << ", expected binary size: " <<
-                crypto_sign_PUBLICKEYBYTES << std::endl;
-        std::cout << "Signature hex length: " << their_signed_signature_hex.length() << ", expected binary size: " <<
-                crypto_sign_BYTES << std::endl;
+        auto their_signed_signature = new unsigned char[crypto_sign_BYTES];
+        unsigned char* their_onetime_public = nullptr;
 
         bool device_ok = hex_to_bin(their_device_public_hex, their_device_public, crypto_sign_PUBLICKEYBYTES);
-        std::cout << "Device public key conversion: " << (device_ok ? "success" : "failed") << std::endl;
-
         bool identity_ok = hex_to_bin(their_identity_public_hex, their_identity_public, crypto_sign_PUBLICKEYBYTES);
-        std::cout << "Identity public key conversion: " << (identity_ok ? "success" : "failed") << std::endl;
-
-        bool onetime_ok = hex_to_bin(their_onetime_public_hex, their_onetime_public, crypto_sign_PUBLICKEYBYTES);
-        std::cout << "One-time key conversion: " << (onetime_ok ? "success" : "failed") << std::endl;
-
         bool signed_ok = hex_to_bin(their_signed_public_hex, their_signed_public, crypto_sign_PUBLICKEYBYTES);
-        std::cout << "Signed prekey conversion: " << (signed_ok ? "success" : "failed") << std::endl;
-
         bool signature_ok = hex_to_bin(their_signed_signature_hex, their_signed_signature, crypto_sign_BYTES);
-        std::cout << "Signature conversion: " << (signature_ok ? "success" : "failed") << std::endl;
 
-        if (!device_ok || !identity_ok || !onetime_ok || !signed_ok || !signature_ok) {
+        // Only process one-time key if it exists and is not NULL
+        if (bundle.contains("one_time_key") && !bundle["one_time_key"].is_null()) {
+            std::string their_onetime_public_hex = bundle["one_time_key"];
+            their_onetime_public = new unsigned char[crypto_sign_PUBLICKEYBYTES];
+            bool onetime_ok = hex_to_bin(their_onetime_public_hex, their_onetime_public, crypto_sign_PUBLICKEYBYTES);
+            std::cout << "One-time key conversion: " << (onetime_ok ? "success" : "failed") << std::endl;
+            if (!onetime_ok) {
+                delete[] their_onetime_public;
+                their_onetime_public = nullptr;
+            }
+        }
+
+        if (!device_ok || !identity_ok || !signed_ok || !signature_ok) {
             // Clean up on error
             delete[] their_device_public;
             delete[] their_identity_public;
-            delete[] their_onetime_public;
             delete[] their_signed_public;
             delete[] their_signed_signature;
+            if (their_onetime_public) {
+                delete[] their_onetime_public;
+            }
             throw std::runtime_error("Failed to decode key bundle data");
         }
 
