@@ -9,6 +9,9 @@
 #include "XChaCha20-Poly1305.h"
 #include "src/keys/kek_manager.h"
 #include "src/sql/queries.h"
+#include "src/key_exchange/utils.h"
+#include <sodium.h>
+#include <memory>
 
 // other key is initiator ephemeral for recipient
 // other key is receiver signed prekey for initiator
@@ -56,10 +59,10 @@ void NewRatchet::set_up_initial_state_for_recipient(const unsigned char *initiat
 };
 
 void NewRatchet::set_up_initial_chain_keys() {
-    const auto dh_output = dh();
+    std::unique_ptr<unsigned char[]> dh_output(dh());
 
     unsigned char kdf_key[32];
-    crypto_generichash(kdf_key, sizeof(kdf_key), dh_output, sizeof(dh_output), nullptr, 0);
+    crypto_generichash(kdf_key, sizeof(kdf_key), dh_output.get(), 32, nullptr, 0);
 
     // run kdf
     crypto_kdf_derive_from_key(
@@ -68,7 +71,7 @@ void NewRatchet::set_up_initial_chain_keys() {
         0,
         "DRXsend1", // one side send is another recv
         kdf_key
-        );
+    );
 
     crypto_kdf_derive_from_key(
         receive_chain.key,
@@ -76,7 +79,7 @@ void NewRatchet::set_up_initial_chain_keys() {
         1,
         "DRXrecv1", // one side recv is another send
         kdf_key
-        );
+    );
 
     crypto_kdf_derive_from_key(
         root_key,
@@ -84,14 +87,14 @@ void NewRatchet::set_up_initial_chain_keys() {
         2,
         "DRXroot1",
         kdf_key
-        );
+    );
 }
 
 void NewRatchet::dh_ratchet_step(const bool received_new_dh) {
-    const auto dh_output = dh();
+    std::unique_ptr<unsigned char[]> dh_output(dh());
 
     unsigned char kdf_key[32];
-    crypto_generichash(kdf_key, sizeof(kdf_key), dh_output, sizeof(dh_output), nullptr, 0);
+    crypto_generichash(kdf_key, sizeof(kdf_key), dh_output.get(), 32, nullptr, 0);
 
     unsigned char new_root_key[32];
     crypto_kdf_derive_from_key(
@@ -134,8 +137,9 @@ void NewRatchet::generate_new_local_dh_keypair() {
 };
 
 unsigned char* NewRatchet::dh() const {
-    const auto result = new unsigned char[32];
+    auto result = new unsigned char[32];
     if (crypto_scalarmult(result, local_dh_priv->data(), remote_dh_public) != 0) {
+        delete[] result;
         throw std::runtime_error("Failed to perform dh");
     };
     return result;
