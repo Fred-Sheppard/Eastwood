@@ -88,7 +88,6 @@ set(DATABASE_SOURCES
 
 # Define cryptography sources and headers
 set(CRYPTO_SOURCES
-        src/key_exchange/DoubleRatchet.cpp
         src/key_exchange/x3dh.cpp
         src/key_exchange/XChaCha20-Poly1305.cpp
         src/key_exchange/NewRatchet.cpp
@@ -115,6 +114,7 @@ set(AUTH_SOURCES
         src/sessions/IdentityManager.cpp
         src/files/upload_file.cpp
         src/auth/salt.cpp
+        src/key_exchange/MessageStructs.h
 )
 
 # Create main executable
