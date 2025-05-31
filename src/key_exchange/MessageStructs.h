@@ -105,5 +105,5 @@ public:
     unsigned char* ciphertext;
     size_t length;
 };
-
 #endif //MESSAGESTRUCTS_H
+
