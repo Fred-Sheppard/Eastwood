@@ -30,9 +30,7 @@ jobs:
         run: echo "${{ secrets.ENV_FILE }}" > .env
 
       - name: Configure CMake
-        run: |
-          cmake -S . -B build -DCMAKE_VERBOSE_MAKEFILE=ON
-          cat build/CMakeFiles/CMakeOutput.log
+        run: cmake -S . -B build -DCMAKE_VERBOSE_MAKEFILE=ON
 
       - name: Build
         run: cmake --build build --config Release --verbose
