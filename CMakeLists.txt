@@ -132,6 +132,12 @@ target_include_directories(Eastwood PRIVATE
         ${SQLCIPHER_INCLUDE_DIRS}
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${GTEST_INCLUDE_DIRS}
+        ${Qt6Core_INCLUDE_DIRS}
+        ${Qt6Gui_INCLUDE_DIRS}
+        ${Qt6Widgets_INCLUDE_DIRS}
+        ${Qt6UiTools_INCLUDE_DIRS}
+        ${Qt6Svg_INCLUDE_DIRS}
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/qrcodegen/cpp
 )
 
 target_link_libraries(Eastwood PRIVATE
@@ -171,6 +177,7 @@ target_include_directories(EastwoodTests PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/keys
         ${CMAKE_CURRENT_SOURCE_DIR}/src/database
         ${CMAKE_CURRENT_SOURCE_DIR}/external/cereal/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/qrcodegen/cpp
         ${GTEST_INCLUDE_DIRS}
 )
 
