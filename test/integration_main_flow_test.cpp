@@ -46,10 +46,9 @@ int main() {
     constexpr bool encrypted = false;
     constexpr bool refresh_database = true;
 
-    auto &db = Database::get();
     const auto master_key = SecureMemoryBuffer::create(MASTER_KEY_LEN);
     randombytes_buf(master_key->data(), MASTER_KEY_LEN);
-    db.initialize("username", master_key, encrypted);
+    Database::get().initialize("username", master_key, encrypted);
 
     auto master_password = std::make_unique<std::string>("correct horse battery stapler");
 
