@@ -6,7 +6,7 @@
 #define SQLITE_HAS_CODEC 1
 #include <sqlite3.h>
 
-#include "secure_memory_buffer.h"
+#include "src/keys/secure_memory_buffer.h"
 
 class Database {
 public:
