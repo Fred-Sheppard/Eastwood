@@ -17,7 +17,7 @@ struct NewChain {
 
 class NewRatchet {
 public:
-    NewRatchet(const unsigned char* shared_secret, const unsigned char* other_key, bool is_sender, unsigned char* ratchet_id_in, unsigned char* identity_session_id_in);
+    NewRatchet(const unsigned char* shared_secret, const unsigned char* other_key, bool is_sender);
     NewRatchet(const std::vector<unsigned char, std::allocator<unsigned char>> &serialised_ratchet);
 
     ~NewRatchet() {

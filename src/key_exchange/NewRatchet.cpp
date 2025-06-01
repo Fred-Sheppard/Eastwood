@@ -13,10 +13,8 @@
 
 // other key is initiator ephemeral for recipient
 // other key is receiver signed prekey for initiator
-NewRatchet::NewRatchet(const unsigned char *shared_secret, const unsigned char *other_key, bool is_sender, unsigned char ratchet_id_in[32], unsigned char identity_session_id_in[32]) {
+NewRatchet::NewRatchet(const unsigned char *shared_secret, const unsigned char *other_key, bool is_sender) {
     memcpy(root_key, shared_secret, 32);
-    memcpy(ratchet_id, ratchet_id_in, 32);
-    memcpy(identity_session_id, identity_session_id_in, 32);
 
     if (is_sender) {
         set_up_initial_state_for_initiator(other_key);

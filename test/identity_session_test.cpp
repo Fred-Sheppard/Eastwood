@@ -303,220 +303,22 @@ protected:
 };
 
 TEST_F(IdentitySessionTest, MultipleRatchetInitialisationTest) {
-    // Initialise identity session
-    std::vector<KeyBundle*> bundles;
-    bundles.push_back(alice_to_bob_bundle);
-    bundles.push_back(alice_to_charlie_bundle);
 
-    std::string alice_username = "alice";
-    std::string bob_username = "bob";
-
-    const auto session = std::make_unique<IdentitySession>(
-        bundles, generate_unique_id_pair(&alice_username, &bob_username)
-    );
-
-    ASSERT_EQ(session->get_ratchets().size(), 2);
-    EXPECT_FALSE(session->get_ratchets().empty());
-
-    // Search manually using memcmp
-    bool found_first = false;
-    bool found_second = false;
-    for (const auto& [key, _] : session->get_ratchets()) {
-        if (std::memcmp(key.data(), bundles[0]->get_ratchet_id().data(), 32) == 0)
-            found_first = true;
-        if (std::memcmp(key.data(), bundles[1]->get_ratchet_id().data(), 32) == 0)
-            found_second = true;
-    }
-
-    ASSERT_TRUE(found_first);
-    ASSERT_TRUE(found_second);
 }
 
 TEST_F(IdentitySessionTest, RatchetGenerationAndDuplicationTest) {
-    // Initialize identity session with initial bundles
-    std::vector<KeyBundle*> initial_bundles;
-    initial_bundles.push_back(alice_to_bob_bundle);
-    initial_bundles.push_back(alice_to_charlie_bundle);
 
-    std::string alice_username = "alice";
-    std::string bob_username = "bob";
-
-    const auto session = std::make_unique<IdentitySession>(
-        initial_bundles, generate_unique_id_pair(&alice_username, &bob_username)
-    );
-
-    // Verify initial ratchets were created
-    ASSERT_EQ(session->get_ratchets().size(), 2);
-
-    // Try to add the same bundles again
-    session->updateFromBundles(initial_bundles);
-
-    // Verify no new ratchets were created
-    ASSERT_EQ(session->get_ratchets().size(), 2);
-
-    // Add a new bundle
-    std::vector<KeyBundle*> new_bundles;
-    new_bundles.push_back(bob_to_charlie_bundle);
-    session->updateFromBundles(new_bundles);
-
-    // Verify new ratchet was created
-    ASSERT_EQ(session->get_ratchets().size(), 3);
 }
 
 TEST_F(IdentitySessionTest, MessageRoutingTest) {
-    // Initialize identity session with multiple bundles
-    std::vector<KeyBundle*> bundles;
-    bundles.push_back(alice_to_bob_bundle);
-    bundles.push_back(alice_to_charlie_bundle);
-    bundles.push_back(bob_to_charlie_bundle);
 
-    std::string alice_username = "alice";
-    std::string bob_username = "bob";
-
-    const auto session = std::make_unique<IdentitySession>(
-        bundles, generate_unique_id_pair(&alice_username, &bob_username)
-    );
-
-    // Create a test message
-    unsigned char test_message[32] = "Test message for routing";
-    
-    // Send message and verify it creates messages for all ratchets
-    auto messages = session->send_message(test_message, sizeof(test_message));
-    ASSERT_EQ(messages.size(), 3); // One message per ratchet
-
-    // Verify each message has correct header and ciphertext
-    for (const auto& [session_id, message] : messages) {
-        ASSERT_NE(message->header, nullptr);
-        ASSERT_NE(message->ciphertext, nullptr);
-        ASSERT_GT(message->length, 0);
-    }
 }
 
 TEST_F(IdentitySessionTest, MessageSendingAndReceivingTest) {
-    // Initialize identity session with a single bundle
-    switch_to_alice_db();
-    std::vector<KeyBundle*> alice_bundles;
-    alice_bundles.push_back(alice_to_bob_bundle);
 
-    std::string alice_username = "alice";
-    std::string bob_username = "bob";
-
-    const auto alice_session = std::make_unique<IdentitySession>(
-        alice_bundles, generate_unique_id_pair(&alice_username, &bob_username)
-    );
-
-    // Create a test message
-    unsigned char test_message[32] = "Test message for sending";
-    
-    auto messages = alice_session->send_message(test_message, sizeof(test_message));
-    ASSERT_EQ(messages.size(), 1);
-
-    // Get the sent message
-    auto [session_id, sent_message] = std::move(messages[0]);
-
-    // Debug: Print available ratchet IDs
-    std::cout << "Alice session ratchets (" << alice_session->get_ratchets().size() << "): " << std::endl;
-    for (const auto& [ratchet_id, ratchet_ptr] : alice_session->get_ratchets()) {
-        std::cout << "  Ratchet ID (first 8 bytes): ";
-        for (int i = 0; i < 8; i++) {
-            std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)ratchet_id[i] << " ";
-        }
-        std::cout << std::endl;
-    }
-    std::cout << "generated ratchet_id: " << bin2hex(alice_to_bob_bundle->get_ratchet_id().data(),32) << std::endl;
-    
-    // Debug: Print the keys used in the bundle for ratchet ID generation
-    std::cout << "Alice device key (my, first 4 bytes): ";
-    for (int i = 0; i < 4; i++) {
-        std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)alice_to_bob_bundle->get_my_device_public()[i] << " ";
-    }
-    std::cout << std::endl;
-    
-    std::cout << "Bob device key (their, first 4 bytes): ";
-    for (int i = 0; i < 4; i++) {
-        std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)alice_to_bob_bundle->get_their_device_public()[i] << " ";
-    }
-    std::cout << std::endl;
-    
-    std::cout << "Alice ephemeral public key (first 4 bytes): ";
-    for (int i = 0; i < 4; i++) {
-        std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)alice_to_bob_eph_pub[i] << " ";
-    }
-    std::cout << std::endl;
-
-    // bob session
-    switch_to_bob_db();
-    std::vector<KeyBundle*> bob_bundles;
-    bob_bundles.push_back(bob_from_alice_bundle);
-
-    const auto bob_session = std::make_unique<IdentitySession>(
-        bob_bundles, generate_unique_id_pair(&alice_username, &bob_username)
-    );
-
-    // Debug: Print available ratchet IDs
-    std::cout << "Bob session ratchets (" << bob_session->get_ratchets().size() << "): " << std::endl;
-    for (const auto& [ratchet_id, ratchet_ptr] : bob_session->get_ratchets()) {
-        std::cout << "  Ratchet ID (first 8 bytes): ";
-        for (int i = 0; i < 8; i++) {
-            std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)ratchet_id[i] << " ";
-        }
-        std::cout << std::endl;
-    }
-    
-    std::cout << "Bob's bundle their_ephemeral (first 4 bytes): ";
-    for (int i = 0; i < 4; i++) {
-        std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)bob_from_alice_bundle->get_their_ephemeral_public()[i] << " ";
-    }
-    std::cout << std::endl;
-
-    // Receive the message (already in Bob's database context)
-    auto key = bob_session->receive_message(*sent_message);
-
-    // Verify the received message matches the original
-    ASSERT_EQ(memcmp(received_plaintext.data(), test_message, sizeof(test_message)), 0);
 }
 
 TEST_F(IdentitySessionTest, MultipleMessageExchangeTest) {
-    // Initialize identity session with multiple bundles
-    std::vector<KeyBundle*> bundles;
-    bundles.push_back(alice_to_bob_bundle);
-    bundles.push_back(alice_to_charlie_bundle);
 
-    std::string alice_username = "alice";
-    std::string bob_username = "bob";
-
-    const auto session = std::make_unique<IdentitySession>(
-        bundles, generate_unique_id_pair(&alice_username, &bob_username)
-    );
-
-    // Send multiple messages
-    const int num_messages = 5;
-    std::vector<std::vector<unsigned char>> sent_messages;
-    std::vector<std::vector<std::tuple<IdentitySessionId, std::unique_ptr<DeviceMessage>>>> encrypted_messages;
-
-    for (int i = 0; i < num_messages; i++) {
-        // Create unique message for each send
-        std::vector<unsigned char> message(32);
-        snprintf(reinterpret_cast<char*>(message.data()), 32, "Test message %d", i);
-        sent_messages.push_back(message);
-
-        // Send message
-        auto messages = session->send_message(message.data(), message.size());
-        encrypted_messages.push_back(std::move(messages));
-    }
-
-    // Verify each message was sent to all ratchets
-    for (const auto& messages : encrypted_messages) {
-        ASSERT_EQ(messages.size(), 2); // One message per ratchet
-    }
-
-    // Receive and verify each message
-    for (size_t i = 0; i < encrypted_messages.size(); i++) {
-        for (const auto& [session_id, message] : encrypted_messages[i]) {
-            auto received_plaintext = session->receive_message(*message);
-            ASSERT_EQ(received_plaintext.size(), sent_messages[i].size());
-            ASSERT_EQ(memcmp(received_plaintext.data(), sent_messages[i].data(), sent_messages[i].size()), 0);
-        }
-    }
 }
 

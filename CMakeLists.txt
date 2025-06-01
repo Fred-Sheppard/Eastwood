@@ -111,6 +111,8 @@ set(FRONTEND_SOURCES
         src/ui/windows/settings/settings.h
         src/ui/windows/settings/settings.ui
         src/ui/QRCodeGenerator.cpp
+        src/sessions/RatchetSessionManager.cpp
+        src/sessions/RatchetSessionManager.h
 )
 
 # Define database sources
@@ -143,8 +145,6 @@ set(AUTH_SOURCES
         src/auth/register_device/register_device.cpp
         src/auth/login/login.cpp
         src/sessions/KeyBundle.h
-        src/sessions/IdentitySession.cpp
-        src/sessions/IdentityManager.cpp
         src/files/upload_file.cpp
         src/auth/salt.cpp
         src/key_exchange/MessageStructs.h
@@ -196,8 +196,6 @@ add_executable(EastwoodTests
         src/database/database.cpp
         src/sessions/KeyBundle.h
         src/keys/session_token_manager.h
-        src/sessions/IdentityManager.cpp
-        src/sessions/IdentitySession.cpp
         src/endpoints/endpoints.cpp
         test/identity_session_test.cpp
 )
