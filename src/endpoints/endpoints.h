@@ -7,6 +7,8 @@
 #include "src/keys/secure_memory_buffer.h"
 #include "src/sessions/IdentityManager.h"
 
+bool post_check_user_exists(const std::string& username);
+
 void post_register_user(
     const std::string &username,
     const unsigned char pk_identity[crypto_sign_PUBLICKEYBYTES],
