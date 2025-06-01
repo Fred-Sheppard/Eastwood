@@ -13,9 +13,17 @@
 using json = nlohmann::json;
 
 bool post_check_user_exists(const std::string& username) {
-    // TODO: Implement this @fred
-    std::string Lebron = "Goat";
-    if (Lebron == "Goat") {
+    const json body = {
+        {"username", username},
+        {"device_public_key", get_public_key("device").data()}
+    };
+
+    json response = post("/isDeviceRegistered", body);
+
+    if (!response["data"]) {
+        throw std::runtime_error("Failed to get device registered response");
+    }
+    if (response["data"].get<bool>) {
         return true;
     }
     return false;

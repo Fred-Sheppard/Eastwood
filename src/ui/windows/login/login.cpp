@@ -10,6 +10,7 @@
 #include "src/ui/utils/qr_code_generation/QRCodeGenerator.h"
 #include <sodium.h>
 #include <QDebug>
+#include "src/database/database.h"
 
 Login::Login(QWidget *parent)
     : QWidget(parent)
@@ -51,9 +52,9 @@ void Login::onContinueButtonClicked()
     }
 
     try {
-        // bool hasDatabase = user_has_database(username.toStdString());
+        bool hasDatabase = Database::user_has_database(username.toStdString());
         bool hasDatabase = false;
-        // bool existsOnServer = post_check_user_exists(username.toStdString());
+        bool existsOnServer = post_check_user_exists(username.toStdString());
         bool existsOnServer = true;
 
         if (hasDatabase && existsOnServer) {
