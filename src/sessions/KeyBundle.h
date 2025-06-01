@@ -90,7 +90,13 @@ public:
     unsigned char* get_their_signed_signature() const { return their_signed_signature; }
 
     std::unique_ptr<NewRatchet> create_ratchet() override {
-        return std::make_unique<NewRatchet>(get_shared_secret(), their_signed_public, true);
+        // Use the overloaded constructor to ensure the ephemeral keypair is used for the initial ratchet state
+        return std::make_unique<NewRatchet>(
+            get_shared_secret(),
+            their_signed_public,
+            my_ephemeral_public,
+            my_ephemeral_private
+        );
     };
 
 private:
@@ -132,7 +138,7 @@ public:
     static std::unique_ptr<SecureMemoryBuffer> get_my_onetime_private(const unsigned char* my_onetime_public) { return get_onetime_private_key(my_onetime_public); }
 
     std::unique_ptr<NewRatchet> create_ratchet() override {
-        return std::make_unique<NewRatchet>(get_shared_secret(), their_ephemeral_public, true);
+        return std::make_unique<NewRatchet>(get_shared_secret(), their_ephemeral_public);
     };
 private:
     unsigned char* their_ephemeral_public;

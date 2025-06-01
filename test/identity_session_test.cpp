@@ -388,6 +388,13 @@ TEST_F(RatchetSessionManagerTest, KeyGenerationConsistencyTest) {
     memcpy(bob_device_id.data(), bob_device_pub, 32);
     auto [alice_message_key, alice_header] = alice_keys[bob_device_id];
 
+    // Debug print Alice's message key and header
+    printf("Alice message key: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", alice_message_key[i]);
+    printf("\nHeader: message_index=%d, dh_public=", alice_header->message_index);
+    for (int i = 0; i < 32; ++i) printf("%02x", alice_header->dh_public[i]);
+    printf("\n");
+
     // Bob's perspective (receiver)
     switch_to_bob_db();
     auto bob_session_manager = std::make_unique<RatchetSessionManager>();
@@ -397,8 +404,18 @@ TEST_F(RatchetSessionManagerTest, KeyGenerationConsistencyTest) {
     std::cout << "=== RECEIVING MESSAGE ===" << std::endl;
     // Get receiving key from Bob's perspective using Alice's header
     auto bob_message_key = bob_session_manager->get_key_for_device("alice", alice_header);
+
+    // Debug print Bob's message key
+    printf("Bob message key: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", bob_message_key[i]);
+    printf("\n");
     
     // Keys should match
+    printf("Comparing Alice and Bob message keys:\n");
+    for (int i = 0; i < 32; ++i) printf("%02x", alice_message_key[i]);
+    printf("\n");
+    for (int i = 0; i < 32; ++i) printf("%02x", bob_message_key[i]);
+    printf("\n");
     EXPECT_EQ(memcmp(alice_message_key.data(), bob_message_key, 32), 0);
     
     // Clean up

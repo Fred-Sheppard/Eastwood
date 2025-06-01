@@ -236,10 +236,10 @@ TEST_F(DoubleRatchetTest, RatchetBothSidesTest) {
     switch_to_alice_db();
     auto ratchet_id = new unsigned char[32];
     randombytes_buf(ratchet_id, 32);
-    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true);
+    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub);
 
     switch_to_bob_db();
-    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false);
+    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub);
 
     // Alice sends first message
     switch_to_alice_db();
@@ -268,10 +268,10 @@ TEST_F(DoubleRatchetTest, TwoMessageFromOneSideTest) {
 
     auto ratchet_id = new unsigned char[32];
     randombytes_buf(ratchet_id, 32);
-    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true);
+    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub);
 
     switch_to_bob_db();
-    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false);
+    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub);
 
     // Alice sends first message
     switch_to_alice_db();
@@ -300,10 +300,10 @@ TEST_F(DoubleRatchetTest, MessageIndexResetTest) {
     switch_to_alice_db();
     auto ratchet_id = std::make_unique<unsigned char[]>(32);
     randombytes_buf(ratchet_id.get(), 32);
-    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true);
+    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub);
 
     switch_to_bob_db();
-    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false);
+    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub);
 
     // alice sends a few
     auto [alice_key1, header1] = alice.advance_send();
@@ -338,10 +338,10 @@ TEST_F(DoubleRatchetTest, OneMessageFromEitherSideTest) {
     switch_to_alice_db();
     auto ratchet_id = std::make_unique<unsigned char[]>(32);
     randombytes_buf(ratchet_id.get(), 32);
-    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true);
+    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub);
 
     switch_to_bob_db();
-    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false);
+    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub);
 
     auto [alice_key1, header1] = alice.advance_send();
     auto header1_ptr = std::unique_ptr<MessageHeader>(header1);
@@ -361,10 +361,10 @@ TEST_F(DoubleRatchetTest, MultipleMessageFromOneSideThenMultipleSwitchTest) {
     switch_to_alice_db();
     auto ratchet_id = std::make_unique<unsigned char[]>(32);
     randombytes_buf(ratchet_id.get(), 32);
-    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true);
+    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub);
 
     switch_to_bob_db();
-    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false);
+    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub);
 
     // alice sends a few
     auto [alice_key1, header1] = alice.advance_send();
@@ -399,10 +399,10 @@ TEST_F(DoubleRatchetTest, OutOfOrderMessageTest) {
     switch_to_alice_db();
     auto ratchet_id = std::make_unique<unsigned char[]>(32);
     randombytes_buf(ratchet_id.get(), 32);
-    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true);
+    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub);
 
     switch_to_bob_db();
-    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false);
+    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub);
 
     // alice sends a few
     auto [alice_key1, header1] = alice.advance_send();
@@ -428,10 +428,10 @@ TEST_F(DoubleRatchetTest, SkippedMessagesAcrossRatchetTest) {
     switch_to_alice_db();
     auto ratchet_id = std::make_unique<unsigned char[]>(32);
     randombytes_buf(ratchet_id.get(), 32);
-    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true);
+    NewRatchet alice(alice_sending_bundle->get_shared_secret(), bob_presign_pub);
 
     switch_to_bob_db();
-    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub, false);
+    NewRatchet bob(bob_receiving_bundle->get_shared_secret(), alice_eph_pub);
 
     // alice sends two messages
     auto [alice_key1, header1] = alice.advance_send();
@@ -462,7 +462,7 @@ TEST_F(DoubleRatchetTest, SavingAndLoadingFromDB) {
     switch_to_alice_db();
     auto ratchet_id = std::make_unique<unsigned char[]>(32);
     randombytes_buf(ratchet_id.get(), 32);
-    NewRatchet ratchet1(alice_sending_bundle->get_shared_secret(), bob_presign_pub, true);
+    NewRatchet ratchet1(alice_sending_bundle->get_shared_secret(), bob_presign_pub);
 
     ratchet1.save();
     auto decrypted_ratchet = get_decrypted_ratchet(ratchet_id.get());

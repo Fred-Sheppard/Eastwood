@@ -13,14 +13,43 @@
 
 // other key is initiator ephemeral for recipient
 // other key is receiver signed prekey for initiator
-NewRatchet::NewRatchet(const unsigned char *shared_secret, const unsigned char *other_key, bool is_sender) {
+NewRatchet::NewRatchet(const unsigned char *shared_secret, const unsigned char *other_key) {
+    printf("[NewRatchet] shared_secret: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", shared_secret[i]);
+    printf("\n[NewRatchet] other_key: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", other_key[i]);
+    printf("\n");
     memcpy(root_key, shared_secret, 32);
 
-    if (is_sender) {
-        set_up_initial_state_for_initiator(other_key);
-    } else {
-        set_up_initial_state_for_recipient(other_key);
-    }
+    printf("[NewRatchet] Calling set_up_initial_state_for_recipient\n");
+    set_up_initial_state_for_recipient(other_key);
+
+    printf("[NewRatchet] After init: local_dh_public: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", local_dh_public[i]);
+    printf("\n[NewRatchet] remote_dh_public: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", remote_dh_public[i]);
+    printf("\n");
+
+    set_up_initial_chain_keys();
+    save();
+}
+
+NewRatchet::NewRatchet(const unsigned char* shared_secret, const unsigned char* other_key,
+                       const unsigned char* my_ephemeral_public, const std::shared_ptr<SecureMemoryBuffer> &my_ephemeral_private) {
+    printf("[NewRatchet] shared_secret: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", shared_secret[i]);
+    printf("\n[NewRatchet] other_key: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", other_key[i]);
+    printf("\n");
+    memcpy(root_key, shared_secret, 32);
+
+    set_up_initial_state_for_initiator(other_key, my_ephemeral_public, my_ephemeral_private);
+
+    printf("[NewRatchet] After init: local_dh_public: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", local_dh_public[i]);
+    printf("\n[NewRatchet] remote_dh_public: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", remote_dh_public[i]);
+    printf("\n");
 
     set_up_initial_chain_keys();
     save();
@@ -35,12 +64,14 @@ NewRatchet::NewRatchet(const std::vector<unsigned char> &serialised_ratchet) {
     deserialise(in);
 }
 
-void NewRatchet::set_up_initial_state_for_initiator(const unsigned char *recipient_signed_public) {
+void NewRatchet::set_up_initial_state_for_initiator(const unsigned char* recipient_signed_public,
+                                                    const unsigned char* my_ephemeral_public,
+                                                    std::shared_ptr<SecureMemoryBuffer> my_ephemeral_private) {
+    printf("[NewRatchet] set_up_initial_state_for_initiator (ephemeral overload)\n");
     reversed = false;
-    //setup initial local dh pub priv
-    crypto_box_keypair(local_dh_public, local_dh_priv->data());
-
-    //remote dh pub
+    memcpy(local_dh_public, my_ephemeral_public, 32);
+    local_dh_priv = SecureMemoryBuffer::create(32);
+    memcpy(local_dh_priv->data(), my_ephemeral_private->data(), 32);
     memcpy(remote_dh_public, recipient_signed_public, 32);
 }
 
@@ -57,6 +88,17 @@ void NewRatchet::set_up_initial_state_for_recipient(const unsigned char *initiat
 
 void NewRatchet::set_up_initial_chain_keys() {
     auto dh_output = dh();
+
+    printf("[NewRatchet] set_up_initial_chain_keys\n");
+    printf("  local_dh_public: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", local_dh_public[i]);
+    printf("\n  local_dh_priv: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", local_dh_priv->data()[i]);
+    printf("\n  remote_dh_public: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", remote_dh_public[i]);
+    printf("\n  dh_output: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", dh_output[i]);
+    printf("\n");
 
     unsigned char kdf_key[32];
     crypto_generichash(kdf_key, sizeof(kdf_key), dh_output.get(), 32, nullptr, 0);
@@ -85,10 +127,37 @@ void NewRatchet::set_up_initial_chain_keys() {
         "DRXroot1",
         kdf_key
     );
+
+    // Swap send/receive chains for responder
+    if (reversed) {
+        unsigned char tmp[32];
+        memcpy(tmp, send_chain.key, 32);
+        memcpy(send_chain.key, receive_chain.key, 32);
+        memcpy(receive_chain.key, tmp, 32);
+    }
+
+    printf("  send_chain.key: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", send_chain.key[i]);
+    printf("\n  receive_chain.key: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", receive_chain.key[i]);
+    printf("\n  root_key: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", root_key[i]);
+    printf("\n");
 }
 
 void NewRatchet::dh_ratchet_step(const bool received_new_dh) {
     auto dh_output = dh();
+
+    printf("[NewRatchet] dh_ratchet_step\n");
+    printf("  local_dh_public: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", local_dh_public[i]);
+    printf("\n  local_dh_priv: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", local_dh_priv->data()[i]);
+    printf("\n  remote_dh_public: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", remote_dh_public[i]);
+    printf("\n  dh_output: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", dh_output[i]);
+    printf("\n");
 
     unsigned char kdf_key[32];
     crypto_generichash(kdf_key, sizeof(kdf_key), dh_output.get(), 32, nullptr, 0);
@@ -127,6 +196,14 @@ void NewRatchet::dh_ratchet_step(const bool received_new_dh) {
 
         send_chain.index = 0;
     }
+
+    printf("  send_chain.key: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", send_chain.key[i]);
+    printf("\n  receive_chain.key: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", receive_chain.key[i]);
+    printf("\n  root_key: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", root_key[i]);
+    printf("\n");
 }
 
 void NewRatchet::generate_new_local_dh_keypair() {
@@ -142,6 +219,10 @@ std::unique_ptr<unsigned char[]> NewRatchet::dh() const {
 }
 
 std::tuple<std::array<unsigned char,32>, MessageHeader*> NewRatchet::advance_send() {
+    printf("[NewRatchet] advance_send()\n");
+    printf("  Before advance - send_chain.key: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", send_chain.key[i]);
+    printf("\n  send_chain.index: %d\n", send_chain.index);
 
     if (due_to_send_new_dh) {
         dh_ratchet_step(false); // we are sending the new dh not receiving
@@ -156,6 +237,11 @@ std::tuple<std::array<unsigned char,32>, MessageHeader*> NewRatchet::advance_sen
 }
 
 unsigned char* NewRatchet::advance_receive(const MessageHeader* header) {
+    printf("[NewRatchet] advance_receive()\n");
+    printf("  Before advance - receive_chain.key: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", receive_chain.key[i]);
+    printf("\n  receive_chain.index: %d\n", receive_chain.index);
+
     // if new dh public
     if (memcmp(remote_dh_public, header->dh_public, 32) != 0) {
         int skipped_count = receive_chain.index;
@@ -186,6 +272,10 @@ unsigned char* NewRatchet::advance_receive(const MessageHeader* header) {
     // get the key normally
     for (int i = receive_chain.index; i <= header->message_index; i++) {
         const auto message_key = progress_receive_ratchet();
+        printf("  Derived message_key at index %d: ", i);
+        for (int j = 0; j < 32; ++j) printf("%02x", message_key[j]);
+        printf("\n");
+
         if (i == header->message_index) {
             receive_chain.index = i + 1;
             save();
@@ -203,7 +293,7 @@ unsigned char* NewRatchet::advance_receive(const MessageHeader* header) {
 unsigned char* NewRatchet::progress_receive_ratchet() {
     auto msg_key = new unsigned char[32];
     unsigned char next_receive_key[32];
-    const char *ctx = reversed ? "DRRcvKey" : "DRSndKey";
+    const char *ctx = "DRSndKey"; // Use same context as sender
 
     crypto_kdf_derive_from_key(msg_key, 32, 0, ctx, receive_chain.key);
     crypto_kdf_derive_from_key(next_receive_key, 32, 1, ctx, receive_chain.key);
@@ -215,7 +305,7 @@ unsigned char* NewRatchet::progress_receive_ratchet() {
 std::tuple<unsigned char*, MessageHeader*> NewRatchet::progress_sending_ratchet() {
     auto message_key = new unsigned char[32];
     unsigned char next_send_key[32];
-    const char *ctx = reversed ? "DRSndKey" : "DRRcvKey";
+    const char *ctx = "DRSndKey"; // Use same context as in advance_send
 
     auto header = new MessageHeader();
     memcpy(header->dh_public, local_dh_public, 32);
@@ -225,7 +315,7 @@ std::tuple<unsigned char*, MessageHeader*> NewRatchet::progress_sending_ratchet(
     crypto_kdf_derive_from_key(next_send_key, 32, 1, ctx, send_chain.key);
 
     memcpy(send_chain.key, next_send_key, 32);
-    send_chain.index = send_chain.index + 1;
+    send_chain.index++;
 
     save();
     return std::make_tuple(message_key, header);
