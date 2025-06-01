@@ -322,9 +322,9 @@ TEST_F(IdentitySessionTest, MultipleRatchetInitialisationTest) {
     bool found_first = false;
     bool found_second = false;
     for (const auto& [key, _] : session->get_ratchets()) {
-        if (std::memcmp(key, bundles[0]->get_ratchet_id(), 32) == 0)
+        if (std::memcmp(key.data(), bundles[0]->get_ratchet_id().data(), 32) == 0)
             found_first = true;
-        if (std::memcmp(key, bundles[1]->get_ratchet_id(), 32) == 0)
+        if (std::memcmp(key.data(), bundles[1]->get_ratchet_id().data(), 32) == 0)
             found_second = true;
     }
 

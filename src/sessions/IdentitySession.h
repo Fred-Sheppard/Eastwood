@@ -16,7 +16,7 @@
 class IdentitySession {
 private:
     unsigned char identity_session_id[32];
-    std::map<unsigned char*, std::unique_ptr<NewRatchet>> ratchets;
+    std::map<std::array<unsigned char, 32>, std::unique_ptr<NewRatchet>> ratchets;
 
 public:
     IdentitySession(std::vector<KeyBundle*> const &keys, const unsigned char* identity_session_id_in);
@@ -27,7 +27,7 @@ public:
     std::vector<std::tuple<IdentitySessionId, std::unique_ptr<DeviceMessage>>> send_message(const unsigned char* message, size_t message_len);
     std::vector<unsigned char> receive_message(DeviceMessage *message);
 
-    const std::map<unsigned char*, std::unique_ptr<NewRatchet>>& get_ratchets() const { return ratchets; };
+    const std::map<std::array<unsigned char, 32>, std::unique_ptr<NewRatchet>>& get_ratchets() const { return ratchets; };
 };
 
 #endif //EASTWOOD_IDENTITY_SESSION_H

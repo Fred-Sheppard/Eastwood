@@ -29,9 +29,9 @@ void IdentitySession::updateFromBundles(std::vector<KeyBundle*> bundles) {
 // post_handshake(session_id, jadjfajdfja)
 std::vector<std::tuple<IdentitySessionId, SendingKeyBundle*>> IdentitySession::create_ratchet_if_needed(KeyBundle* bundle) {
     size_t message_len = 32;
-    auto ratchet_id = bundle->get_ratchet_id();
+    auto ratchet_id_arr = bundle->get_ratchet_id();
 
-    bool exists = ratchets.find(ratchet_id) != ratchets.end();
+    bool exists = ratchets.find(ratchet_id_arr) != ratchets.end();
     std::cout << "Ratchets exists: " << exists << std::endl;
 
     std::vector<std::tuple<IdentitySessionId, SendingKeyBundle*>> posts_to_send;
@@ -40,7 +40,7 @@ std::vector<std::tuple<IdentitySessionId, SendingKeyBundle*>> IdentitySession::c
         // Create new DoubleRatchet instance with the bundle
         std::cout << "Creating ratchet" << std::endl;
         auto ratchet = std::make_unique<NewRatchet>(bundle->create_ratchet());
-        ratchets[ratchet_id] = std::move(ratchet);
+        ratchets[ratchet_id_arr] = std::move(ratchet);
 
         if (bundle->get_role() == Role::Initiator) {
             auto sender = dynamic_cast<SendingKeyBundle*>(bundle);
@@ -82,11 +82,17 @@ std::vector<std::tuple<IdentitySessionId, std::unique_ptr<DeviceMessage>>> Ident
 
 std::vector<unsigned char> IdentitySession::receive_message(DeviceMessage *message) {
     size_t message_len = 32;
-    auto ratchet_id = concat_ordered(reinterpret_cast<const unsigned char *>(get_public_key("device").data()), 32, message->header->device_id, 32, message_len);
+    auto ratchet_id_ptr = concat_ordered(reinterpret_cast<const unsigned char *>(get_public_key("device").data()), 32, message->header->device_id, 32, message_len);
+    std::array<unsigned char, 32> ratchet_id_arr;
+    std::memcpy(ratchet_id_arr.data(), ratchet_id_ptr, 32);
 
-    auto key = ratchets[ratchet_id].get()->advance_receive(message->header);
+    auto key = ratchets[ratchet_id_arr].get()->advance_receive(message->header);
 
     std::vector<unsigned char> plaintext = decrypt_message_given_key(message->ciphertext, message->length, key);
+    
+    // Clean up the dynamically allocated pointer from concat_ordered
+    delete[] ratchet_id_ptr;
+    
     return plaintext;
 }
 
