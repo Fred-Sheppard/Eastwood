@@ -188,7 +188,11 @@ protected:
         auto nonce = new unsigned char[CHA_CHA_NONCE_LEN];
         randombytes_buf(nonce, CHA_CHA_NONCE_LEN);
 
-        std::unique_ptr<SecureMemoryBuffer> encrypted_alice_device_priv = encrypt_secret_key(std::move(alice_device_priv), nonce);
+        // Create a copy of the private key before moving it
+        auto alice_device_priv_copy = SecureMemoryBuffer::create(crypto_sign_SECRETKEYBYTES);
+        memcpy(alice_device_priv_copy->data(), alice_device_priv->data(), crypto_sign_SECRETKEYBYTES);
+
+        std::unique_ptr<SecureMemoryBuffer> encrypted_alice_device_priv = encrypt_secret_key(std::move(alice_device_priv_copy), nonce);
         save_encrypted_keypair("device", alice_device_pub, encrypted_alice_device_priv, nonce);
 
         delete[] nonce;
@@ -201,19 +205,29 @@ protected:
         auto nonce = new unsigned char[CHA_CHA_NONCE_LEN];
         randombytes_buf(nonce, CHA_CHA_NONCE_LEN);
 
-        std::unique_ptr<SecureMemoryBuffer> encrypted_bob_device_priv = encrypt_secret_key(std::move(bob_device_priv), nonce);
+        // Create copies of the private keys before moving them
+        auto bob_device_priv_copy = SecureMemoryBuffer::create(crypto_sign_SECRETKEYBYTES);
+        memcpy(bob_device_priv_copy->data(), bob_device_priv->data(), crypto_sign_SECRETKEYBYTES);
+        
+        std::unique_ptr<SecureMemoryBuffer> encrypted_bob_device_priv = encrypt_secret_key(std::move(bob_device_priv_copy), nonce);
         save_encrypted_keypair("device", bob_device_pub, encrypted_bob_device_priv, nonce);
 
         auto nonce_2 = new unsigned char[CHA_CHA_NONCE_LEN];
         randombytes_buf(nonce_2, CHA_CHA_NONCE_LEN);
 
-        std::unique_ptr<SecureMemoryBuffer> encrypted_bob_presign_priv = encrypt_secret_key(std::move(bob_presign_priv), nonce_2);
+        auto bob_presign_priv_copy = SecureMemoryBuffer::create(crypto_sign_SECRETKEYBYTES);
+        memcpy(bob_presign_priv_copy->data(), bob_presign_priv->data(), crypto_sign_SECRETKEYBYTES);
+        
+        std::unique_ptr<SecureMemoryBuffer> encrypted_bob_presign_priv = encrypt_secret_key(std::move(bob_presign_priv_copy), nonce_2);
         save_encrypted_keypair("signed", bob_presign_pub, encrypted_bob_presign_priv, nonce_2);
 
         auto nonce_3 = new unsigned char[CHA_CHA_NONCE_LEN];
         randombytes_buf(nonce_3, CHA_CHA_NONCE_LEN);
 
-        std::unique_ptr<SecureMemoryBuffer> encrypted_bob_onetime_priv = encrypt_secret_key(std::move(bob_onetime_priv), nonce_3);
+        auto bob_onetime_priv_copy = SecureMemoryBuffer::create(crypto_sign_SECRETKEYBYTES);
+        memcpy(bob_onetime_priv_copy->data(), bob_onetime_priv->data(), crypto_sign_SECRETKEYBYTES);
+        
+        std::unique_ptr<SecureMemoryBuffer> encrypted_bob_onetime_priv = encrypt_secret_key(std::move(bob_onetime_priv_copy), nonce_3);
 
         unsigned char* onetime_pub_copy = new unsigned char[crypto_box_PUBLICKEYBYTES];
         memcpy(onetime_pub_copy, bob_onetime_pub, crypto_box_PUBLICKEYBYTES);
@@ -223,9 +237,11 @@ protected:
 
         save_encrypted_onetime_keys(std::move(onetime_keys));
 
-        // Clean up the copy
+        // Clean up all allocated memory
         delete[] onetime_pub_copy;
         delete[] nonce;
+        delete[] nonce_2;
+        delete[] nonce_3;
     }
 
     // Helper to print key for debugging
