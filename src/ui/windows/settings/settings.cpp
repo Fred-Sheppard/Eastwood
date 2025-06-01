@@ -4,6 +4,7 @@
 #include "../../utils/window_manager/window_manager.h"
 #include "../../utils/navbar/navbar.h"
 #include "src/key_exchange/utils.h"
+#include "src/auth/register_device/register_device.h"
 #include <QVBoxLayout>
 #include <QFileDialog>
 #include <QLineEdit>
@@ -15,8 +16,6 @@
 #include <QPixmap>
 #include <QLabel>
 #include <opencv2/opencv.hpp>
-#include <nlohmann/json.hpp>
-#include <QDebug>
 
 Settings::Settings(QWidget *parent)
     : QWidget(parent)
@@ -333,6 +332,18 @@ void Settings::processFrame()
                         "A new device wants to connect with you.\n\nDo you wish to accept this connection?")) {
                         StyledMessageBox::success(this, "Connection Accepted", 
                             "Connection request has been accepted.");
+                        
+                        std::vector<unsigned char> decoded_key = base642bin(safeDecodedInfo.toStdString());
+                        if (decoded_key.size() != crypto_sign_PUBLICKEYBYTES) {
+                            StyledMessageBox::error(this, "Invalid Key", 
+                                "The scanned QR code contains an invalid public key.");
+                            return;
+                        }
+
+                        unsigned char pk_new_device[crypto_sign_PUBLICKEYBYTES];
+                        std::copy(decoded_key.begin(), decoded_key.end(), pk_new_device);
+                        
+                        add_trusted_device(pk_new_device);
                         qDebug() << "Connection accepted with public key:" << safeDecodedInfo;
                     } else {
                         StyledMessageBox::info(this, "Connection Denied", 
