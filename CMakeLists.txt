@@ -122,7 +122,6 @@ set(FRONTEND_SOURCES
         src/ui/windows/settings/settings.cpp
         src/ui/windows/settings/settings.h
         src/ui/windows/settings/settings.ui
-        src/ui/QRCodeGenerator.cpp
         src/sessions/RatchetSessionManager.cpp
         src/sessions/RatchetSessionManager.h
         src/ui/utils/qr_code_generation/QRCodeGenerator.cpp
