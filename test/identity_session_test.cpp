@@ -1,28 +1,23 @@
 //
 // Created by Josh Sloggett on 31/05/2025.
 //
-//
-// Created by Josh Sloggett on 30/05/2025.
-//
 
 #include <gtest/gtest.h>
 #include <tuple>
+#include <iostream>
 
 #include "kek_manager.h"
 #include "NewRatchet.h"
 #include "utils.h"
 #include "database/schema.h"
-#include "client_api_interactions/MakeAuthReq.h"
-#include "libraries/BaseClient.h"
-#include "libraries/HTTPSClient.h"
-#include "endpoints/endpoints.h"
 #include "keys/secure_memory_buffer.h"
 #include "algorithms/algorithms.h"
 #include "database/database.h"
 #include "sessions/KeyBundle.h"
-#include "sessions/IdentityManager.h"
+#include "sessions/RatchetSessionManager.h"
+#include "key_exchange/MessageStructs.h"
 
-class IdentitySessionTest : public ::testing::Test {
+class RatchetSessionManagerTest : public ::testing::Test {
 protected:
     void SetUp() override {
         if (sodium_init() < 0) {
@@ -40,7 +35,6 @@ protected:
         randombytes_buf(master_key->data(), MASTER_KEY_LEN);
         Database::get().initialize("username", master_key, encrypted);
 
-        auto master_password = std::make_unique<std::string>("correct horse battery stapler");
         drop_all_tables();
         init_schema();
 
@@ -160,10 +154,8 @@ protected:
             charlie_onetime_pub
         );
 
-        // Initialize databases for all users
-        switch_to_alice_db();
-        switch_to_bob_db();
-        switch_to_charlie_db();
+        // Initialize RatchetSessionManager
+        session_manager = std::make_unique<RatchetSessionManager>();
     }
 
     void TearDown() override {
@@ -177,6 +169,16 @@ protected:
 
         // Reset database state
         drop_all_tables();
+    }
+
+    // Helper function to create a MessageHeader for testing
+    MessageHeader* create_test_header(const unsigned char* dh_public, const unsigned char* device_id, int message_index, int prev_chain_length) {
+        auto header = new MessageHeader();
+        memcpy(header->dh_public, dh_public, crypto_kx_PUBLICKEYBYTES);
+        memcpy(header->device_id, device_id, crypto_box_PUBLICKEYBYTES);
+        header->message_index = message_index;
+        header->prev_chain_length = prev_chain_length;
+        return header;
     }
 
     void switch_to_alice_db() {
@@ -226,40 +228,8 @@ protected:
         delete[] nonce;
     }
 
-    void switch_to_charlie_db() {
-        drop_all_tables();
-        init_schema();
-
-        auto nonce = new unsigned char[CHA_CHA_NONCE_LEN];
-        randombytes_buf(nonce, CHA_CHA_NONCE_LEN);
-
-        std::unique_ptr<SecureMemoryBuffer> encrypted_charlie_device_priv = encrypt_secret_key(std::move(charlie_device_priv), nonce);
-        save_encrypted_keypair("device", charlie_device_pub, encrypted_charlie_device_priv, nonce);
-
-        auto nonce_2 = new unsigned char[CHA_CHA_NONCE_LEN];
-        randombytes_buf(nonce_2, CHA_CHA_NONCE_LEN);
-
-        std::unique_ptr<SecureMemoryBuffer> encrypted_charlie_presign_priv = encrypt_secret_key(std::move(charlie_presign_priv), nonce_2);
-        save_encrypted_keypair("signed", charlie_presign_pub, encrypted_charlie_presign_priv, nonce_2);
-
-        auto nonce_3 = new unsigned char[CHA_CHA_NONCE_LEN];
-        randombytes_buf(nonce_3, CHA_CHA_NONCE_LEN);
-
-        std::unique_ptr<SecureMemoryBuffer> encrypted_charlie_onetime_priv = encrypt_secret_key(std::move(charlie_onetime_priv), nonce_3);
-
-        unsigned char* onetime_pub_copy = new unsigned char[crypto_box_PUBLICKEYBYTES];
-        memcpy(onetime_pub_copy, charlie_onetime_pub, crypto_box_PUBLICKEYBYTES);
-
-        std::vector<std::tuple<unsigned char*, std::unique_ptr<SecureMemoryBuffer>, unsigned char*>> onetime_keys;
-        onetime_keys.emplace_back(onetime_pub_copy, std::move(encrypted_charlie_onetime_priv), nonce_3);
-
-        save_encrypted_onetime_keys(std::move(onetime_keys));
-
-        delete[] onetime_pub_copy;
-        delete[] nonce;
-        delete[] nonce_2;
-        delete[] nonce_3;
-    }
+    // Test data
+    std::unique_ptr<RatchetSessionManager> session_manager;
 
     // Key bundles for Alice -> Bob
     SendingKeyBundle *alice_to_bob_bundle = nullptr;
@@ -302,23 +272,226 @@ protected:
     unsigned char charlie_presign_signature[crypto_sign_BYTES] = {};
 };
 
-TEST_F(IdentitySessionTest, MultipleRatchetInitialisationTest) {
-
+TEST_F(RatchetSessionManagerTest, RatchetCreationTest) {
+    switch_to_alice_db();
+    // Test that ratchets are created when bundles are provided
+    std::vector<KeyBundle*> alice_bundles = {alice_to_bob_bundle};
+    session_manager->create_ratchets_if_needed("bob", alice_bundles);
+    
+    // Verify ratchet was created by attempting to get keys
+    auto keys = session_manager->get_keys_for_identity("bob");
+    EXPECT_EQ(keys.size(), 1);
+    
+    // Check that the device ID matches bob's device public key
+    std::array<unsigned char, 32> bob_device_id;
+    memcpy(bob_device_id.data(), bob_device_pub, 32);
+    EXPECT_NE(keys.find(bob_device_id), keys.end());
 }
 
-TEST_F(IdentitySessionTest, RatchetGenerationAndDuplicationTest) {
-
+TEST_F(RatchetSessionManagerTest, MultipleDeviceRatchetCreationTest) {
+    // Test creating ratchets for multiple devices
+    switch_to_alice_db();
+    std::vector<KeyBundle*> alice_bundles = {alice_to_charlie_bundle, alice_to_bob_bundle};
+    session_manager->create_ratchets_if_needed("twobundles", alice_bundles);
+    
+    auto keys = session_manager->get_keys_for_identity("twobundles");
+    EXPECT_EQ(keys.size(), 2);
+    
+    // Check that both Alice and Bob device IDs are present
+    std::array<unsigned char, 32> charlie_device_id;
+    std::array<unsigned char, 32> bob_device_id;
+    memcpy(charlie_device_id.data(), charlie_device_pub, 32);
+    memcpy(bob_device_id.data(), bob_device_pub, 32);
+    
+    EXPECT_NE(keys.find(charlie_device_id), keys.end());
+    EXPECT_NE(keys.find(bob_device_id), keys.end());
 }
 
-TEST_F(IdentitySessionTest, MessageRoutingTest) {
-
+TEST_F(RatchetSessionManagerTest, DuplicateRatchetPreventionTest) {
+    // Test that duplicate ratchets are not created
+    switch_to_alice_db();
+    std::vector<KeyBundle*>alice_bundles = {alice_to_bob_bundle};
+    
+    // Create ratchet first time
+    session_manager->create_ratchets_if_needed("bob", alice_bundles);
+    auto keys1 = session_manager->get_keys_for_identity("bob");
+    
+    // Attempt to create again - should not create duplicates
+    session_manager->create_ratchets_if_needed("bob", alice_bundles);
+    auto keys2 = session_manager->get_keys_for_identity("bob");
+    
+    EXPECT_EQ(keys1.size(), keys2.size());
+    EXPECT_EQ(keys1.size(), 1);
 }
 
-TEST_F(IdentitySessionTest, MessageSendingAndReceivingTest) {
-
+TEST_F(RatchetSessionManagerTest, KeyGenerationForSendingTest) {
+    // Test that keys are properly generated for sending
+    switch_to_alice_db();
+    std::vector<KeyBundle*> alice_bundles = {alice_to_bob_bundle};
+    session_manager->create_ratchets_if_needed("bob", alice_bundles);
+    
+    auto keys = session_manager->get_keys_for_identity("bob");
+    EXPECT_EQ(keys.size(), 1);
+    
+    std::array<unsigned char, 32> bob_device_id;
+    memcpy(bob_device_id.data(), bob_device_pub, 32);
+    
+    auto it = keys.find(bob_device_id);
+    ASSERT_NE(it, keys.end());
+    
+    auto [message_key, header] = it->second;
+    
+    // Verify header is properly initialized
+    EXPECT_NE(header, nullptr);
+    EXPECT_EQ(header->message_index, 0); // First message should have index 0
+    EXPECT_EQ(header->prev_chain_length, 0);
+    
+    // Verify message key is not all zeros
+    bool all_zeros = true;
+    for (int i = 0; i < 32; i++) {
+        if (message_key[i] != 0) {
+            all_zeros = false;
+            break;
+        }
+    }
+    EXPECT_FALSE(all_zeros);
+    
+    // Clean up
+    delete header;
 }
 
-TEST_F(IdentitySessionTest, MultipleMessageExchangeTest) {
+TEST_F(RatchetSessionManagerTest, KeyGenerationConsistencyTest) {
+    // Test that sending and receiving keys match
+    
+    // Debug: Show the device IDs we're working with
+    std::cout << "=== DEVICE IDS ===" << std::endl;
+    std::cout << "Alice device ID: ";
+    for (int i = 0; i < 32; i++) {
+        printf("%02x", alice_device_pub[i]);
+    }
+    std::cout << std::endl;
+    std::cout << "Bob device ID: ";
+    for (int i = 0; i < 32; i++) {
+        printf("%02x", bob_device_pub[i]);
+    }
+    std::cout << std::endl;
+    
+    // Alice's perspective (sender)
+    switch_to_alice_db();
+    auto alice_session_manager = std::make_unique<RatchetSessionManager>();
+    std::vector<KeyBundle*> alice_bundles = {alice_to_bob_bundle};
+    alice_session_manager->create_ratchets_if_needed("bob", alice_bundles);
+    
+    // Get sending key from Alice's perspective
+    auto alice_keys = alice_session_manager->get_keys_for_identity("bob");
+    std::array<unsigned char, 32> bob_device_id;
+    memcpy(bob_device_id.data(), bob_device_pub, 32);
+    auto [alice_message_key, alice_header] = alice_keys[bob_device_id];
 
+    // Bob's perspective (receiver)
+    switch_to_bob_db();
+    auto bob_session_manager = std::make_unique<RatchetSessionManager>();
+    std::vector<KeyBundle*> bob_bundles = {bob_from_alice_bundle};
+    bob_session_manager->create_ratchets_if_needed("alice", bob_bundles);
+    
+    std::cout << "=== RECEIVING MESSAGE ===" << std::endl;
+    // Get receiving key from Bob's perspective using Alice's header
+    auto bob_message_key = bob_session_manager->get_key_for_device("alice", alice_header);
+    
+    // Keys should match
+    EXPECT_EQ(memcmp(alice_message_key.data(), bob_message_key, 32), 0);
+    
+    // Clean up
+    delete alice_header;
+    delete[] bob_message_key;
+}
+
+TEST_F(RatchetSessionManagerTest, MultipleMessageExchangeTest) {
+    // Test multiple message exchanges between parties
+    
+    // Alice's side
+    switch_to_alice_db();
+    auto alice_session_manager = std::make_unique<RatchetSessionManager>();
+    std::vector<KeyBundle*> alice_bundles = {alice_to_bob_bundle};
+    alice_session_manager->create_ratchets_if_needed("bob", alice_bundles);
+    
+    // Bob's side
+    switch_to_bob_db();
+    auto bob_session_manager = std::make_unique<RatchetSessionManager>();
+    std::vector<KeyBundle*> bob_bundles = {bob_from_alice_bundle};
+    bob_session_manager->create_ratchets_if_needed("alice", bob_bundles);
+    
+    // Exchange multiple messages
+    for (int i = 0; i < 3; i++) {
+        // Switch back to Alice for sending
+        switch_to_alice_db();
+        
+        // Alice sends to Bob
+        auto alice_keys = alice_session_manager->get_keys_for_identity("bob");
+        std::array<unsigned char, 32> bob_device_id;
+        memcpy(bob_device_id.data(), bob_device_pub, 32);
+        auto [alice_message_key, alice_header] = alice_keys[bob_device_id];
+        
+        // Switch to Bob for receiving
+        switch_to_bob_db();
+        
+        // Bob receives from Alice
+        auto bob_message_key = bob_session_manager->get_key_for_device("alice", alice_header);
+        
+        // Keys should match
+        EXPECT_EQ(memcmp(alice_message_key.data(), bob_message_key, 32), 0);
+        EXPECT_EQ(alice_header->message_index, i);
+        
+        // Clean up
+        delete alice_header;
+        delete[] bob_message_key;
+    }
+}
+
+TEST_F(RatchetSessionManagerTest, InvalidDeviceIdTest) {
+    // Test handling of invalid device IDs
+    std::vector<KeyBundle*> bob_bundles = {alice_to_bob_bundle};
+    session_manager->create_ratchets_if_needed("bob", bob_bundles);
+    
+    // Create header with invalid device ID
+    unsigned char invalid_device_id[crypto_box_PUBLICKEYBYTES];
+    randombytes_buf(invalid_device_id, crypto_box_PUBLICKEYBYTES);
+    
+    unsigned char dummy_dh_public[crypto_kx_PUBLICKEYBYTES];
+    randombytes_buf(dummy_dh_public, crypto_kx_PUBLICKEYBYTES);
+    
+    auto invalid_header = create_test_header(dummy_dh_public, invalid_device_id, 0, 0);
+    
+    // Should throw or return null for invalid device ID
+    EXPECT_THROW(session_manager->get_key_for_device("bob", invalid_header), std::exception);
+    
+    delete invalid_header;
+}
+
+TEST_F(RatchetSessionManagerTest, MultipleUsersTest) {
+    // Test managing ratchets for multiple users
+    std::vector<KeyBundle*> bob_bundles = {alice_to_bob_bundle};
+    std::vector<KeyBundle*> charlie_bundles = {alice_to_charlie_bundle};
+    
+    session_manager->create_ratchets_if_needed("bob", bob_bundles);
+    session_manager->create_ratchets_if_needed("charlie", charlie_bundles);
+    
+    auto bob_keys = session_manager->get_keys_for_identity("bob");
+    auto charlie_keys = session_manager->get_keys_for_identity("charlie");
+    
+    EXPECT_EQ(bob_keys.size(), 1);
+    EXPECT_EQ(charlie_keys.size(), 1);
+    
+    // Verify keys are different between users
+    std::array<unsigned char, 32> alice_device_id;
+    memcpy(alice_device_id.data(), alice_device_pub, 32);
+    
+    auto [bob_key, bob_header] = bob_keys[alice_device_id];
+    auto [charlie_key, charlie_header] = charlie_keys[alice_device_id];
+    
+    EXPECT_NE(memcmp(bob_key.data(), charlie_key.data(), 32), 0);
+    
+    delete bob_header;
+    delete charlie_header;
 }
 

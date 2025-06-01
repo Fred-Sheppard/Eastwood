@@ -8,7 +8,6 @@
 #include "src/sql/queries.h"
 #include "src/client_api_interactions/MakeUnauthReq.h"
 #include "src/keys/session_token_manager.h"
-#include "src/sessions/IdentityManager.h"
 #include "src/utils/utils.h"
 
 using json = nlohmann::json;
@@ -304,7 +303,7 @@ std::vector<std::tuple<std::string, KeyBundle *> > get_handshake_backlog() {
         std::string username = handshake["username"].get<std::string>();
 
         bool success = hex_to_bin(dev_key_str, initator_dev_key, crypto_box_PUBLICKEYBYTES) &&
-                       hex_to_bin(eph_pub_str, initiator_eph_pub, crypto_box_PUBLICKEYBYTES)
+                       hex_to_bin(eph_pub_str, initiator_eph_pub, crypto_box_PUBLICKEYBYTES);
         if (!success) {
             delete[] initator_dev_key;
             delete[] initiator_eph_pub;

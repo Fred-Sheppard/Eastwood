@@ -8,6 +8,7 @@
 
 #include "KeyBundle.h"
 #include "src/key_exchange/NewRatchet.h"
+#include "src/sql/queries.h"
 
 
 class RatchetSessionManager{

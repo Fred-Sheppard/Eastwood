@@ -195,6 +195,7 @@ add_executable(EastwoodTests
         ${CRYPTO_SOURCES}
         src/database/database.cpp
         src/sessions/KeyBundle.h
+        src/sessions/RatchetSessionManager.cpp
         src/keys/session_token_manager.h
         src/endpoints/endpoints.cpp
         test/identity_session_test.cpp

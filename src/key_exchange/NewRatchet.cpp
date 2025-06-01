@@ -49,6 +49,7 @@ void NewRatchet::set_up_initial_state_for_recipient(const unsigned char *initiat
     //setup initial local dh pub priv
     auto [public_signed, sk_signed] = get_decrypted_keypair("signed");
     local_dh_priv = std::move(sk_signed);
+    memcpy(local_dh_public, public_signed.constData(), 32);
 
     //remote dh pub
     memcpy(remote_dh_public, initiator_ephemeral_public, 32);
