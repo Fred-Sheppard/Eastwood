@@ -52,9 +52,9 @@ void Login::onContinueButtonClicked()
 
     try {
         // bool hasDatabase = user_has_database(username.toStdString());
-        bool hasDatabase = true;
+        bool hasDatabase = false;
         // bool existsOnServer = post_check_user_exists(username.toStdString());
-        bool existsOnServer = false;
+        bool existsOnServer = true;
 
         if (hasDatabase && existsOnServer) {
             qDebug() << "User has database and exists on server";

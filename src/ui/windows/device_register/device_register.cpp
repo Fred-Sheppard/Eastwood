@@ -50,7 +50,7 @@ void DeviceRegister::displayAuthCode(const std::string& auth_code)
 
 void DeviceRegister::onBackButtonClicked()
 {
-    WindowManager::instance().showRegister();
+    WindowManager::instance().showLogin();
 }
 
 void DeviceRegister::onCopyButtonClicked()
