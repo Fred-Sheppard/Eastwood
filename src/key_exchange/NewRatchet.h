@@ -9,6 +9,7 @@
 #include "MessageStructs.h"
 #include "src/keys/secure_memory_buffer.h"
 #include <vector>
+#include <string>
 
 struct NewChain {
     int index = 0;
@@ -38,9 +39,10 @@ public:
     std::tuple<int,int> get_chain_lengths();
 
     const unsigned char *get_current_dh_public() const; //testing!!
+    
+    void save(const std::string& username, const std::array<unsigned char, 32>& device_id);
+
 private:
-    unsigned char ratchet_id[32];
-    unsigned char identity_session_id[32];
 
     bool reversed;
     bool due_to_send_new_dh;
@@ -81,7 +83,6 @@ private:
     //serialisation
     void serialise(std::ostream& os) const;
     void deserialise(std::istream &in);
-    void save();
 
     friend class DoubleRatchetTest_Serialisation_Test;
     friend class DoubleRatchetTest_SavingAndLoadingFromDB_Test;

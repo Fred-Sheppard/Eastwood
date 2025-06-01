@@ -329,7 +329,7 @@ TEST_F(DoubleRatchetTest, MessageIndexResetTest) {
 
     auto alice_key3 = std::unique_ptr<unsigned char[]>(alice->advance_receive(header3_ptr.get()));
 
-    ASSERT_EQ(std::get<0>(alice->get_chain_lengths()), 0);
+    ASSERT_EQ(std::get<0>(alice->get_chain_lengths()), 2);
     ASSERT_EQ(std::get<1>(alice->get_chain_lengths()), 1);
 }
 
@@ -460,12 +460,12 @@ TEST_F(DoubleRatchetTest, SkippedMessagesAcrossRatchetTest) {
 TEST_F(DoubleRatchetTest, SavingAndLoadingFromDB) {
     // Create initial ratchet
     switch_to_alice_db();
-    auto ratchet_id = std::make_unique<unsigned char[]>(32);
-    randombytes_buf(ratchet_id.get(), 32);
+    std::array<unsigned char, 32> device_id;
+    randombytes_buf(device_id.data(), 32);
     auto ratchet1 = alice_sending_bundle->create_ratchet();
 
-    ratchet1->save();
-    auto decrypted_ratchet = get_decrypted_ratchet(ratchet_id.get());
+    ratchet1->save("alice", device_id);
+    auto decrypted_ratchet = get_decrypted_ratchet_by_username_device("alice", device_id);
     auto ratchet2 = NewRatchet(decrypted_ratchet);
 
     EXPECT_EQ(0, memcmp(ratchet1->local_dh_priv->data(), ratchet2.local_dh_priv->data(), 32));

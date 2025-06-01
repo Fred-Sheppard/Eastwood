@@ -19,6 +19,8 @@ void RatchetSessionManager::create_ratchets_if_needed(std::string username, std:
         if (user_ratchets.find(device_id) == user_ratchets.end()) {
             std::cout << "creating ratchet for " << username << std::endl;
             user_ratchets[device_id] = bundle->create_ratchet();
+            // Save the newly created ratchet
+            user_ratchets[device_id]->save(username, device_id);
         }
     }
 }
@@ -33,6 +35,9 @@ std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>
 
     for (auto& [device_id, ratchet] : ratchets_for_user) {
         auto [message_key_vector, header] = ratchet->advance_send();
+        
+        // Save the ratchet state after advancing send
+        ratchet->save(username, device_id);
         
         // Set the header device_id to the sender's (my) device ID so receiver can look up correct ratchet
         memcpy(header->device_id, my_device_public.constData(), 32);
@@ -78,6 +83,11 @@ unsigned char* RatchetSessionManager::get_key_for_device(std::string username, M
         throw std::runtime_error("Device not found for user: " + username);
     }
     
-    return target_ratchet->second->advance_receive(header);
+    auto result = target_ratchet->second->advance_receive(header);
+    
+    // Save the ratchet state after advancing receive
+    target_ratchet->second->save(username, device_id);
+    
+    return result;
 }
 
