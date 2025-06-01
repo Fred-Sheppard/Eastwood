@@ -48,38 +48,30 @@ void WindowManager::cleanup()
         disconnect(m_deviceRegister, nullptr, this, nullptr);
     }
 
-    // Clear the windows list first
+    QWidget* received = m_received;
+    QWidget* sent = m_sent;
+    QWidget* sendFile = m_sendFile;
+    QWidget* settings = m_settings;
+    QWidget* login = m_login;
+    QWidget* register_ = m_register;
+    QWidget* deviceRegister = m_deviceRegister;
+
+    m_received.clear();
+    m_sent.clear();
+    m_sendFile.clear();
+    m_settings.clear();
+    m_login.clear();
+    m_register.clear();
+    m_deviceRegister.clear();
     m_windows.clear();
 
-    // Then close and clear individual windows
-    if (!m_received.isNull()) {
-        m_received->close();
-        m_received.clear();
-    }
-    if (!m_sent.isNull()) {
-        m_sent->close();
-        m_sent.clear();
-    }
-    if (!m_sendFile.isNull()) {
-        m_sendFile->close();
-        m_sendFile.clear();
-    }
-    if (!m_settings.isNull()) {
-        m_settings->close();
-        m_settings.clear();
-    }
-    if (!m_login.isNull()) {
-        m_login->close();
-        m_login.clear();
-    }
-    if (!m_register.isNull()) {
-        m_register->close();
-        m_register.clear();
-    }
-    if (!m_deviceRegister.isNull()) {
-        m_deviceRegister->close();
-        m_deviceRegister.clear();
-    }
+    if (received) received->close();
+    if (sent) sent->close();
+    if (sendFile) sendFile->close();
+    if (settings) settings->close();
+    if (login) login->close();
+    if (register_) register_->close();
+    if (deviceRegister) deviceRegister->close();
 }
 
 void WindowManager::showReceived()
