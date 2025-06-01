@@ -12,16 +12,18 @@
 
 using json = nlohmann::json;
 
-bool post_check_user_exists(const std::string& username) {
+bool post_check_user_exists(const std::string& username, const unsigned char* pk_device) {
     const json body = {
         {"username", username},
-        {"device_public_key", get_public_key("device").data()}
+        {"device_public_key", bin2hex(pk_device, 32) }
     };
 
-    json response = post("/isDeviceRegistered", body);
+    json response = post_unauth("/isDeviceRegistered", body);
 
-    if (!response["data"]) {
-        throw std::runtime_error("Failed to get device registered response");
+    std::cout << response.dump() << std::endl;
+
+    if (!response.contains("data") || !response["data"].is_boolean()) {
+        throw std::runtime_error("Invalid or missing 'data' field in response");
     }
     return response["data"].get<bool>();
 }

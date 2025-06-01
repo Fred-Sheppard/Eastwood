@@ -4,13 +4,35 @@
 #include <iostream>
 #include <QClipboard>
 #include <QApplication>
+#include <thread>
+#include <unistd.h>
+
+#include "src/endpoints/endpoints.h"
 #include "src/ui/utils/messagebox.h"
 
-DeviceRegister::DeviceRegister(const std::string& auth_code, const QImage& qr_code, QWidget *parent)
+void continuously_ping(std::array<unsigned char, 32> pk_device) {
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+        try {
+            std::cout << "pinging" << std::endl;
+            post_check_user_exists("sloggo123", pk_device.data());
+        } catch (const std::exception& e) {
+            qDebug() << "Ping failed:" << e.what();
+        }
+    }
+}
+
+DeviceRegister::DeviceRegister(const std::string& auth_code, const QImage& qr_code, QWidget *parent, unsigned char* pk_device)
     : QWidget(parent)
     , ui(new Ui::DeviceRegister)
     , m_auth_code(auth_code)
 {
+    // Then pass it like this:
+    std::array<unsigned char, 32> arr;
+    std::memcpy(arr.data(), pk_device, 32);
+    std::thread t1(continuously_ping, arr);
+    t1.detach();
+
     ui->setupUi(this);
     setupConnections();
     displayQRCode(qr_code);

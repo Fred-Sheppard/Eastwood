@@ -13,7 +13,7 @@ class DeviceRegister : public QWidget {
     Q_OBJECT
 
 public:
-    explicit DeviceRegister(const std::string& auth_code, const QImage& qr_code, QWidget *parent = nullptr);
+    explicit DeviceRegister(const std::string& auth_code, const QImage& qr_code, QWidget *parent = nullptr, unsigned char* pk_device = nullptr);
     ~DeviceRegister() override;
     void displayQRCode(const QImage& qr_code);
     void displayAuthCode(const std::string& auth_code);

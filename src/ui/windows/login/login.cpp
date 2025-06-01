@@ -52,8 +52,11 @@ void Login::onContinueButtonClicked()
     }
 
     try {
+        unsigned char pk_device[crypto_sign_PUBLICKEYBYTES];
+        auto sk_device = SecureMemoryBuffer::create(crypto_sign_SECRETKEYBYTES);
+
         bool hasDatabase = Database::user_has_database(username.toStdString());
-        bool existsOnServer = post_check_user_exists(username.toStdString());
+        bool existsOnServer = true;
 
         if (hasDatabase && existsOnServer) {
             qDebug() << "User has database and exists on server";
@@ -64,9 +67,6 @@ void Login::onContinueButtonClicked()
             if (sodium_init() < 0) {
                 throw std::runtime_error("Libsodium initialization failed");
             }
-
-            unsigned char pk_device[crypto_sign_PUBLICKEYBYTES];
-            auto sk_device = SecureMemoryBuffer::create(crypto_sign_SECRETKEYBYTES);
 
             crypto_sign_keypair(pk_device, sk_device->data());
             std::string auth_code = bin2base64(pk_device, crypto_sign_PUBLICKEYBYTES);
@@ -82,7 +82,7 @@ void Login::onContinueButtonClicked()
                 return;
             }
 
-            WindowManager::instance().showDeviceRegister(auth_code, qr_code);
+            WindowManager::instance().showDeviceRegister(auth_code, qr_code, pk_device);
         } else {
             qDebug() << "User doesn't exist - go straight to register";
             WindowManager::instance().showRegister();

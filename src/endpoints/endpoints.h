@@ -8,7 +8,7 @@
 #include "src/key_exchange/MessageStructs.h"
 #include "src/sessions/KeyBundle.h"
 
-bool post_check_user_exists(const std::string& username);
+bool post_check_user_exists(const std::string& username, const unsigned char* pk_device);
 
 std::vector<std::string> get_devices();
 
