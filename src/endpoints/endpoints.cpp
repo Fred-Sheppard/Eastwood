@@ -23,10 +23,7 @@ bool post_check_user_exists(const std::string& username) {
     if (!response["data"]) {
         throw std::runtime_error("Failed to get device registered response");
     }
-    if (response["data"].get<bool>) {
-        return true;
-    }
-    return false;
+    return response["data"].get<bool>();
 }
 
 void post_register_user(
