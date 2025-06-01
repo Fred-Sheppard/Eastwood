@@ -25,22 +25,61 @@ WindowManager::~WindowManager()
 
 void WindowManager::cleanup()
 {
-    // Close all windows first
-    for (const QPointer<QWidget>& window : m_windows) {
-        if (!window.isNull()) {
-            window->close();
-        }
+    // First, disconnect all signals to prevent callbacks during cleanup
+    if (!m_received.isNull()) {
+        disconnect(m_received, nullptr, this, nullptr);
     }
+    if (!m_sent.isNull()) {
+        disconnect(m_sent, nullptr, this, nullptr);
+    }
+    if (!m_sendFile.isNull()) {
+        disconnect(m_sendFile, nullptr, this, nullptr);
+    }
+    if (!m_settings.isNull()) {
+        disconnect(m_settings, nullptr, this, nullptr);
+    }
+    if (!m_login.isNull()) {
+        disconnect(m_login, nullptr, this, nullptr);
+    }
+    if (!m_register.isNull()) {
+        disconnect(m_register, nullptr, this, nullptr);
+    }
+    if (!m_deviceRegister.isNull()) {
+        disconnect(m_deviceRegister, nullptr, this, nullptr);
+    }
+
+    // Clear the windows list first
     m_windows.clear();
 
-    // Then clean up individual pointers
-    deleteWindow(m_received);
-    deleteWindow(m_sent);
-    deleteWindow(m_sendFile);
-    deleteWindow(m_settings);
-    deleteWindow(m_login);
-    deleteWindow(m_register);
-    deleteWindow(m_deviceRegister);
+    // Then close and clear individual windows
+    if (!m_received.isNull()) {
+        m_received->close();
+        m_received = nullptr;
+    }
+    if (!m_sent.isNull()) {
+        m_sent->close();
+        m_sent = nullptr;
+    }
+    if (!m_sendFile.isNull()) {
+        m_sendFile->close();
+        m_sendFile = nullptr;
+    }
+    if (!m_settings.isNull()) {
+        m_settings->close();
+        m_settings = nullptr;
+    }
+    if (!m_login.isNull()) {
+        m_login->close();
+        m_login = nullptr;
+    }
+    if (!m_register.isNull()) {
+        m_register->close();
+        m_register = nullptr;
+    }
+    if (!m_deviceRegister.isNull()) {
+        m_deviceRegister->close();
+        m_deviceRegister = nullptr;
+    }
 }
 
 void WindowManager::showReceived()
