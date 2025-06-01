@@ -25,20 +25,16 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(json)
 
-# Fetch GoogleTest
+# Fetch GoogleTest - following official guide
 FetchContent_Declare(
         googletest
-        URL https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
-        DOWNLOAD_EXTRACT_TIMESTAMP true
+        URL https://github.com/google/googletest/archive/refs/tags/v1.17.0.tar.gz
 )
-
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
-# Make GoogleTest available
 FetchContent_MakeAvailable(googletest)
 
-# Enable testing
+# Enable testing - following official guide
 enable_testing()
 include(GoogleTest)
 
@@ -118,6 +114,8 @@ set(FRONTEND_SOURCES
         src/ui/windows/settings/settings.cpp
         src/ui/windows/settings/settings.h
         src/ui/windows/settings/settings.ui
+        src/sessions/RatchetSessionManager.cpp
+        src/sessions/RatchetSessionManager.h
         src/ui/utils/qr_code_generation/QRCodeGenerator.cpp
         src/ui/utils/qr_code_generation/QRCodeGenerator.h
         src/ui/utils/camera_functionality/camera_functionality.cpp
@@ -153,7 +151,6 @@ set(AUTH_SOURCES
         src/auth/register_device/register_device.cpp
         src/auth/login/login.cpp
         src/sessions/KeyBundle.h
-        src/sessions/RatchetSessionManager.cpp
         src/files/upload_file.cpp
         src/auth/salt.cpp
         src/key_exchange/MessageStructs.h
@@ -215,8 +212,8 @@ add_executable(EastwoodTests
         ${CRYPTO_SOURCES}
         src/database/database.cpp
         src/sessions/KeyBundle.h
-        src/keys/session_token_manager.h
         src/sessions/RatchetSessionManager.cpp
+        src/keys/session_token_manager.h
         src/endpoints/endpoints.cpp
 )
 
@@ -281,10 +278,12 @@ target_link_libraries(IntegrationTests PRIVATE
         ${SQLCIPHER_LIBRARIES}
 )
 
+# Enable testing
+enable_testing()
+
 # Add test
 add_test(NAME EastwoodTests COMMAND EastwoodTests)
 add_test(NAME IntegrationTests COMMAND IntegrationTests)
 
 # Add tests to CTest
 gtest_discover_tests(EastwoodTests)
-gtest_discover_tests(IntegrationTests)
