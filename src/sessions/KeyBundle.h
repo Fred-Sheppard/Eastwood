@@ -142,7 +142,7 @@ public:
     static std::unique_ptr<SecureMemoryBuffer> get_my_onetime_private(const unsigned char* my_onetime_public) { return get_onetime_private_key(my_onetime_public); }
 
     NewRatchet create_ratchet() override {
-        return {get_shared_secret(), their_ephemeral_public, true};
+        return {get_shared_secret(), their_ephemeral_public, false};
     };
 private:
     unsigned char* their_ephemeral_public;
