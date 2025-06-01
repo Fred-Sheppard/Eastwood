@@ -28,7 +28,7 @@ public:
         skipped_keys.clear();
     }
 
-    std::tuple<unsigned char*, MessageHeader*> advance_send();
+    std::tuple<std::array<unsigned char,32>, MessageHeader*> advance_send();
     unsigned char* advance_receive(const MessageHeader* header);
 
     std::tuple<int,int> get_chain_lengths();

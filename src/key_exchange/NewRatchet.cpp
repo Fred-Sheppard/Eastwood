@@ -140,14 +140,18 @@ std::unique_ptr<unsigned char[]> NewRatchet::dh() const {
     return result;
 }
 
-std::tuple<unsigned char*, MessageHeader*> NewRatchet::advance_send() {
+std::tuple<std::array<unsigned char,32>, MessageHeader*> NewRatchet::advance_send() {
 
     if (due_to_send_new_dh) {
         dh_ratchet_step(false); // we are sending the new dh not receiving
         due_to_send_new_dh = false;
     }
 
-    return progress_sending_ratchet();
+    auto [raw_id, message_header] = progress_sending_ratchet();
+    std::array<unsigned char, 32> device_id;
+    std::memcpy(device_id.data(), raw_id, 32);
+
+    return std::make_tuple(device_id, message_header);
 }
 
 unsigned char* NewRatchet::advance_receive(const MessageHeader* header) {
