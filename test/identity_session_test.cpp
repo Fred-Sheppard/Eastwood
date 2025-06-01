@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 #include <tuple>
 #include <iostream>
+#include <thread>
 
 #include "kek_manager.h"
 #include "NewRatchet.h"
@@ -24,6 +25,9 @@ protected:
             throw std::runtime_error("Libsodium initialization failed");
         }
 
+        // Add small delay to prevent timing issues in CI
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
         auto kek = SecureMemoryBuffer::create(SYM_KEY_LEN);
         crypto_secretbox_keygen(kek->data());
 
@@ -37,6 +41,20 @@ protected:
 
         drop_all_tables();
         init_schema();
+
+        // Initialize all arrays to zero first
+        memset(alice_device_pub, 0, sizeof(alice_device_pub));
+        memset(alice_to_bob_eph_pub, 0, sizeof(alice_to_bob_eph_pub));
+        memset(alice_to_charlie_eph_pub, 0, sizeof(alice_to_charlie_eph_pub));
+        memset(bob_device_pub, 0, sizeof(bob_device_pub));
+        memset(bob_presign_pub, 0, sizeof(bob_presign_pub));
+        memset(bob_onetime_pub, 0, sizeof(bob_onetime_pub));
+        memset(bob_presign_signature, 0, sizeof(bob_presign_signature));
+        memset(charlie_device_pub, 0, sizeof(charlie_device_pub));
+        memset(charlie_eph_pub, 0, sizeof(charlie_eph_pub));
+        memset(charlie_presign_pub, 0, sizeof(charlie_presign_pub));
+        memset(charlie_onetime_pub, 0, sizeof(charlie_onetime_pub));
+        memset(charlie_presign_signature, 0, sizeof(charlie_presign_signature));
 
         // Initialize SecureMemoryBuffer objects with correct sizes for all users
         // Alice's keys
@@ -159,16 +177,47 @@ protected:
     }
 
     void TearDown() override {
+        // Clean up session manager first to ensure database is not in use
+        session_manager.reset();
+        
+        // Add small delay to ensure all operations are complete
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        
         // Clean up all key bundles
-        if (alice_to_bob_bundle) delete alice_to_bob_bundle;
-        if (bob_from_alice_bundle) delete bob_from_alice_bundle;
-        if (alice_to_charlie_bundle) delete alice_to_charlie_bundle;
-        if (charlie_from_alice_bundle) delete charlie_from_alice_bundle;
-        if (bob_to_charlie_bundle) delete bob_to_charlie_bundle;
-        if (charlie_from_bob_bundle) delete charlie_from_bob_bundle;
+        if (alice_to_bob_bundle) {
+            delete alice_to_bob_bundle;
+            alice_to_bob_bundle = nullptr;
+        }
+        if (bob_from_alice_bundle) {
+            delete bob_from_alice_bundle;
+            bob_from_alice_bundle = nullptr;
+        }
+        if (alice_to_charlie_bundle) {
+            delete alice_to_charlie_bundle;
+            alice_to_charlie_bundle = nullptr;
+        }
+        if (charlie_from_alice_bundle) {
+            delete charlie_from_alice_bundle;
+            charlie_from_alice_bundle = nullptr;
+        }
+        if (bob_to_charlie_bundle) {
+            delete bob_to_charlie_bundle;
+            bob_to_charlie_bundle = nullptr;
+        }
+        if (charlie_from_bob_bundle) {
+            delete charlie_from_bob_bundle;
+            charlie_from_bob_bundle = nullptr;
+        }
 
-        // Reset database state
-        drop_all_tables();
+        // Reset database state with proper synchronization
+        try {
+            drop_all_tables();
+        } catch (...) {
+            // Ignore errors during cleanup in case database is already closed
+        }
+        
+        // Add final delay to ensure cleanup is complete
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
     // Helper function to create a MessageHeader for testing
