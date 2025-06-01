@@ -230,7 +230,6 @@ target_include_directories(EastwoodTests PRIVATE
 
 # Link libraries using proper CMake targets
 target_link_libraries(EastwoodTests PRIVATE
-        GTest::gtest
         GTest::gtest_main
         Qt6::Core
         Qt6::Gui
@@ -261,7 +260,6 @@ target_include_directories(IntegrationTests PRIVATE
 )
 
 target_link_libraries(IntegrationTests PRIVATE
-        GTest::gtest
         GTest::gtest_main
         Qt6::Core
         Qt6::Gui
