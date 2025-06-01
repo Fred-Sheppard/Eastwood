@@ -54,31 +54,31 @@ void WindowManager::cleanup()
     // Then close and clear individual windows
     if (!m_received.isNull()) {
         m_received->close();
-        m_received = nullptr;
+        m_received.clear();
     }
     if (!m_sent.isNull()) {
         m_sent->close();
-        m_sent = nullptr;
+        m_sent.clear();
     }
     if (!m_sendFile.isNull()) {
         m_sendFile->close();
-        m_sendFile = nullptr;
+        m_sendFile.clear();
     }
     if (!m_settings.isNull()) {
         m_settings->close();
-        m_settings = nullptr;
+        m_settings.clear();
     }
     if (!m_login.isNull()) {
         m_login->close();
-        m_login = nullptr;
+        m_login.clear();
     }
     if (!m_register.isNull()) {
         m_register->close();
-        m_register = nullptr;
+        m_register.clear();
     }
     if (!m_deviceRegister.isNull()) {
         m_deviceRegister->close();
-        m_deviceRegister = nullptr;
+        m_deviceRegister.clear();
     }
 }
 
