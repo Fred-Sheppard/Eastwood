@@ -106,7 +106,7 @@ std::vector<std::tuple<IdentitySessionId, std::unique_ptr<DeviceMessage>>> Ident
     return responses;
 }
 
-std::vector<unsigned char> IdentitySession::receive_message(const DeviceMessage& message) {
+unsigned char* IdentitySession::receive_message(const DeviceMessage& message) {
     size_t message_len = 32;
     
     auto my_device_key = get_public_key("device");
@@ -140,21 +140,8 @@ std::vector<unsigned char> IdentitySession::receive_message(const DeviceMessage&
         std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)message.ciphertext[i] << " ";
     }
     std::cout << std::endl;
-
-    std::vector<unsigned char> plaintext = decrypt_message_given_key(message.ciphertext, message.length, key);
     
-    std::cout << "Plaintext length: " << plaintext.size() << std::endl;
-    if (!plaintext.empty()) {
-        std::cout << "Plaintext (first 4 bytes): ";
-        for (int i = 0; i < 4 && i < plaintext.size(); i++) {
-            std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)plaintext[i] << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    delete[] ratchet_id_ptr;
-    
-    return plaintext;
+    return key;
 }
 
 

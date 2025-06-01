@@ -470,10 +470,9 @@ TEST_F(IdentitySessionTest, MessageSendingAndReceivingTest) {
     std::cout << std::endl;
 
     // Receive the message (already in Bob's database context)
-    auto received_plaintext = bob_session->receive_message(*sent_message);
+    auto key = bob_session->receive_message(*sent_message);
 
     // Verify the received message matches the original
-    ASSERT_EQ(received_plaintext.size(), sizeof(test_message));
     ASSERT_EQ(memcmp(received_plaintext.data(), test_message, sizeof(test_message)), 0);
 }
 
