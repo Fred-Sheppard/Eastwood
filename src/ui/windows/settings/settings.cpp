@@ -3,19 +3,25 @@
 #include "../../utils/messagebox.h"
 #include "../../utils/window_manager/window_manager.h"
 #include "../../utils/navbar/navbar.h"
+#include "src/key_exchange/utils.h"
+#include "src/auth/register_device/register_device.h"
+#include "src/utils/ConversionUtils.h"
 #include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QFileInfo>
 #include <QFileDialog>
 #include <QLineEdit>
 #include <QDialog>
-#include <QScrollArea>
 #include <QTimer>
 #include <QCheckBox>
+#include <QImage>
+#include <QImageReader>
+#include <QPixmap>
+#include <QLabel>
+#include <QDebug>
 
 Settings::Settings(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::Settings)
+    , m_cameraFunctionality(new CameraFunctionality(this))
 {
     ui->setupUi(this);
     setupConnections();
@@ -34,12 +40,16 @@ void Settings::setupConnections()
 {
     // Connect passphrase fields to validation
     connect(ui->currentPassphrase, &QLineEdit::textChanged, this, &Settings::validatePassphrase);
-    connect(ui->newPassphrase, &QLineEdit::textChanged, this, &Settings::validatePassphrase);
+    connect(ui->currentPassphrase, &QLineEdit::textChanged, this, &Settings::validatePassphrase);
     connect(ui->confirmPassphrase, &QLineEdit::textChanged, this, &Settings::validatePassphrase);
 
-    // Connect buttons
-    connect(ui->cancelButton, &QPushButton::clicked, this, &Settings::onCancelClicked);
-    connect(ui->saveButton, &QPushButton::clicked, this, &Settings::onSaveChangesClicked);
+    // Connect passphrase section buttons
+    connect(ui->passphraseCancelButton, &QPushButton::clicked, this, &Settings::onPassphraseCancelClicked);
+    connect(ui->passphraseSaveButton, &QPushButton::clicked, this, &Settings::onPassphraseSaveClicked);
+
+    // Connect auth section buttons
+    connect(ui->authCancelButton, &QPushButton::clicked, this, &Settings::onAuthCancelClicked);
+    connect(ui->authSaveButton, &QPushButton::clicked, this, &Settings::onAuthSaveClicked);
 
     // Connect NavBar signals
     NavBar* navbar = findChild<NavBar*>();
@@ -50,6 +60,7 @@ void Settings::setupConnections()
         connect(navbar, &NavBar::logoutClicked, this, &Settings::onLogoutButtonClicked);
         connect(navbar, &NavBar::settingsClicked, this, &Settings::onSettingsButtonClicked);
     }
+    connect(ui->scanQRButton, &QPushButton::clicked, this, &Settings::onScanQRButtonClicked);
 }
 
 void Settings::validatePassphrase()
@@ -86,7 +97,6 @@ void Settings::onReceivedButtonClicked()
     ui->newPassphrase->clear();
     ui->confirmPassphrase->clear();
     WindowManager::instance().showReceived();
-    hide();
 }
 
 void Settings::onSentButtonClicked()
@@ -95,17 +105,14 @@ void Settings::onSentButtonClicked()
     ui->newPassphrase->clear();
     ui->confirmPassphrase->clear();
     WindowManager::instance().showSent();
-    hide();
 }
 
-// navbar button
 void Settings::onSendFileButtonClicked()
 {   
     ui->currentPassphrase->clear();
     ui->newPassphrase->clear();
     ui->confirmPassphrase->clear();
     WindowManager::instance().showSendFile();
-    hide();
 }
 
 void Settings::onSettingsButtonClicked()
@@ -115,7 +122,7 @@ void Settings::onSettingsButtonClicked()
     ui->confirmPassphrase->clear();
 }
 
-void Settings::onWindowShown(const QString& windowName)
+void Settings::onWindowShown(const QString& windowName) const
 {
     // Find the navbar and update its active button
     NavBar* navbar = findChild<NavBar*>();
@@ -124,7 +131,7 @@ void Settings::onWindowShown(const QString& windowName)
     }
 }
 
-void Settings::onCancelClicked()
+void Settings::onPassphraseCancelClicked()
 {
     // Clear all passphrase fields
     ui->currentPassphrase->clear();
@@ -133,7 +140,59 @@ void Settings::onCancelClicked()
     
     // Navigate back to the previous window
     WindowManager::instance().showReceived();
-    hide();
+}
+
+void Settings::onPassphraseSaveClicked()
+{
+    // TODO: Implement passphrase change functionality
+    StyledMessageBox::info(this, "Not Implemented", "Passphrase change functionality is not yet implemented.");
+}
+
+void Settings::onAuthCancelClicked()
+{
+    // Clear auth code input
+    ui->authCodeInput->clear();
+    
+    // Navigate back to the previous window
+    WindowManager::instance().showReceived();
+}
+
+void Settings::onAuthSaveClicked()
+{
+    QString auth_code = ui->authCodeInput->text().trimmed();
+    
+    if (auth_code.length() != 44) {
+        StyledMessageBox::error(this, "Invalid Code", "The authentication code must be 44 characters long");
+        return;
+    }
+
+    if (StyledMessageBox::confirmDialog(this, "Connection Request", 
+        "A new device wants to connect.\n\nEnsure you trust this device before accepting.\n\nDo you wish to accept this connection?")) {
+        
+        std::vector<unsigned char> decoded_key = base642bin(auth_code.toStdString());
+        if (decoded_key.size() != crypto_sign_PUBLICKEYBYTES) {
+            StyledMessageBox::error(this, "Invalid Key", 
+                "The authentication code contains an invalid public key.");
+            return;
+        }
+
+        unsigned char pk_new_device[crypto_sign_PUBLICKEYBYTES];
+        std::copy(decoded_key.begin(), decoded_key.end(), pk_new_device);
+        
+        try {
+            add_trusted_device(pk_new_device);
+            StyledMessageBox::success(this, "Connection Accepted", 
+                "Connection request has been accepted.");
+            qDebug() << "Connection accepted with public key:" << auth_code;
+        } catch (const std::exception& e) {
+            StyledMessageBox::error(this, "Connection Failed", 
+                QString("Failed to add trusted device: %1").arg(e.what()));
+        }
+    } else {
+        StyledMessageBox::info(this, "Connection Denied", 
+            "Connection request has been denied.");
+        qDebug() << "Connection denied";
+    }
 }
 
 void Settings::onLogoutButtonClicked() {
@@ -141,7 +200,7 @@ void Settings::onLogoutButtonClicked() {
     StyledMessageBox::info(this, "Not Implemented", "Logout functionality is not yet implemented.");
 }
 
-void Settings::onSaveChangesClicked()
+void Settings::onScanQRButtonClicked()
 {
-    StyledMessageBox::info(this, "Not Implemented", "Save Changes functionality is not yet implemented.");
+    m_cameraFunctionality->showScanDialog();
 }

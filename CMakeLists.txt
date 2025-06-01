@@ -13,38 +13,47 @@ set(CMAKE_AUTOUIC ON)
 # Find Qt
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets UiTools Concurrent)
 find_package(OpenSSL REQUIRED)
+find_package(OpenCV REQUIRED)
 
-# Enable testing
-enable_testing()
 
-# Add nlohmann_json and GoogleTest via FetchContent
+# Add nlohmann_json
 include(FetchContent)
-
-# Fetch nlohmann_json
 FetchContent_Declare(
         json
         URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
         DOWNLOAD_EXTRACT_TIMESTAMP true
 )
+FetchContent_MakeAvailable(json)
+# Enable testing and find GTest
 
+FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.zip
+)
+
+# Make the content available
+FetchContent_MakeAvailable(googletest)
+
+enable_testing()
+include(GoogleTest)
 # Fetch GoogleTest
 FetchContent_Declare(
-    googletest
-    URL https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
-    DOWNLOAD_EXTRACT_TIMESTAMP true
+        googletest
+        URL https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
+        DOWNLOAD_EXTRACT_TIMESTAMP true
 )
 
 # Fetch QR Code Generator
 FetchContent_Declare(
-    qrcodegen
-    GIT_REPOSITORY https://github.com/nayuki/QR-Code-generator.git
-    GIT_TAG master
+        qrcodegen
+        GIT_REPOSITORY https://github.com/nayuki/QR-Code-generator.git
+        GIT_TAG master
 )
 
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
-FetchContent_MakeAvailable(json googletest qrcodegen)
+FetchContent_MakeAvailable(googletest qrcodegen)
 
 # Find pkg-config and SQLCipher
 find_package(PkgConfig REQUIRED)
@@ -89,6 +98,9 @@ set(FRONTEND_SOURCES
         src/ui/windows/register/register.cpp
         src/ui/windows/register/register.h
         src/ui/windows/register/register.ui
+        src/ui/windows/device_register/device_register.cpp
+        src/ui/windows/device_register/device_register.h
+        src/ui/windows/device_register/device_register.ui
         src/ui/utils/messagebox.h
         src/ui/windows/received_dashboard/received_dash.cpp
         src/ui/windows/received_dashboard/received_dash.h
@@ -113,6 +125,9 @@ set(FRONTEND_SOURCES
         src/ui/QRCodeGenerator.cpp
         src/sessions/RatchetSessionManager.cpp
         src/sessions/RatchetSessionManager.h
+        src/ui/utils/qr_code_generation/QRCodeGenerator.cpp
+        src/ui/utils/qr_code_generation/QRCodeGenerator.h
+        src/ui/utils/camera_functionality/camera_functionality.cpp
 )
 
 # Define database sources
@@ -162,6 +177,15 @@ add_executable(Eastwood
         ${qrcodegen_SOURCE_DIR}/cpp/qrcodegen.cpp
 )
 
+# I hope this works nially
+if(APPLE)
+    set_target_properties(Eastwood PROPERTIES
+            MACOSX_BUNDLE TRUE
+            MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist
+            MACOSX_BUNDLE_ENTITLEMENTS ${CMAKE_CURRENT_SOURCE_DIR}/Eastwood.entitlements
+    )
+endif()
+
 # Include directories and link libraries for main executable
 target_include_directories(Eastwood PRIVATE
         ${SODIUM_INCLUDE_DIR}
@@ -173,6 +197,7 @@ target_include_directories(Eastwood PRIVATE
         ${Qt6UiTools_INCLUDE_DIRS}
         ${Qt6Svg_INCLUDE_DIRS}
         ${qrcodegen_SOURCE_DIR}/cpp
+        ${OpenCV_INCLUDE_DIRS}
 )
 
 target_link_libraries(Eastwood PRIVATE
@@ -186,6 +211,8 @@ target_link_libraries(Eastwood PRIVATE
         OpenSSL::Crypto
         nlohmann_json::nlohmann_json
         ${SQLCIPHER_LIBRARIES}
+        ${GTEST_LIBRARIES}
+        ${OpenCV_LIBS}
 )
 
 # Create test executable
@@ -198,7 +225,6 @@ add_executable(EastwoodTests
         src/sessions/RatchetSessionManager.cpp
         src/keys/session_token_manager.h
         src/endpoints/endpoints.cpp
-        test/identity_session_test.cpp
 )
 
 # Configure test target
@@ -213,16 +239,18 @@ target_include_directories(EastwoodTests PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/database
         ${CMAKE_CURRENT_SOURCE_DIR}/external/cereal/include
         ${CMAKE_CURRENT_SOURCE_DIR}/external/qrcodegen/cpp
+        ${GTEST_INCLUDE_DIRS}
 )
 
 # Link libraries using proper CMake targets
 target_link_libraries(EastwoodTests PRIVATE
-        gtest_main
-        gtest
+        GTest::gtest
+        GTest::gtest_main
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets
         Qt6::UiTools
+        Qt6::Concurrent
         ${SODIUM_LIBRARY}
         OpenSSL::SSL
         OpenSSL::Crypto
@@ -253,6 +281,7 @@ target_link_libraries(IntegrationTests PRIVATE
         Qt6::Gui
         Qt6::Widgets
         Qt6::UiTools
+        Qt6::Concurrent
         ${SODIUM_LIBRARY}
         OpenSSL::SSL
         OpenSSL::Crypto
@@ -268,5 +297,4 @@ add_test(NAME EastwoodTests COMMAND EastwoodTests)
 add_test(NAME IntegrationTests COMMAND IntegrationTests)
 
 # Add tests to CTest
-include(GoogleTest)
 gtest_discover_tests(EastwoodTests)

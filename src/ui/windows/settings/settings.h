@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QLineEdit>
 #include <QPushButton>
+#include "src/ui/utils/camera_functionality/camera_functionality.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class Settings; }
@@ -17,20 +18,25 @@ public:
     ~Settings() override;
 
 private slots:
-    void onWindowShown(const QString& windowName);
+    void onWindowShown(const QString& windowName) const;
     void onReceivedButtonClicked();
     void onSentButtonClicked();
     void onSendFileButtonClicked();
     void onLogoutButtonClicked();
     void validatePassphrase();
-    void onCancelClicked();
+    void onPassphraseCancelClicked();
+    void onPassphraseSaveClicked();
+    void onAuthCancelClicked();
+    void onAuthSaveClicked();
     void onSettingsButtonClicked();
-    void onSaveChangesClicked();
+    void onScanQRButtonClicked();
 
 private:
-    Ui::Settings *ui;
     void setupConnections();
     void navigateTo(QWidget* newWindow);
+
+    Ui::Settings *ui;
+    CameraFunctionality* m_cameraFunctionality;
 };
 
 #endif // SETTINGS_H
