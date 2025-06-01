@@ -26,22 +26,11 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(json)
 # Enable testing and find GTest
 
-FetchContent_Declare(
-        googletest
-        URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.zip
-)
-
-# Make the content available
-FetchContent_MakeAvailable(googletest)
-
 enable_testing()
 include(GoogleTest)
-# Fetch GoogleTest
-FetchContent_Declare(
-        googletest
-        URL https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
-        DOWNLOAD_EXTRACT_TIMESTAMP true
-)
+
+# Find GTest package
+find_package(GTest REQUIRED)
 
 # Fetch QR Code Generator
 FetchContent_Declare(
@@ -53,7 +42,7 @@ FetchContent_Declare(
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
-FetchContent_MakeAvailable(googletest qrcodegen)
+FetchContent_MakeAvailable(qrcodegen)
 
 # Find pkg-config and SQLCipher
 find_package(PkgConfig REQUIRED)
@@ -209,7 +198,6 @@ target_link_libraries(Eastwood PRIVATE
         OpenSSL::Crypto
         nlohmann_json::nlohmann_json
         ${SQLCIPHER_LIBRARIES}
-        ${GTEST_LIBRARIES}
         ${OpenCV_LIBS}
 )
 
@@ -273,8 +261,8 @@ target_include_directories(IntegrationTests PRIVATE
 )
 
 target_link_libraries(IntegrationTests PRIVATE
-        gtest_main
-        gtest
+        GTest::gtest
+        GTest::gtest_main
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets
