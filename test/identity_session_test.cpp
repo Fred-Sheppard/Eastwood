@@ -228,6 +228,24 @@ protected:
         delete[] nonce;
     }
 
+    // Helper to print key for debugging
+    void print_key(const std::string& label, const unsigned char* key) {
+        std::cout << label << ": ";
+        for (int i = 0; i < 32; i++) {
+            printf("%02x", key[i]);
+        }
+        std::cout << std::endl;
+    }
+
+    // Helper to print key for debugging (std::array version)
+    void print_key(const std::string& label, const std::array<unsigned char, 32>& key) {
+        std::cout << label << ": ";
+        for (int i = 0; i < 32; i++) {
+            printf("%02x", key[i]);
+        }
+        std::cout << std::endl;
+    }
+
     // Test data
     std::unique_ptr<RatchetSessionManager> session_manager;
 
@@ -358,5 +376,458 @@ TEST_F(RatchetSessionManagerTest, KeyGenerationForSendingTest) {
     
     // Clean up
     delete header;
+}
+
+TEST_F(RatchetSessionManagerTest, KeyGenerationConsistencyTest) {
+    // Test that sending and receiving keys match
+
+    // Debug: Show the device IDs we're working with
+    std::cout << "=== DEVICE IDS ===" << std::endl;
+    std::cout << "Alice device ID: ";
+    for (int i = 0; i < 32; i++) {
+        printf("%02x", alice_device_pub[i]);
+    }
+    std::cout << std::endl;
+    std::cout << "Bob device ID: ";
+    for (int i = 0; i < 32; i++) {
+        printf("%02x", bob_device_pub[i]);
+    }
+    std::cout << std::endl;
+
+    // Alice's perspective (sender)
+    switch_to_alice_db();
+    auto alice_session_manager = std::make_unique<RatchetSessionManager>();
+    std::vector<KeyBundle*> alice_bundles = {alice_to_bob_bundle};
+    alice_session_manager->create_ratchets_if_needed("bob", alice_bundles);
+
+    // Get sending key from Alice's perspective
+    auto alice_keys = alice_session_manager->get_keys_for_identity("bob");
+    std::array<unsigned char, 32> bob_device_id;
+    memcpy(bob_device_id.data(), bob_device_pub, 32);
+    auto [alice_message_key, alice_header] = alice_keys[bob_device_id];
+
+    // Debug print Alice's message key and header
+    printf("Alice message key: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", alice_message_key[i]);
+    printf("\nHeader: message_index=%d, dh_public=", alice_header->message_index);
+    for (int i = 0; i < 32; ++i) printf("%02x", alice_header->dh_public[i]);
+    printf("\n");
+
+    // Bob's perspective (receiver)
+    switch_to_bob_db();
+    auto bob_session_manager = std::make_unique<RatchetSessionManager>();
+    std::vector<KeyBundle*> bob_bundles = {bob_from_alice_bundle};
+    bob_session_manager->create_ratchets_if_needed("alice", bob_bundles);
+
+    std::cout << "=== RECEIVING MESSAGE ===" << std::endl;
+    // Get receiving key from Bob's perspective using Alice's header
+    auto bob_message_key = bob_session_manager->get_key_for_device("alice", alice_header);
+
+    // Debug print Bob's message key
+    printf("Bob message key: ");
+    for (int i = 0; i < 32; ++i) printf("%02x", bob_message_key[i]);
+    printf("\n");
+
+    // Keys should match
+    printf("Comparing Alice and Bob message keys:\n");
+    for (int i = 0; i < 32; ++i) printf("%02x", alice_message_key[i]);
+    printf("\n");
+    for (int i = 0; i < 32; ++i) printf("%02x", bob_message_key[i]);
+    printf("\n");
+    EXPECT_EQ(memcmp(alice_message_key.data(), bob_message_key, 32), 0);
+
+    // Clean up
+    delete alice_header;
+    delete[] bob_message_key;
+}
+
+// ===== EXTENSIVE KEY GENERATION CONSISTENCY TESTS =====
+
+TEST_F(RatchetSessionManagerTest, MultipleSequentialSendKeyConsistencyTest) {
+    std::cout << "\n=== Multiple Sequential Send Key Consistency Test ===" << std::endl;
+    
+    // Alice's perspective (sender)
+    switch_to_alice_db();
+    auto alice_session_manager = std::make_unique<RatchetSessionManager>();
+    std::vector<KeyBundle*> alice_bundles = {alice_to_bob_bundle};
+    alice_session_manager->create_ratchets_if_needed("bob", alice_bundles);
+
+    // Bob's perspective (receiver)
+    switch_to_bob_db();
+    auto bob_session_manager = std::make_unique<RatchetSessionManager>();
+    std::vector<KeyBundle*> bob_bundles = {bob_from_alice_bundle};
+    bob_session_manager->create_ratchets_if_needed("alice", bob_bundles);
+
+    const int num_messages = 5;
+    std::vector<std::array<unsigned char, 32>> alice_keys;
+    std::vector<MessageHeader*> headers;
+
+    std::array<unsigned char, 32> bob_device_id;
+    memcpy(bob_device_id.data(), bob_device_pub, 32);
+
+    // Alice sends multiple messages
+    switch_to_alice_db();
+    for (int i = 0; i < num_messages; i++) {
+        auto alice_keys_map = alice_session_manager->get_keys_for_identity("bob");
+        auto [message_key, header] = alice_keys_map[bob_device_id];
+        alice_keys.push_back(message_key);
+        headers.push_back(header);
+        print_key("Alice sends key " + std::to_string(i), message_key);
+    }
+
+    // Bob receives all messages in order
+    switch_to_bob_db();
+    for (int i = 0; i < num_messages; i++) {
+        auto bob_key = bob_session_manager->get_key_for_device("alice", headers[i]);
+        print_key("Bob receives key " + std::to_string(i), bob_key);
+        
+        ASSERT_EQ(memcmp(alice_keys[i].data(), bob_key, 32), 0) 
+            << "Key mismatch at message " << i;
+        
+        delete[] bob_key;
+        delete headers[i];
+    }
+}
+
+TEST_F(RatchetSessionManagerTest, AlternatingKeyGenerationConsistencyTest) {
+    std::cout << "\n=== Alternating Key Generation Consistency Test ===" << std::endl;
+    
+    // Setup Alice
+    switch_to_alice_db();
+    auto alice_session_manager = std::make_unique<RatchetSessionManager>();
+    std::vector<KeyBundle*> alice_bundles = {alice_to_bob_bundle};
+    alice_session_manager->create_ratchets_if_needed("bob", alice_bundles);
+
+    // Setup Bob 
+    switch_to_bob_db();
+    auto bob_session_manager = std::make_unique<RatchetSessionManager>();
+    std::vector<KeyBundle*> bob_bundles = {bob_from_alice_bundle};
+    bob_session_manager->create_ratchets_if_needed("alice", bob_bundles);
+
+    std::array<unsigned char, 32> bob_device_id;
+    memcpy(bob_device_id.data(), bob_device_pub, 32);
+    std::array<unsigned char, 32> alice_device_id;
+    memcpy(alice_device_id.data(), alice_device_pub, 32);
+
+    const int num_rounds = 3;
+    
+    for (int round = 0; round < num_rounds; round++) {
+        std::cout << "\n--- Round " << round + 1 << " ---" << std::endl;
+        
+        // Alice sends
+        switch_to_alice_db();
+        auto alice_keys_map = alice_session_manager->get_keys_for_identity("bob");
+        auto [alice_key, alice_header] = alice_keys_map[bob_device_id];
+        print_key("Alice sends key", alice_key);
+
+        switch_to_bob_db();
+        auto bob_received_key = bob_session_manager->get_key_for_device("alice", alice_header);
+        print_key("Bob receives Alice's key", bob_received_key);
+
+        ASSERT_EQ(memcmp(alice_key.data(), bob_received_key, 32), 0)
+            << "Alice->Bob key mismatch in round " << round + 1;
+
+        // Bob responds
+        auto bob_keys_map = bob_session_manager->get_keys_for_identity("alice");
+        auto [bob_key, bob_header] = bob_keys_map[alice_device_id];
+        print_key("Bob sends key", bob_key);
+
+        switch_to_alice_db();
+        auto alice_received_key = alice_session_manager->get_key_for_device("bob", bob_header);
+        print_key("Alice receives Bob's key", alice_received_key);
+
+        ASSERT_EQ(memcmp(bob_key.data(), alice_received_key, 32), 0)
+            << "Bob->Alice key mismatch in round " << round + 1;
+
+        delete alice_header;
+        delete bob_header;
+        delete[] bob_received_key;
+        delete[] alice_received_key;
+    }
+}
+
+TEST_F(RatchetSessionManagerTest, BurstSendKeyConsistencyTest) {
+    std::cout << "\n=== Burst Send Key Consistency Test ===" << std::endl;
+    
+    // Setup Alice
+    switch_to_alice_db();
+    auto alice_session_manager = std::make_unique<RatchetSessionManager>();
+    std::vector<KeyBundle*> alice_bundles = {alice_to_bob_bundle};
+    alice_session_manager->create_ratchets_if_needed("bob", alice_bundles);
+
+    // Setup Bob
+    switch_to_bob_db();
+    auto bob_session_manager = std::make_unique<RatchetSessionManager>();
+    std::vector<KeyBundle*> bob_bundles = {bob_from_alice_bundle};
+    bob_session_manager->create_ratchets_if_needed("alice", bob_bundles);
+
+    std::array<unsigned char, 32> bob_device_id;
+    memcpy(bob_device_id.data(), bob_device_pub, 32);
+    std::array<unsigned char, 32> alice_device_id;
+    memcpy(alice_device_id.data(), alice_device_pub, 32);
+
+    // Alice sends burst of messages
+    const int alice_burst_size = 3;
+    std::vector<std::array<unsigned char, 32>> alice_keys;
+    std::vector<MessageHeader*> alice_headers;
+
+    switch_to_alice_db();
+    for (int i = 0; i < alice_burst_size; i++) {
+        auto alice_keys_map = alice_session_manager->get_keys_for_identity("bob");
+        auto [key, header] = alice_keys_map[bob_device_id];
+        alice_keys.push_back(key);
+        alice_headers.push_back(header);
+        print_key("Alice burst key " + std::to_string(i), key);
+    }
+
+    // Bob receives all Alice's messages
+    switch_to_bob_db();
+    for (int i = 0; i < alice_burst_size; i++) {
+        auto bob_key = bob_session_manager->get_key_for_device("alice", alice_headers[i]);
+        print_key("Bob receives Alice burst key " + std::to_string(i), bob_key);
+        
+        ASSERT_EQ(memcmp(alice_keys[i].data(), bob_key, 32), 0)
+            << "Alice burst key mismatch at index " << i;
+        
+        delete[] bob_key;
+    }
+
+    // Bob responds with his own burst
+    const int bob_burst_size = 4;
+    std::vector<std::array<unsigned char, 32>> bob_keys;
+    std::vector<MessageHeader*> bob_headers;
+
+    for (int i = 0; i < bob_burst_size; i++) {
+        auto bob_keys_map = bob_session_manager->get_keys_for_identity("alice");
+        auto [key, header] = bob_keys_map[alice_device_id];
+        bob_keys.push_back(key);
+        bob_headers.push_back(header);
+        print_key("Bob burst key " + std::to_string(i), key);
+    }
+
+    // Alice receives all Bob's messages
+    switch_to_alice_db();
+    for (int i = 0; i < bob_burst_size; i++) {
+        auto alice_key = alice_session_manager->get_key_for_device("bob", bob_headers[i]);
+        print_key("Alice receives Bob burst key " + std::to_string(i), alice_key);
+        
+        ASSERT_EQ(memcmp(bob_keys[i].data(), alice_key, 32), 0)
+            << "Bob burst key mismatch at index " << i;
+        
+        delete[] alice_key;
+    }
+
+    // Clean up
+    for (auto header : alice_headers) delete header;
+    for (auto header : bob_headers) delete header;
+}
+
+TEST_F(RatchetSessionManagerTest, KeyUniquenessTest) {
+    std::cout << "\n=== Key Uniqueness Test ===" << std::endl;
+    
+    // Setup Alice
+    switch_to_alice_db();
+    auto alice_session_manager = std::make_unique<RatchetSessionManager>();
+    std::vector<KeyBundle*> alice_bundles = {alice_to_bob_bundle};
+    alice_session_manager->create_ratchets_if_needed("bob", alice_bundles);
+
+    // Setup Bob
+    switch_to_bob_db();
+    auto bob_session_manager = std::make_unique<RatchetSessionManager>();
+    std::vector<KeyBundle*> bob_bundles = {bob_from_alice_bundle};
+    bob_session_manager->create_ratchets_if_needed("alice", bob_bundles);
+
+    std::array<unsigned char, 32> bob_device_id;
+    memcpy(bob_device_id.data(), bob_device_pub, 32);
+    std::array<unsigned char, 32> alice_device_id;
+    memcpy(alice_device_id.data(), alice_device_pub, 32);
+
+    const int num_keys = 20;
+    std::vector<std::array<unsigned char, 32>> all_keys;
+
+    // Generate keys from alternating sends
+    for (int i = 0; i < num_keys / 2; i++) {
+        // Alice sends
+        switch_to_alice_db();
+        auto alice_keys_map = alice_session_manager->get_keys_for_identity("bob");
+        auto [alice_key, alice_header] = alice_keys_map[bob_device_id];
+        all_keys.push_back(alice_key);
+
+        // Bob receives and responds
+        switch_to_bob_db();
+        auto bob_received_key = bob_session_manager->get_key_for_device("alice", alice_header);
+        auto bob_keys_map = bob_session_manager->get_keys_for_identity("alice");
+        auto [bob_key, bob_header] = bob_keys_map[alice_device_id];
+        all_keys.push_back(bob_key);
+
+        // Alice receives Bob's response
+        switch_to_alice_db();
+        auto alice_received_key = alice_session_manager->get_key_for_device("bob", bob_header);
+
+        delete alice_header;
+        delete bob_header;
+        delete[] bob_received_key;
+        delete[] alice_received_key;
+    }
+
+    // Verify all keys are unique
+    std::cout << "Checking uniqueness of " << all_keys.size() << " keys..." << std::endl;
+    for (size_t i = 0; i < all_keys.size(); i++) {
+        for (size_t j = i + 1; j < all_keys.size(); j++) {
+            ASSERT_NE(memcmp(all_keys[i].data(), all_keys[j].data(), 32), 0)
+                << "Duplicate keys found at indices " << i << " and " << j;
+        }
+    }
+    
+    std::cout << "All " << all_keys.size() << " keys are unique!" << std::endl;
+}
+
+TEST_F(RatchetSessionManagerTest, CrossRatchetKeyConsistencyTest) {
+    std::cout << "\n=== Cross Ratchet Key Consistency Test ===" << std::endl;
+    
+    // Setup Alice
+    switch_to_alice_db();
+    auto alice_session_manager = std::make_unique<RatchetSessionManager>();
+    std::vector<KeyBundle*> alice_bundles = {alice_to_bob_bundle};
+    alice_session_manager->create_ratchets_if_needed("bob", alice_bundles);
+
+    // Setup Bob
+    switch_to_bob_db();
+    auto bob_session_manager = std::make_unique<RatchetSessionManager>();
+    std::vector<KeyBundle*> bob_bundles = {bob_from_alice_bundle};
+    bob_session_manager->create_ratchets_if_needed("alice", bob_bundles);
+
+    std::array<unsigned char, 32> bob_device_id;
+    memcpy(bob_device_id.data(), bob_device_pub, 32);
+    std::array<unsigned char, 32> alice_device_id;
+    memcpy(alice_device_id.data(), alice_device_pub, 32);
+
+    // Test pattern: Alice sends, Bob responds, Alice sends more (triggers DH ratchet)
+    
+    // Alice sends initial message
+    switch_to_alice_db();
+    auto alice_keys_map1 = alice_session_manager->get_keys_for_identity("bob");
+    auto [alice_key1, alice_header1] = alice_keys_map1[bob_device_id];
+    print_key("Alice sends key 1", alice_key1);
+
+    switch_to_bob_db();
+    auto bob_received_key1 = bob_session_manager->get_key_for_device("alice", alice_header1);
+    print_key("Bob receives Alice's key 1", bob_received_key1);
+    ASSERT_EQ(memcmp(alice_key1.data(), bob_received_key1, 32), 0);
+
+    // Bob responds (this should trigger DH ratchet)
+    auto bob_keys_map1 = bob_session_manager->get_keys_for_identity("alice");
+    auto [bob_key1, bob_header1] = bob_keys_map1[alice_device_id];
+    print_key("Bob sends key 1", bob_key1);
+
+    switch_to_alice_db();
+    auto alice_received_key1 = alice_session_manager->get_key_for_device("bob", bob_header1);
+    print_key("Alice receives Bob's key 1", alice_received_key1);
+    ASSERT_EQ(memcmp(bob_key1.data(), alice_received_key1, 32), 0);
+
+    // Alice sends more messages (new DH ratchet should be in effect)
+    auto alice_keys_map2 = alice_session_manager->get_keys_for_identity("bob");
+    auto [alice_key2, alice_header2] = alice_keys_map2[bob_device_id];
+    print_key("Alice sends key 2 (new ratchet)", alice_key2);
+
+    switch_to_bob_db();
+    auto bob_received_key2 = bob_session_manager->get_key_for_device("alice", alice_header2);
+    print_key("Bob receives Alice's key 2 (new ratchet)", bob_received_key2);
+    ASSERT_EQ(memcmp(alice_key2.data(), bob_received_key2, 32), 0);
+
+    // Bob sends another message
+    auto bob_keys_map2 = bob_session_manager->get_keys_for_identity("alice");
+    auto [bob_key2, bob_header2] = bob_keys_map2[alice_device_id];
+    print_key("Bob sends key 2", bob_key2);
+
+    switch_to_alice_db();
+    auto alice_received_key2 = alice_session_manager->get_key_for_device("bob", bob_header2);
+    print_key("Alice receives Bob's key 2", alice_received_key2);
+    ASSERT_EQ(memcmp(bob_key2.data(), alice_received_key2, 32), 0);
+
+    // Clean up
+    delete alice_header1;
+    delete bob_header1;
+    delete alice_header2;
+    delete bob_header2;
+    delete[] bob_received_key1;
+    delete[] alice_received_key1;
+    delete[] bob_received_key2;
+    delete[] alice_received_key2;
+}
+
+TEST_F(RatchetSessionManagerTest, LongChainKeyConsistencyTest) {
+    std::cout << "\n=== Long Chain Key Consistency Test ===" << std::endl;
+    
+    // Setup Alice
+    switch_to_alice_db();
+    auto alice_session_manager = std::make_unique<RatchetSessionManager>();
+    std::vector<KeyBundle*> alice_bundles = {alice_to_bob_bundle};
+    alice_session_manager->create_ratchets_if_needed("bob", alice_bundles);
+
+    // Setup Bob
+    switch_to_bob_db();
+    auto bob_session_manager = std::make_unique<RatchetSessionManager>();
+    std::vector<KeyBundle*> bob_bundles = {bob_from_alice_bundle};
+    bob_session_manager->create_ratchets_if_needed("alice", bob_bundles);
+
+    std::array<unsigned char, 32> bob_device_id;
+    memcpy(bob_device_id.data(), bob_device_pub, 32);
+    std::array<unsigned char, 32> alice_device_id;
+    memcpy(alice_device_id.data(), alice_device_pub, 32);
+
+    const int long_chain_length = 10;
+    std::vector<std::array<unsigned char, 32>> alice_keys;
+    std::vector<MessageHeader*> headers;
+
+    // Alice sends a long chain of messages
+    switch_to_alice_db();
+    for (int i = 0; i < long_chain_length; i++) {
+        auto alice_keys_map = alice_session_manager->get_keys_for_identity("bob");
+        auto [key, header] = alice_keys_map[bob_device_id];
+        alice_keys.push_back(key);
+        headers.push_back(header);
+        print_key("Alice long chain key " + std::to_string(i), key);
+    }
+
+    // Bob receives all messages in order
+    switch_to_bob_db();
+    for (int i = 0; i < long_chain_length; i++) {
+        auto bob_key = bob_session_manager->get_key_for_device("alice", headers[i]);
+        print_key("Bob receives long chain key " + std::to_string(i), bob_key);
+        
+        ASSERT_EQ(memcmp(alice_keys[i].data(), bob_key, 32), 0)
+            << "Long chain key mismatch at index " << i;
+        
+        delete[] bob_key;
+    }
+
+    // Now Bob sends a long chain back
+    std::vector<std::array<unsigned char, 32>> bob_keys;
+    std::vector<MessageHeader*> bob_headers;
+
+    for (int i = 0; i < long_chain_length; i++) {
+        auto bob_keys_map = bob_session_manager->get_keys_for_identity("alice");
+        auto [key, header] = bob_keys_map[alice_device_id];
+        bob_keys.push_back(key);
+        bob_headers.push_back(header);
+        print_key("Bob long chain key " + std::to_string(i), key);
+    }
+
+    // Alice receives all Bob's messages
+    switch_to_alice_db();
+    for (int i = 0; i < long_chain_length; i++) {
+        auto alice_key = alice_session_manager->get_key_for_device("bob", bob_headers[i]);
+        print_key("Alice receives Bob's long chain key " + std::to_string(i), alice_key);
+        
+        ASSERT_EQ(memcmp(bob_keys[i].data(), alice_key, 32), 0)
+            << "Long chain key mismatch at index " << i;
+        
+        delete[] alice_key;
+    }
+
+    // Clean up
+    for (auto header : headers) delete header;
+    for (auto header : bob_headers) delete header;
 }
 
