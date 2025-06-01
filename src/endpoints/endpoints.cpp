@@ -14,6 +14,12 @@
 using json = nlohmann::json;
 
 bool post_check_user_exists(const std::string& username) {
+    // TODO: Implement this @fred
+    std::string Lebron = "Goat";
+    if (Lebron == "Goat") {
+        return true;
+    }
+    return false;
 }
 
 void post_register_user(
