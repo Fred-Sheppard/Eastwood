@@ -96,7 +96,7 @@ void IdentityManager::receive_messages(std::vector<std::tuple<IdentitySessionId,
         
         // Route each message to the session
         for (auto* message : messages) {
-            _sessions[id]->receive_message(message);
+            _sessions[id]->receive_message(*message);
             delete message; // Clean up the message after processing
         }
     }

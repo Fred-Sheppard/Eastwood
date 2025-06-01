@@ -25,7 +25,7 @@ public:
     void updateFromBundles(std::vector<KeyBundle*> bundles);
     std::vector<std::tuple<IdentitySessionId, SendingKeyBundle*>> create_ratchet_if_needed(KeyBundle* bundle);
     std::vector<std::tuple<IdentitySessionId, std::unique_ptr<DeviceMessage>>> send_message(const unsigned char* message, size_t message_len);
-    std::vector<unsigned char> receive_message(DeviceMessage *message);
+    std::vector<unsigned char> receive_message(const DeviceMessage& message);
 
     const std::map<std::array<unsigned char, 32>, std::unique_ptr<NewRatchet>>& get_ratchets() const { return ratchets; };
 };

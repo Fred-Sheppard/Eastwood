@@ -58,8 +58,27 @@ std::vector<std::tuple<IdentitySessionId, std::unique_ptr<DeviceMessage>>> Ident
     IdentitySessionId session_id{};
     memcpy(session_id.data.data(), identity_session_id, crypto_hash_sha256_BYTES);
 
+    auto my_device_key = get_public_key("device");
+
     for (const auto& [id, ratchet]: ratchets) {
         auto [key, message_header] = ratchet->advance_send();
+        
+        // Set the device_id in the header now that we have proper database context
+        memcpy(message_header->device_id, my_device_key.data(), crypto_box_PUBLICKEYBYTES);
+        
+        // Debug encryption
+        std::cout << "Encryption key (first 4 bytes): ";
+        for (int i = 0; i < 4; i++) {
+            std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)key[i] << " ";
+        }
+        std::cout << std::endl;
+        
+        std::cout << "Original message length: " << message_len << std::endl;
+        std::cout << "Original message (first 4 bytes): ";
+        for (int i = 0; i < 4 && i < message_len; i++) {
+            std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)message[i] << " ";
+        }
+        std::cout << std::endl;
         
         // create header
         std::unique_ptr<MessageHeader> header(message_header);
@@ -67,6 +86,13 @@ std::vector<std::tuple<IdentitySessionId, std::unique_ptr<DeviceMessage>>> Ident
         // encrypt
         auto encrypted = encrypt_message_given_key(message, message_len, key);
         
+        std::cout << "Encrypted length: " << encrypted.size() << std::endl;
+        std::cout << "Encrypted (first 4 bytes): ";
+        for (int i = 0; i < 4 && i < encrypted.size(); i++) {
+            std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)encrypted[i] << " ";
+        }
+        std::cout << std::endl;
+
         // Create DeviceMessage
         auto device_message = std::make_unique<DeviceMessage>();
         device_message->header = header.release();  // Transfer ownership
@@ -80,17 +106,52 @@ std::vector<std::tuple<IdentitySessionId, std::unique_ptr<DeviceMessage>>> Ident
     return responses;
 }
 
-std::vector<unsigned char> IdentitySession::receive_message(DeviceMessage *message) {
+std::vector<unsigned char> IdentitySession::receive_message(const DeviceMessage& message) {
     size_t message_len = 32;
-    auto ratchet_id_ptr = concat_ordered(reinterpret_cast<const unsigned char *>(get_public_key("device").data()), 32, message->header->device_id, 32, message_len);
-    std::array<unsigned char, 32> ratchet_id_arr;
-    std::memcpy(ratchet_id_arr.data(), ratchet_id_ptr, 32);
-
-    auto key = ratchets[ratchet_id_arr].get()->advance_receive(message->header);
-
-    std::vector<unsigned char> plaintext = decrypt_message_given_key(message->ciphertext, message->length, key);
     
-    // Clean up the dynamically allocated pointer from concat_ordered
+    auto my_device_key = get_public_key("device");
+    
+    auto ratchet_id_ptr = concat_ordered(reinterpret_cast<const unsigned char *>(my_device_key.data()), 32, message.header->device_id, 32, message_len);
+    std::array<unsigned char, 32> ratchet_id_arr{};
+    crypto_generichash(ratchet_id_arr.data(), 32, ratchet_id_ptr, message_len, nullptr, 0);
+    
+    auto ratchet_it = ratchets.find(ratchet_id_arr);
+    if (ratchet_it == ratchets.end()) {
+        throw std::runtime_error("Ratchet not found for the given ID");
+    }
+    
+    auto* ratchet_ptr = ratchet_it->second.get();
+    if (!ratchet_ptr) {
+        throw std::runtime_error("Ratchet pointer is null");
+    }
+
+    auto key = ratchet_ptr->advance_receive(message.header);
+
+    // Debug: Check the decryption inputs
+    std::cout << "Decryption key (first 4 bytes): ";
+    for (int i = 0; i < 4; i++) {
+        std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)key[i] << " ";
+    }
+    std::cout << std::endl;
+    
+    std::cout << "Ciphertext length: " << message.length << std::endl;
+    std::cout << "Ciphertext (first 4 bytes): ";
+    for (int i = 0; i < 4 && i < message.length; i++) {
+        std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)message.ciphertext[i] << " ";
+    }
+    std::cout << std::endl;
+
+    std::vector<unsigned char> plaintext = decrypt_message_given_key(message.ciphertext, message.length, key);
+    
+    std::cout << "Plaintext length: " << plaintext.size() << std::endl;
+    if (!plaintext.empty()) {
+        std::cout << "Plaintext (first 4 bytes): ";
+        for (int i = 0; i < 4 && i < plaintext.size(); i++) {
+            std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)plaintext[i] << " ";
+        }
+        std::cout << std::endl;
+    }
+
     delete[] ratchet_id_ptr;
     
     return plaintext;
