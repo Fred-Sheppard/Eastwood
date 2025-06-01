@@ -39,11 +39,12 @@ jobs:
           qt6-tools-dev-tools libxkbcommon-dev libsodium-dev libvulkan-dev \
           libsqlcipher-dev qt6-svg-dev libgtest-dev libopencv-dev
 
-    - name: Configure with CMake (no build)
+    - name: Configure and build with CMake
       run: |
         mkdir -p build
         cd build
         cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        make -j$(nproc)
 
     - name: Get list of changed C++ files
       id: changed-files
