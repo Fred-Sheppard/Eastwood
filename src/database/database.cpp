@@ -4,6 +4,7 @@
 #include <QStandardPaths>
 #include <iostream>
 
+#include "src/algorithms/constants.h"
 #include "src/keys/secure_memory_buffer.h"
 #include "src/utils/utils.h"
 
@@ -53,12 +54,15 @@ void Database::initialize(
 
     // Verify the database is accessible by running a test query
     char *errMsg = nullptr;
-    rc = sqlite3_exec(db, "SELECT 1;", nullptr, nullptr, &errMsg);
+    rc = sqlite3_exec(db, "SELECT 1 FROM sqlite_master;", nullptr, nullptr, &errMsg);
     if (rc != SQLITE_OK) {
-        qDebug() << "Database verification failed:" << errMsg;
+        auto err = std::string(errMsg);
+        if (err == "file is not a database") {
+            err = "Incorrect password";
+        }
         sqlite3_free(errMsg);
         sqlite3_close(db);
-        throw std::runtime_error("Database verification failed:" + std::string(errMsg));
+        throw std::runtime_error("Database verification failed: " + err);
     }
     initialized = true;
 }
@@ -142,4 +146,27 @@ QVector<QVariantMap> Database::query(sqlite3_stmt *stmt) const {
     }
     sqlite3_finalize(stmt);
     return results;
+}
+
+void Database::rotate_master_password(const std::unique_ptr<SecureMemoryBuffer> &new_master_key) const {
+    if (!initialized || !db) {
+        throw std::runtime_error("Database not initialized");
+    }
+    if (new_master_key->size() != MASTER_KEY_LEN) {
+        throw std::runtime_error("Invalid size for new master key");
+    }
+
+    int rc = sqlite3_rekey(db, new_master_key->data(), new_master_key->size());
+    if (rc != SQLITE_OK) {
+        throw std::runtime_error("Failed to rotate master password: " + std::string(sqlite3_errmsg(db)));
+    }
+
+    // Verify the new key works by running a test query
+    char *errMsg = nullptr;
+    rc = sqlite3_exec(db, "SELECT 1 FROM sqlite_master;", nullptr, nullptr, &errMsg);
+    if (rc != SQLITE_OK) {
+        const auto err = std::string(errMsg);
+        sqlite3_free(errMsg);
+        throw std::runtime_error("Password rotation verification failed: " + err);
+    }
 }

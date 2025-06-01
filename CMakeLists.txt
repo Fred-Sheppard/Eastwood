@@ -11,7 +11,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 # Find Qt
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets UiTools)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets UiTools Concurrent)
 find_package(OpenSSL REQUIRED)
 
 # Enable testing
@@ -49,6 +49,8 @@ FetchContent_MakeAvailable(json googletest qrcodegen)
 # Find pkg-config and SQLCipher
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SQLCIPHER REQUIRED sqlcipher)
+
+link_directories(${SQLCIPHER_LIBRARY_DIRS})
 
 # Find libsodium
 find_path(SODIUM_INCLUDE_DIR sodium.h
@@ -147,7 +149,7 @@ set(AUTH_SOURCES
         src/auth/salt.cpp
         src/key_exchange/MessageStructs.h
         src/auth/set_up_client.cpp
-
+        src/auth/rotate_master_key/rotate_master_key.cpp
 )
 
 # Create main executable
@@ -178,6 +180,7 @@ target_link_libraries(Eastwood PRIVATE
         Qt6::Gui
         Qt6::Widgets
         Qt6::UiTools
+        Qt6::Concurrent
         ${SODIUM_LIBRARY}
         OpenSSL::SSL
         OpenSSL::Crypto
@@ -187,7 +190,6 @@ target_link_libraries(Eastwood PRIVATE
 
 # Create test executable
 add_executable(EastwoodTests
-        test/identity_communication_session_test.cpp
         test/double_ratchet_test.cpp
         test/identity_session_test.cpp
         ${CRYPTO_SOURCES}
@@ -197,6 +199,7 @@ add_executable(EastwoodTests
         src/sessions/IdentityManager.cpp
         src/sessions/IdentitySession.cpp
         src/endpoints/endpoints.cpp
+        test/identity_session_test.cpp
 )
 
 # Configure test target
@@ -231,18 +234,9 @@ target_link_libraries(EastwoodTests PRIVATE
 # Create integration test executable
 add_executable(IntegrationTests
         test/integration_main_flow_test.cpp
+        ${DATABASE_SOURCES}
         ${CRYPTO_SOURCES}
-        src/database/database.cpp
-        src/sessions/KeyBundle.h
-        src/keys/session_token_manager.h
-        src/sessions/IdentityManager.cpp
-        src/sessions/IdentitySession.cpp
-        src/auth/register_user/register_user.cpp
-        src/auth/register_device/register_device.cpp
-        src/auth/login/login.cpp
-        src/files/upload_file.cpp
-        src/auth/salt.cpp
-        src/auth/set_up_client.cpp
+        ${AUTH_SOURCES}
 )
 
 target_include_directories(IntegrationTests PRIVATE
@@ -250,9 +244,6 @@ target_include_directories(IntegrationTests PRIVATE
         ${SQLCIPHER_INCLUDE_DIRS}
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/key_exchange
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/sessions
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/keys
         ${CMAKE_CURRENT_SOURCE_DIR}/external/cereal/include
 )
 
