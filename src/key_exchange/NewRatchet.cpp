@@ -143,6 +143,8 @@ void NewRatchet::set_up_initial_chain_keys() {
     printf("\n  root_key: ");
     for (int i = 0; i < 32; ++i) printf("%02x", root_key[i]);
     printf("\n");
+
+    due_to_send_new_dh = true;
 }
 
 void NewRatchet::dh_ratchet_step(const bool received_new_dh) {
