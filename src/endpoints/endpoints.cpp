@@ -41,12 +41,14 @@ void post_register_user(
 void post_register_device(
     const unsigned char pk_id[crypto_sign_PUBLICKEYBYTES],
     const unsigned char pk_device[crypto_sign_PUBLICKEYBYTES],
-    const unsigned char pk_signature[crypto_sign_BYTES]
+    const unsigned char pk_signature[crypto_sign_BYTES],
+    const std::string &device_name
 ) {
     const json body = {
         {"identity_public", bin2hex(pk_id, crypto_sign_PUBLICKEYBYTES)},
         {"device_public", bin2hex(pk_device, crypto_sign_PUBLICKEYBYTES)},
-        {"signature", bin2hex(pk_signature, crypto_sign_BYTES)}
+        {"signature", bin2hex(pk_signature, crypto_sign_BYTES)},
+        {"device_name", device_name}
     };
     post_unauth("/registerDevice", body);
 };
@@ -393,4 +395,9 @@ std::string post_upload_file(std::vector<unsigned char> encrypted_bytes) {
 
     const json response = post("/uploadFile", body);
     return response["data"]["file_id"];
+}
+
+std::vector<std::string> get_devices() {
+    const json response = get("/getDevices");
+    return response["data"];
 }

@@ -9,6 +9,8 @@
 
 bool post_check_user_exists(const std::string& username);
 
+std::vector<std::string> get_devices();
+
 void post_register_user(
     const std::string &username,
     const unsigned char pk_identity[crypto_sign_PUBLICKEYBYTES],
@@ -19,7 +21,8 @@ void post_register_user(
 void post_register_device(
     const unsigned char pk_id[crypto_sign_PUBLICKEYBYTES],
     const unsigned char pk_device[crypto_sign_PUBLICKEYBYTES],
-    const unsigned char pk_signature[crypto_sign_BYTES]
+    const unsigned char pk_signature[crypto_sign_BYTES],
+    const std::string &device_name
 );
 
 std::vector<unsigned char> post_request_login(

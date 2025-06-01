@@ -27,13 +27,16 @@ private slots:
     void onPassphraseCancelClicked();
     void onPassphraseSaveClicked();
     void onAuthCancelClicked();
-    void onAuthSaveClicked();
+    void onAuthVerifyClicked();
     void onSettingsButtonClicked();
     void onScanQRButtonClicked();
+    void onRefreshDevicesClicked();
+    void updateDeviceList();
 
 private:
     void setupConnections();
     void navigateTo(QWidget* newWindow);
+    void createDeviceBox(const std::string& deviceName);
 
     Ui::Settings *ui;
     CameraFunctionality* m_cameraFunctionality;
