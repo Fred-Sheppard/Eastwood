@@ -16,6 +16,7 @@
 
 #include "src/endpoints/endpoints.h"
 #include "src/files/upload_file.h"
+#include "src/keys/session_token_manager.h"
 #include "src/key_exchange/utils.h"
 #include "src/key_exchange/XChaCha20-Poly1305.h"
 #include "src/sessions/RatchetSessionManager.h"
@@ -120,7 +121,7 @@ void SendFile::onSendClicked() {
             
             messages.push_back(std::make_tuple(device_id, message));
         }
-        post_ratchet_message(messages, ui->usernameInput->text().toStdString());
+        post_ratchet_message(messages, SessionTokenManager::instance().getUsername());
         
         // Clean up DeviceMessage objects after posting
         for (auto [device_id, msg] : messages) {
