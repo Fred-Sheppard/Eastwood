@@ -105,15 +105,26 @@ void DeviceRegister::onCopyButtonClicked()
 
 void DeviceRegister::onUserRegistered()
 {
-    try {
-        QString errorMessage;
-        QString passphrase = StyledMessageBox::getPassphraseWithVerification(this, errorMessage);
+    QString errorMessage;
+    QString passphrase;
+    
+    // Keep showing the dialog until a valid passphrase is entered or user cancels
+    do {
+        passphrase = StyledMessageBox::getPassphraseWithVerification(this, errorMessage);
         
         if (passphrase.isEmpty()) {
             StyledMessageBox::error(this, "Error", errorMessage);
             return;
         }
+        
+        if (passphrase.length() >= 20 && passphrase.length() <= 64) {
+            break;
+        }
+        
+        StyledMessageBox::error(this, "Invalid Passphrase", "Passphrase must be between 20 and 64 characters");
+    } while (true);
 
+    try {
         auto master_password = std::make_unique<std::string>(passphrase.toStdString());
         set_up_client_for_user(m_username, std::move(master_password));
 

@@ -8,6 +8,11 @@
 #include <QPixmap>
 #include <QInputDialog>
 #include <QString>
+#include <QDialog>
+#include <QVBoxLayout>
+#include <QLineEdit>
+#include <QLabel>
+#include <QHBoxLayout>
 
 class StyledMessageBox {
 public:
@@ -239,91 +244,147 @@ public:
     }
     
     static QString getPassphraseWithVerification(QWidget* parent, QString& errorMessage) {
-        QInputDialog inputDialog(parent);
-        inputDialog.setWindowTitle("Set Passphrase");
-        inputDialog.setLabelText("Enter a passphrase (20-64 characters):");
-        inputDialog.setTextValue("");
-        inputDialog.setStyleSheet(R"(
-            QInputDialog {
-                background-color: #f5f6fa;
-                font-family: 'Helvetica Neue', Arial, sans-serif;
-            }
-            QInputDialog QLabel {
-                color: #2d3436;
-                font-size: 14px;
-                padding: 10px;
-            }
-            QInputDialog QLineEdit {
-                padding: 8px 12px;
-                font-size: 14px;
-                border-radius: 6px;
-                background-color: white;
-                border: 1px solid #dfe6e9;
-                color: #2d3436;
-                margin: 4px 0;
-                min-height: 20px;
-            }
-            QInputDialog QLineEdit:focus {
-                border: 2px solid #6c5ce7;
-            }
-            QInputDialog QPushButton {
-                background-color: #6c5ce7;
-                color: white;
-                border-radius: 6px;
-                padding: 8px 16px;
-                font-weight: bold;
-                min-width: 80px;
-                font-size: 13px;
-                margin: 5px;
-            }
-            QInputDialog QPushButton:hover {
-                background-color: #5049c9;
-            }
-            QInputDialog QPushButton:pressed {
-                background-color: #4040b0;
-            }
-        )");
+        QDialog dialog(parent);
+        dialog.setWindowTitle("Set Passphrase");
+        dialog.setMinimumWidth(400);
         
-        bool ok = inputDialog.exec();
-        QString passphrase = inputDialog.textValue();
+        QVBoxLayout* layout = new QVBoxLayout(&dialog);
         
-        if (!ok || passphrase.isEmpty()) {
-            errorMessage = "Passphrase is required";
-            return QString();
-        }
-
-        if (passphrase.length() < 20) {
-            errorMessage = "Passphrase must be at least 20 characters long";
-            return QString();
-        }
-
-        if (passphrase.length() > 64) {
-            errorMessage = "Passphrase cannot be longer than 64 characters";
-            return QString();
-        }
-
-        // Verify passphrase
-        QInputDialog verifyDialog(parent);
-        verifyDialog.setWindowTitle("Verify Passphrase");
-        verifyDialog.setLabelText("Enter the passphrase again:");
-        verifyDialog.setTextValue("");
-        verifyDialog.setStyleSheet(inputDialog.styleSheet());
+        // Passphrase input
+        QLabel* passphraseLabel = new QLabel("Enter a passphrase (20-64 characters):", &dialog);
+        passphraseLabel->setStyleSheet("color: #2d3436; font-size: 14px; margin-top: 10px;");
+        layout->addWidget(passphraseLabel);
         
-        ok = verifyDialog.exec();
-        QString verifyPassphrase = verifyDialog.textValue();
+        QLineEdit* passphraseEdit = new QLineEdit(&dialog);
+        passphraseEdit->setEchoMode(QLineEdit::Password);
+        passphraseEdit->setStyleSheet(
+            "QLineEdit {"
+            "  padding: 8px 12px;"
+            "  font-size: 14px;"
+            "  border-radius: 6px;"
+            "  background-color: white;"
+            "  border: 1px solid #dfe6e9;"
+            "  color: #2d3436;"
+            "  margin: 4px 0;"
+            "}"
+            "QLineEdit:focus {"
+            "  border: 2px solid #6c5ce7;"
+            "}"
+        );
+        layout->addWidget(passphraseEdit);
         
-        if (!ok || verifyPassphrase.isEmpty()) {
-            errorMessage = "Passphrase verification is required";
-            return QString();
+        // Verify passphrase input
+        QLabel* verifyLabel = new QLabel("Enter the passphrase again:", &dialog);
+        verifyLabel->setStyleSheet("color: #2d3436; font-size: 14px; margin-top: 10px;");
+        layout->addWidget(verifyLabel);
+        
+        QLineEdit* verifyEdit = new QLineEdit(&dialog);
+        verifyEdit->setEchoMode(QLineEdit::Password);
+        verifyEdit->setStyleSheet(passphraseEdit->styleSheet());
+        layout->addWidget(verifyEdit);
+        
+        // Error label
+        QLabel* errorLabel = new QLabel(&dialog);
+        errorLabel->setStyleSheet("color: #e74c3c; font-size: 12px; margin-top: 5px;");
+        errorLabel->setWordWrap(true);
+        errorLabel->hide();
+        layout->addWidget(errorLabel);
+        
+        // Buttons
+        QHBoxLayout* buttonLayout = new QHBoxLayout();
+        buttonLayout->addStretch();
+        
+        QPushButton* cancelButton = new QPushButton("Cancel", &dialog);
+        cancelButton->setStyleSheet(
+            "QPushButton {"
+            "  background-color: #dfe6e9;"
+            "  color: #2d3436;"
+            "  border-radius: 6px;"
+            "  padding: 8px 16px;"
+            "  font-weight: bold;"
+            "  min-width: 80px;"
+            "  font-size: 13px;"
+            "  margin: 5px;"
+            "}"
+            "QPushButton:hover {"
+            "  background-color: #b2bec3;"
+            "}"
+            "QPushButton:pressed {"
+            "  background-color: #a4b0be;"
+            "}"
+        );
+        
+        QPushButton* okButton = new QPushButton("OK", &dialog);
+        okButton->setStyleSheet(
+            "QPushButton {"
+            "  background-color: #6c5ce7;"
+            "  color: white;"
+            "  border-radius: 6px;"
+            "  padding: 8px 16px;"
+            "  font-weight: bold;"
+            "  min-width: 80px;"
+            "  font-size: 13px;"
+            "  margin: 5px;"
+            "}"
+            "QPushButton:hover {"
+            "  background-color: #5049c9;"
+            "}"
+            "QPushButton:pressed {"
+            "  background-color: #4040b0;"
+            "}"
+        );
+        
+        buttonLayout->addWidget(cancelButton);
+        buttonLayout->addWidget(okButton);
+        layout->addLayout(buttonLayout);
+        
+        // Connect buttons
+        QObject::connect(cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
+        QObject::connect(okButton, &QPushButton::clicked, [&]() {
+            QString passphrase = passphraseEdit->text();
+            QString verifyPassphrase = verifyEdit->text();
+            
+            if (passphrase.isEmpty()) {
+                errorLabel->setText("Passphrase is required");
+                errorLabel->show();
+                return;
+            }
+            
+            if (passphrase.length() < 20) {
+                errorLabel->setText("Passphrase must be at least 20 characters long");
+                errorLabel->show();
+                return;
+            }
+            
+            if (passphrase.length() > 64) {
+                errorLabel->setText("Passphrase cannot be longer than 64 characters");
+                errorLabel->show();
+                return;
+            }
+            
+            if (verifyPassphrase.isEmpty()) {
+                errorLabel->setText("Please verify your passphrase");
+                errorLabel->show();
+                return;
+            }
+            
+            if (passphrase != verifyPassphrase) {
+                errorLabel->setText("Passphrases do not match");
+                errorLabel->show();
+                return;
+            }
+            
+            dialog.accept();
+        });
+        
+        // Show dialog
+        if (dialog.exec() == QDialog::Accepted) {
+            errorMessage = QString();
+            return passphraseEdit->text();
         }
-
-        if (passphrase != verifyPassphrase) {
-            errorMessage = "Passphrases do not match";
-            return QString();
-        }
-
-        errorMessage = QString();
-        return passphrase;
+        
+        errorMessage = "Passphrase entry cancelled";
+        return QString();
     }
 };
 
