@@ -32,4 +32,4 @@ bool SessionTokenManager::hasToken() const {
 void SessionTokenManager::clearToken() {
     token_.clear();
     has_token_ = false;
-} 
+}

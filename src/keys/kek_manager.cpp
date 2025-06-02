@@ -19,6 +19,6 @@ bool KekManager::isLoaded() const {
     return kek_ != nullptr;
 }
 
-void KekManager::clearKEK() {
+void KekManager::unload() {
     kek_.reset();
-} 
+}

@@ -11,6 +11,8 @@ public:
     bool isLoaded() const;
     void clearKEK();
 
+    void unload();
+
     // Non-copyable
     KekManager(const KekManager&) = delete;
     KekManager& operator=(const KekManager&) = delete;
