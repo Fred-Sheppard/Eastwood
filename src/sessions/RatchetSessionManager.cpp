@@ -49,8 +49,10 @@ void RatchetSessionManager::create_ratchets_if_needed(std::string username, std:
 
 
 std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>, MessageHeader *> > RatchetSessionManager::get_keys_for_identity(std::string username, bool post_new_ratchets_to_server) {
-    auto new_bundles = get_keybundles(username, get_device_ids_of_existing_handshakes(username));
-    create_ratchets_if_needed(username, new_bundles, post_new_ratchets_to_server);
+    if (post_new_ratchets_to_server) {
+        const auto new_bundles = get_keybundles(username, get_device_ids_of_existing_handshakes(username));
+        create_ratchets_if_needed(username, new_bundles, post_new_ratchets_to_server);
+    }
 
     std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>, MessageHeader *> > keys;
     auto& ratchets_for_user = ratchets[username];
@@ -103,7 +105,7 @@ std::vector<std::array<unsigned char,32> > RatchetSessionManager::get_device_ids
         throw std::runtime_error("User not found: " + username);
     }
 
-    for (auto [device_id, ratchet] : user_it->second) {
+    for (const auto& [device_id, ratchet] : user_it->second) {
         device_ids.push_back(device_id);
     }
     return device_ids;

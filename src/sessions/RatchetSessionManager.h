@@ -15,6 +15,9 @@ class RatchetSessionManager{
 public:
     // Singleton access method
     static RatchetSessionManager& instance();
+    
+    // Public constructor for direct instantiation
+    RatchetSessionManager();
 
     // Delete copy constructor and assignment operator to prevent copying
     RatchetSessionManager(const RatchetSessionManager&) = delete;
@@ -28,9 +31,6 @@ public:
 
     std::vector<std::array<unsigned char,32>>get_device_ids_of_existing_handshakes(std::string username);
 private:
-    // Private constructor for singleton
-    RatchetSessionManager();
-
     // username : [ device_id : ratchet ]
     std::map<std::string, std::map<std::array<unsigned char, 32>, std::unique_ptr<NewRatchet>>> ratchets;
 };
