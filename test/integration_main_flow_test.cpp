@@ -56,8 +56,18 @@ int main() {
         generate_signed_prekey(),
         generate_onetime_keys(100)
     );
+    qDebug() << "Getting devices";
+    get_devices();
     qDebug() << "Logging out";
     logout();
+
+    qDebug() << "Attempting to send authenticated request when logged out";
+    try {
+        get_devices();
+        throw std::logic_error("Able to send authenticated requests when logged out");
+    } catch (std::runtime_error&) {
+        // ALl good
+    }
 
     const std::string username_1 = generateRandomString(8);
     const auto password_1 = std::make_unique<const std::string>("correct horse staple battery");
