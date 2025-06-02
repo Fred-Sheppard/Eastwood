@@ -91,3 +91,25 @@ unsigned char* RatchetSessionManager::get_key_for_device(std::string username, M
     return result;
 }
 
+void RatchetSessionManager::load_ratchets_from_db() {
+    try {
+        auto all_ratchets = get_all_decrypted_ratchets();
+        
+        for (const auto& [username, device_id, serialized_ratchet] : all_ratchets) {
+            try {
+                // Create NewRatchet from serialized data
+                auto ratchet = std::make_unique<NewRatchet>(serialized_ratchet);
+                
+                // Add to the ratchets map
+                ratchets[username][device_id] = std::move(ratchet);
+            } catch (const std::exception& e) {
+                std::cerr << "Failed to deserialize ratchet for user " << username << ": " << e.what() << std::endl;
+                continue;
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Failed to load ratchets from database: " << e.what() << std::endl;
+        throw;
+    }
+}
+

@@ -20,6 +20,8 @@ public:
     std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>, MessageHeader*>> get_keys_for_identity(std::string username);
     // essentially receive
     unsigned char* get_key_for_device(std::string username, MessageHeader* header);
+
+    void load_ratchets_from_db();
 private:
     // username : [ device_id : ratchet ]
     std::map<std::string, std::map<std::array<unsigned char, 32>, std::unique_ptr<NewRatchet>>> ratchets;
