@@ -123,7 +123,7 @@ void SendFile::onSendClicked() {
         post_ratchet_message(messages);
         
         // Clean up DeviceMessage objects after posting
-        for (auto msg : messages) {
+        for (auto [key, msg] : messages) {
             delete msg;
         }
     }
