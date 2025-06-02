@@ -24,6 +24,7 @@ signals:
 private slots:
     void onBackButtonClicked();
     void onCopyButtonClicked();
+    void onUserRegistered();
 
 private:
     Ui::DeviceRegister *ui;
