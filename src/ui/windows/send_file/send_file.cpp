@@ -14,6 +14,7 @@
 #include <QTimer>
 #include <QCheckBox>
 
+#include "src/auth/logout.h"
 #include "src/files/upload_file.h"
 #include "src/sql/queries.h"
 #include "src/keys/session_token_manager.h"
@@ -144,10 +145,8 @@ void SendFile::onWindowShown(const QString &windowName) {
 }
 
 void SendFile::onLogoutButtonClicked() {
-    // Clear session state
-    SessionTokenManager::instance().clearToken();
-    KekManager::instance().clearKEK();
-    
+    logout();
+
     // Show login window
     WindowManager::instance().showLogin();
 }

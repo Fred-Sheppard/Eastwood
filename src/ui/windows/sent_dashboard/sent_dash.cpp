@@ -12,6 +12,8 @@
 #include <QScrollArea>
 #include <QTimer>
 #include <QCheckBox>
+
+#include "src/auth/logout.h"
 #include "src/keys/session_token_manager.h"
 #include "src/keys/kek_manager.h"
 
@@ -346,10 +348,7 @@ void Sent::onDownloadFileClicked(FileItemWidget* widget)
 }
 
 void Sent::onLogoutButtonClicked() {
-    // Clear session state
-    SessionTokenManager::instance().clearToken();
-    KekManager::instance().clearKEK();
-    
+    logout();
     // Show login window
     WindowManager::instance().showLogin();
 }

@@ -19,6 +19,8 @@
 #include <QDebug>
 #include <QPainter>
 #include <QIcon>
+
+#include "src/auth/logout.h"
 #include "src/endpoints/endpoints.h"
 #include "src/keys/session_token_manager.h"
 #include "src/keys/kek_manager.h"
@@ -123,7 +125,7 @@ void Settings::onSentButtonClicked()
 }
 
 void Settings::onSendFileButtonClicked()
-{   
+{
     ui->currentPassphrase->clear();
     ui->newPassphrase->clear();
     ui->confirmPassphrase->clear();
@@ -131,7 +133,7 @@ void Settings::onSendFileButtonClicked()
 }
 
 void Settings::onSettingsButtonClicked()
-{   
+{
     ui->currentPassphrase->clear();
     ui->newPassphrase->clear();
     ui->confirmPassphrase->clear();
@@ -152,7 +154,7 @@ void Settings::onPassphraseCancelClicked()
     ui->currentPassphrase->clear();
     ui->newPassphrase->clear();
     ui->confirmPassphrase->clear();
-    
+
     // Navigate back to the previous window
     WindowManager::instance().showReceived();
 }
@@ -167,7 +169,7 @@ void Settings::onAuthCancelClicked()
 {
     // Clear auth code input
     ui->authCodeInput->clear();
-    
+
     // Navigate back to the previous window
     WindowManager::instance().showReceived();
 }
@@ -175,17 +177,17 @@ void Settings::onAuthCancelClicked()
 void Settings::onAuthVerifyClicked()
 {
     QString auth_code = ui->authCodeInput->text().trimmed();
-    
+
     if (auth_code.length() != 44) {
         StyledMessageBox::error(this, "Invalid Code", "The authentication code must be 44 characters long");
         return;
     }
 
     QString deviceName;
-    if (StyledMessageBox::connectionRequest(this, "Connection Request", 
+    if (StyledMessageBox::connectionRequest(this, "Connection Request",
         "A new device wants to connect.\n\nEnsure you trust this device before accepting.\n\nDo you wish to accept this connection?",
         deviceName)) {
-        
+
         try {
             unsigned char pk_new_device[crypto_sign_PUBLICKEYBYTES];
             size_t bin_len;
@@ -193,31 +195,31 @@ void Settings::onAuthVerifyClicked()
                                 auth_code.toStdString().c_str(), auth_code.length(),
                                 nullptr, &bin_len, nullptr,
                                 sodium_base64_VARIANT_ORIGINAL) != 0) {
-                StyledMessageBox::error(this, "Invalid Key", 
+                StyledMessageBox::error(this, "Invalid Key",
                     "The authentication code contains an invalid public key.");
                 return;
             }
             if (bin_len != crypto_sign_PUBLICKEYBYTES) {
-                StyledMessageBox::error(this, "Invalid Key", 
+                StyledMessageBox::error(this, "Invalid Key",
                     "The authentication code contains an invalid public key.");
                 return;
             }
 
             add_trusted_device(pk_new_device, deviceName.toStdString());
-            StyledMessageBox::success(this, "Connection Accepted", 
+            StyledMessageBox::success(this, "Connection Accepted",
                 QString("Connection request has been accepted for device: %1").arg(deviceName));
             qDebug() << "Connection accepted with public key:" << auth_code << "and device name:" << deviceName;
         } catch (const std::runtime_error& e) {
-            StyledMessageBox::error(this, "Connection Failed", 
+            StyledMessageBox::error(this, "Connection Failed",
                 QString("Failed to add trusted device: %1").arg(e.what()));
             qDebug() << "Connection failed:" << e.what();
         } catch (const std::exception& e) {
-            StyledMessageBox::error(this, "Connection Failed", 
+            StyledMessageBox::error(this, "Connection Failed",
                 QString("An unexpected error occurred: %1").arg(e.what()));
             qDebug() << "Unexpected error:" << e.what();
         }
     } else {
-        StyledMessageBox::info(this, "Connection Denied", 
+        StyledMessageBox::info(this, "Connection Denied",
             "Connection request has been denied.");
         qDebug() << "Connection denied";
     }
@@ -276,7 +278,7 @@ void Settings::updateDeviceList()
 void Settings::handleRefreshSpinner()
 {
     m_spinnerAngle = (m_spinnerAngle + 30) % 360;
-    
+
     // Update the button's icon with the new angle
     QPixmap pixmap(16, 16);
     pixmap.fill(Qt::transparent);
@@ -296,10 +298,10 @@ void Settings::onRefreshDevicesClicked()
     // Start the spinner animation
     m_spinnerAngle = 0;
     m_refreshSpinnerTimer->start(50); // Update every 50ms
-    
+
     // Update the device list
     updateDeviceList();
-    
+
     // Stop the spinner after 1 second
     QTimer::singleShot(1000, [this]() {
         m_refreshSpinnerTimer->stop();
@@ -308,10 +310,7 @@ void Settings::onRefreshDevicesClicked()
 }
 
 void Settings::onLogoutButtonClicked() {
-    // Clear session state
-    SessionTokenManager::instance().clearToken();
-    KekManager::instance().clearKEK();
-    
+    logout();
     // Show login window
     WindowManager::instance().showLogin();
 }

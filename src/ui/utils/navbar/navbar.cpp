@@ -2,6 +2,7 @@
 #include "ui_navbar.h"
 #include "../../utils/window_manager/window_manager.h"
 #include "../../utils/messagebox.h"
+#include "src/auth/logout.h"
 #include "src/keys/session_token_manager.h"
 #include "src/keys/kek_manager.h"
 #include "src/database/database.h"
@@ -110,10 +111,7 @@ void NavBar::onSettingsButtonClicked() {
 }
 
 void NavBar::onLogoutButtonClicked() {
-    // Clear session state
-    SessionTokenManager::instance().clearToken();
-    KekManager::instance().clearKEK();
-    Database::get().closeDatabase();
+    logout();
     // Show login window
     WindowManager::instance().showLogin();
 }

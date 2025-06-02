@@ -147,9 +147,6 @@ void Login::onContinueButtonClicked()
             
             auto [auth_code, qr_code, pk_device, sk_device] = setupDeviceRegistration();
             
-            auto master_password = std::make_unique<std::string>("slog"); // Temporary password until user sets it
-            set_up_client_for_user(username.toStdString(), std::move(master_password));
-
             WindowManager::instance().showDeviceRegister(auth_code, qr_code, pk_device.data(), std::move(sk_device), username.toStdString());
         } else {
             qDebug() << "User doesn't exist - go straight to register";
