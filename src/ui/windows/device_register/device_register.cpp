@@ -18,7 +18,7 @@ void continuously_ping(std::array<unsigned char, 32> pk_device, DeviceRegister* 
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(2));
         try {
-            qDebug() << "pinging for user: " << username;
+            qDebug() << "pinging for user: " << QString::fromStdString(username);
             if (post_check_user_exists(username, pk_device.data())) {
                 std::cout << "logged in" << std::endl;
                 
