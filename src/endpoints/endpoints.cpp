@@ -149,10 +149,10 @@ std::vector<std::tuple<std::string, DeviceMessage *> > get_messages() {
         DeviceMessage *msg = new DeviceMessage();
         MessageHeader *header = new MessageHeader();
 
-        memcpy(header->dh_public, new_dh_public, crypto_box_PUBLICKEYBYTES);
+        memcpy(header->dh_public.data(), new_dh_public, crypto_box_PUBLICKEYBYTES);
         header->message_index = message_index;
         header->prev_chain_length = prev_chain_length;
-        memcpy(header->device_id, initator_dev_key, crypto_box_PUBLICKEYBYTES);
+        memcpy(header->device_id.data(), initator_dev_key, crypto_box_PUBLICKEYBYTES);
 
         msg->header = header;
         msg->ciphertext = ciphertext;
@@ -174,9 +174,10 @@ void post_ratchet_message(std::vector<DeviceMessage*> messages) {
 
         json body = json::object();
         body["file_id"] = 0; // update
-        body["initiator_device_public_key"] = bin2hex(dev_pub, crypto_box_PUBLICKEYBYTES);
-        body["recipient_device_public_key"] = bin2hex(msg->header->device_id, crypto_box_PUBLICKEYBYTES);
-        body["dh_public"] = bin2hex(msg->header->dh_public, crypto_box_PUBLICKEYBYTES);
+        body["username"] = SessionTokenManager::instance().getUsername();
+        body["initiator_device_public_key"] = bin2hex(dev_pub, 32);
+        body["recipient_device_public_key"] = bin2hex(msg->header->device_id.data(), 32);
+        body["dh_public"] = bin2hex(msg->header->dh_public.data(), 32);
         body["prev_chain_length"] = msg->header->prev_chain_length;
         body["message_index"] = msg->header->message_index;
         body["ciphertext"] = bin2hex(msg->ciphertext, msg->length);
@@ -305,7 +306,7 @@ void post_handshake_device(
             bin2hex(recipient_signed_prekey_signature, crypto_box_PUBLICKEYBYTES)
         },
         {"initiator_ephemeral_public_key", bin2hex(my_ephemeral_key_public, crypto_box_PUBLICKEYBYTES)},
-        {"initiator_device_public_key", bin2hex(reinterpret_cast<const unsigned char *>(my_device_key_public.data()), crypto_box_PUBLICKEYBYTES)},
+        {"initiator_device_public_key", bin2hex(reinterpret_cast<const unsigned char *>(my_device_key_public.constData()), crypto_box_PUBLICKEYBYTES)},
     };
 
     // Only add one-time prekey if it exists

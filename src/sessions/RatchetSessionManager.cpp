@@ -77,7 +77,17 @@ std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>
         auto [message_key_vector, header] = ratchet->advance_send();
         ratchet->save(username, device_id);
         
-        memcpy(header->device_id, my_device_public.constData(), 32);
+        memcpy(header->device_id.data(), my_device_public.data(), 32);
+        
+        // Debug: Print MessageHeader values after device_id is set
+        printf("=== DEBUG: MessageHeader after device_id set in RatchetSessionManager ===\n");
+        printf("message_index: %d\n", header->message_index);
+        printf("prev_chain_length: %d\n", header->prev_chain_length);
+        printf("dh_public: ");
+        for (int i = 0; i < 32; ++i) printf("%02x", header->dh_public[i]);
+        printf("\ndevice_id: ");
+        for (int i = 0; i < 32; ++i) printf("%02x", header->device_id[i]);
+        printf("\n=== END DEBUG ===\n");
         
         std::array<unsigned char, 32> message_key_array;
         std::copy(message_key_vector.begin(), message_key_vector.begin() + 32, message_key_array.begin());
@@ -91,7 +101,7 @@ std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>
 
 unsigned char* RatchetSessionManager::get_key_for_device(std::string username, MessageHeader* header) {
     std::array<unsigned char, 32> device_id;
-    std::copy(std::begin(header->device_id), std::end(header->device_id), device_id.begin());
+    std::copy(header->device_id.begin(), header->device_id.end(), device_id.begin());
     
     auto user_it = ratchets.find(username);
     if (user_it == ratchets.end()) {

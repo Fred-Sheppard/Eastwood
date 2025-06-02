@@ -6,13 +6,23 @@
 
 #include "sodium.h"
 #include <cstring>
+#include <array>
 
+#pragma pack(push, 1)
 struct MessageHeader {
-    unsigned char dh_public[crypto_kx_PUBLICKEYBYTES]; // Sender's current ratchet public key
-    int prev_chain_length;                             // Length of previous sending chain
-    int message_index;                                 // Message number in the chain
-    unsigned char device_id[crypto_box_PUBLICKEYBYTES]; // Fixed-size array for device ID
+    // Constructor to ensure proper initialization
+    MessageHeader() : dh_public{}, prev_chain_length(0), message_index(0), device_id{} {
+        // Debug: verify initialization
+        static_assert(sizeof(MessageHeader) == crypto_kx_PUBLICKEYBYTES + 4 + 4 + crypto_box_PUBLICKEYBYTES, 
+                     "MessageHeader size mismatch");
+    }
+    
+    std::array<unsigned char, crypto_kx_PUBLICKEYBYTES> dh_public; // Sender's current ratchet public key
+    int prev_chain_length;                                         // Length of previous sending chain
+    int message_index;                                             // Message number in the chain
+    std::array<unsigned char, crypto_box_PUBLICKEYBYTES> device_id; // Fixed-size array for device ID
 };
+#pragma pack(pop)
 
 struct Message {
     MessageHeader *header;
@@ -33,9 +43,10 @@ public:
     DeviceMessage(const DeviceMessage& other) {
         if (other.header) {
             header = new MessageHeader();
-            memcpy(header->dh_public, other.header->dh_public, crypto_kx_PUBLICKEYBYTES);
+            header->dh_public = other.header->dh_public;
             header->prev_chain_length = other.header->prev_chain_length;
             header->message_index = other.header->message_index;
+            header->device_id = other.header->device_id;
         } else {
             header = nullptr;
         }
@@ -66,9 +77,10 @@ public:
 
             if (other.header) {
                 header = new MessageHeader();
-                memcpy(header->dh_public, other.header->dh_public, crypto_kx_PUBLICKEYBYTES);
+                header->dh_public = other.header->dh_public;
                 header->prev_chain_length = other.header->prev_chain_length;
                 header->message_index = other.header->message_index;
+                header->device_id = other.header->device_id;
             } else {
                 header = nullptr;
             }

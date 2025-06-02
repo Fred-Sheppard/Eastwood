@@ -223,8 +223,8 @@ protected:
     // Helper function to create a MessageHeader for testing
     MessageHeader* create_test_header(const unsigned char* dh_public, const unsigned char* device_id, int message_index, int prev_chain_length) {
         auto header = new MessageHeader();
-        memcpy(header->dh_public, dh_public, crypto_kx_PUBLICKEYBYTES);
-        memcpy(header->device_id, device_id, crypto_box_PUBLICKEYBYTES);
+        memcpy(header->dh_public.data(), dh_public, crypto_kx_PUBLICKEYBYTES);
+        memcpy(header->device_id.data(), device_id, crypto_box_PUBLICKEYBYTES);
         header->message_index = message_index;
         header->prev_chain_length = prev_chain_length;
         return header;

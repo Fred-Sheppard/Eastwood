@@ -107,11 +107,14 @@ void SendFile::onSendClicked() {
             auto message = new DeviceMessage();
             message->header = message_header;
             messages.push_back(message);
-            delete message;
         }
         post_ratchet_message(messages);
+        
+        // Clean up DeviceMessage objects after posting
+        for (auto msg : messages) {
+            delete msg;
+        }
     }
-
 
     StyledMessageBox::info(this, "File Sent", "File has been sent successfully!");
 }
