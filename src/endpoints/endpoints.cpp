@@ -163,11 +163,11 @@ std::vector<std::tuple<std::string, DeviceMessage *> > get_messages() {
     return messages;
 }
 
-void post_ratchet_message(std::vector<DeviceMessage*> messages) {
+void post_ratchet_message(std::vector<std::tuple<std::array<unsigned char,32>, DeviceMessage*>> messages) {
     json data = json::object();
     data["messages"] = json::array();
 
-    for (auto msg : messages) {
+    for (auto [recipient_dev_pub, msg] : messages) {
         const auto dev_pub = new unsigned char[crypto_box_PUBLICKEYBYTES];
         QByteArray dev_pub_byte = get_public_key("device");
         memcpy(dev_pub, dev_pub_byte.constData(), crypto_box_PUBLICKEYBYTES);
@@ -176,7 +176,7 @@ void post_ratchet_message(std::vector<DeviceMessage*> messages) {
         body["file_id"] = std::string(msg->header->file_uuid);
         body["username"] = SessionTokenManager::instance().getUsername();
         body["initiator_device_public_key"] = bin2hex(dev_pub, 32);
-        body["recipient_device_public_key"] = bin2hex(msg->header->device_id.data(), 32);
+        body["recipient_device_public_key"] = bin2hex(recipient_dev_pub.data(), 32);
         body["dh_public"] = bin2hex(msg->header->dh_public.data(), 32);
         body["prev_chain_length"] = msg->header->prev_chain_length;
         body["message_index"] = msg->header->message_index;

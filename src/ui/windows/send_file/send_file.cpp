@@ -100,9 +100,9 @@ void SendFile::onSendClicked() {
     std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>, MessageHeader *>> keys_to_send_key = RatchetSessionManager::instance().get_keys_for_identity(ui->usernameInput->text().toStdString());
 
     if (keys_to_send_key.size() > 0) {
-        std::vector<DeviceMessage*> messages;
+        std::vector<std::tuple<std::array<unsigned char,32>, DeviceMessage*>> messages;
         for (const auto& pair : keys_to_send_key) {
-            const auto& device_id = pair.first;
+            const auto device_id = pair.first;
             const auto& [key, message_header] = pair.second;
 
             auto file_key = get_decrypted_file_key(uuid);
@@ -118,7 +118,7 @@ void SendFile::onSendClicked() {
             message->ciphertext = new unsigned char[message->length];
             memcpy(message->ciphertext, encrypted_data.data(), message->length);
             
-            messages.push_back(message);
+            messages.push_back(std::make_tuple(device_id, message));
         }
         post_ratchet_message(messages);
         

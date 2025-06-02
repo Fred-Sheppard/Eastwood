@@ -38,7 +38,7 @@ std::string post_authenticate(
 );
 
 void post_ratchet_message(
-    const std::vector<DeviceMessage*>
+    std::vector<std::tuple<std::array<unsigned char,32>, DeviceMessage*>>
 );
 
 void post_handshake_device(
