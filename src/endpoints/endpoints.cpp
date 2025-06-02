@@ -123,9 +123,11 @@ std::vector<std::tuple<std::string, DeviceMessage *> > get_messages() {
     for (const auto &message: response["data"]) {
         int ciphertext_length = message["ciphertext_length"].get<int>();
 
-        auto initator_dev_key = new unsigned char[crypto_box_PUBLICKEYBYTES];
-        auto new_dh_public = new unsigned char[crypto_box_PUBLICKEYBYTES];
-        auto ciphertext = new unsigned char[ciphertext_length];
+        // Validate ciphertext length
+        if (ciphertext_length <= 0 || ciphertext_length > 1024 * 1024) { // Max 1MB
+            std::cerr << "Invalid ciphertext length: " << ciphertext_length << std::endl;
+            continue;
+        }
 
         std::string username = message["username"].get<std::string>();
         std::string dev_key_str = message["initiator_device_public_key"].get<std::string>();
@@ -135,27 +137,42 @@ std::vector<std::tuple<std::string, DeviceMessage *> > get_messages() {
         int prev_chain_length = message["prev_chain_length"].get<int>();
         int message_index = message["message_index"].get<int>();
 
-        bool success = hex_to_bin(dev_key_str, initator_dev_key, crypto_box_PUBLICKEYBYTES) &&
-                       hex_to_bin(dh_pub_str, new_dh_public, crypto_box_PUBLICKEYBYTES) &&
-                       hex_to_bin(ciphertext_str, ciphertext, ciphertext_length);
+        // Validate hex string lengths before allocation
+        if (dev_key_str.length() != 64 || dh_pub_str.length() != 64) { // 32 bytes = 64 hex chars
+            std::cerr << "Invalid key hex string lengths" << std::endl;
+            continue;
+        }
+
+        if (ciphertext_str.length() != ciphertext_length * 2) { // Each byte = 2 hex chars
+            std::cerr << "Ciphertext length mismatch" << std::endl;
+            continue;
+        }
+
+        // Use fixed-size arrays instead of dynamic allocation
+        unsigned char initator_dev_key[32];
+        unsigned char new_dh_public[32];
+        auto ciphertext = std::make_unique<unsigned char[]>(ciphertext_length);
+
+        bool success = hex_to_bin(dev_key_str, initator_dev_key, 32) &&
+                       hex_to_bin(dh_pub_str, new_dh_public, 32) &&
+                       hex_to_bin(ciphertext_str, ciphertext.get(), ciphertext_length);
 
         if (!success) {
-            delete[] initator_dev_key;
-            delete[] new_dh_public;
-            delete[] ciphertext;
-            throw std::runtime_error("Failed to decode message data");
+            std::cerr << "Failed to decode message data" << std::endl;
+            continue;
         }
 
         DeviceMessage *msg = new DeviceMessage();
         MessageHeader *header = new MessageHeader();
 
-        memcpy(header->dh_public.data(), new_dh_public, crypto_box_PUBLICKEYBYTES);
+        // Safe copy with correct size (both arrays are 32 bytes)
+        memcpy(header->dh_public.data(), new_dh_public, 32);
         header->message_index = message_index;
         header->prev_chain_length = prev_chain_length;
-        memcpy(header->device_id.data(), initator_dev_key, crypto_box_PUBLICKEYBYTES);
+        memcpy(header->device_id.data(), initator_dev_key, 32);
 
         msg->header = header;
-        msg->ciphertext = ciphertext;
+        msg->ciphertext = ciphertext.release(); // Transfer ownership
         msg->length = ciphertext_length;
 
         messages.push_back(std::make_tuple(username, msg));
@@ -174,7 +191,7 @@ void post_ratchet_message(std::vector<std::tuple<std::array<unsigned char,32>, D
 
         json body = json::object();
         body["file_id"] = std::string(msg->header->file_uuid);
-        body["username"] = username;
+        body["username"] = SessionTokenManager::instance().getUsername();
         body["initiator_device_public_key"] = bin2hex(dev_pub, 32);
         body["recipient_device_public_key"] = bin2hex(recipient_dev_pub.data(), 32);
         body["dh_public"] = bin2hex(msg->header->dh_public.data(), 32);

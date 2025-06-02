@@ -123,8 +123,8 @@ void SendFile::onSendClicked() {
         post_ratchet_message(messages, ui->usernameInput->text().toStdString());
         
         // Clean up DeviceMessage objects after posting
-        for (auto [key, msg] : messages) {
-            delete msg;
+        for (auto [device_id, msg] : messages) {
+            delete msg;  // DeviceMessage destructor handles header and ciphertext cleanup
         }
     }
 
