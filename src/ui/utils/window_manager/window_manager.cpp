@@ -92,7 +92,7 @@ void WindowManager::showReceived()
         m_received->setAttribute(Qt::WA_DeleteOnClose);
         m_windows.append(QPointer<QWidget>(m_received));
         connect(m_received, &Received::destroyed, this, [this]() {
-            m_windows.removeOne(QPointer<QWidget>(m_received));
+            m_windows.removeAll(QPointer<QWidget>());
         });
     }
     m_received->show();
@@ -114,7 +114,7 @@ void WindowManager::showSent()
         m_sent->setAttribute(Qt::WA_DeleteOnClose);
         m_windows.append(QPointer<QWidget>(m_sent));
         connect(m_sent, &Sent::destroyed, this, [this]() {
-            m_windows.removeOne(QPointer<QWidget>(m_sent));
+            m_windows.removeAll(QPointer<QWidget>());
         });
     }
     m_sent->show();
@@ -136,7 +136,7 @@ void WindowManager::showSendFile()
         m_sendFile->setAttribute(Qt::WA_DeleteOnClose);
         m_windows.append(QPointer<QWidget>(m_sendFile));
         connect(m_sendFile, &SendFile::destroyed, this, [this]() {
-            m_windows.removeOne(QPointer<QWidget>(m_sendFile));
+            m_windows.removeAll(QPointer<QWidget>());
         });
     }
     m_sendFile->show();
@@ -158,7 +158,7 @@ void WindowManager::showSettings()
         m_settings->setAttribute(Qt::WA_DeleteOnClose);
         m_windows.append(QPointer<QWidget>(m_settings));
         connect(m_settings, &Settings::destroyed, this, [this]() {
-            m_windows.removeOne(QPointer<QWidget>(m_settings));
+            m_windows.removeAll(QPointer<QWidget>());
         });
     }
     m_settings->show();
@@ -180,7 +180,7 @@ void WindowManager::showLogin()
         m_login->setAttribute(Qt::WA_DeleteOnClose);
         m_windows.append(QPointer<QWidget>(m_login));
         connect(m_login, &Login::destroyed, this, [this]() {
-            m_windows.removeOne(QPointer<QWidget>(m_login));
+            m_windows.removeAll(QPointer<QWidget>());
         });
     }
     m_login->show();
@@ -202,7 +202,7 @@ void WindowManager::showRegister()
         m_register->setAttribute(Qt::WA_DeleteOnClose);
         m_windows.append(QPointer<QWidget>(m_register));
         connect(m_register, &Register::destroyed, this, [this]() {
-            m_windows.removeOne(QPointer<QWidget>(m_register));
+            m_windows.removeAll(QPointer<QWidget>());
         });
     }
     m_register->show();
@@ -224,7 +224,7 @@ void WindowManager::showDeviceRegister(const std::string& auth_code, const QImag
         m_deviceRegister->setAttribute(Qt::WA_DeleteOnClose);
         m_windows.append(QPointer<QWidget>(m_deviceRegister));
         connect(m_deviceRegister, &DeviceRegister::destroyed, this, [this]() {
-            m_windows.removeOne(QPointer<QWidget>(m_deviceRegister));
+            m_windows.removeAll(QPointer<QWidget>());
         });
     }
     
