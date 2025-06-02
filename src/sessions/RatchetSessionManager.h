@@ -20,9 +20,9 @@ public:
     RatchetSessionManager(const RatchetSessionManager&) = delete;
     RatchetSessionManager& operator=(const RatchetSessionManager&) = delete;
 
-    void create_ratchets_if_needed(std::string username, std::vector<KeyBundle*> bundles);
+    void create_ratchets_if_needed(std::string username, std::vector<KeyBundle*> bundles, bool post_to_server = true);
     // device id : <key, message header>
-    std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>, MessageHeader*>> get_keys_for_identity(std::string username);
+    std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>, MessageHeader*>> get_keys_for_identity(std::string username, bool post_new_ratchets_to_server = true);
     // essentially receive
     unsigned char* get_key_for_device(std::string username, MessageHeader* header);
 

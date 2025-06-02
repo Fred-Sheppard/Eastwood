@@ -17,7 +17,7 @@ RatchetSessionManager::RatchetSessionManager() {
     // No need to initialize ratchets as it's already default-initialized
 }
 
-void RatchetSessionManager::create_ratchets_if_needed(std::string username, std::vector<KeyBundle*> bundles) {
+void RatchetSessionManager::create_ratchets_if_needed(std::string username, std::vector<KeyBundle*> bundles, bool post_to_server) {
     auto& user_ratchets = ratchets[username];
 
     for (KeyBundle* bundle : bundles) {
@@ -29,14 +29,28 @@ void RatchetSessionManager::create_ratchets_if_needed(std::string username, std:
             user_ratchets[device_id] = bundle->create_ratchet();
             // Save the newly created ratchet
             user_ratchets[device_id]->save(username, device_id);
+
+            auto sending_bundle = dynamic_cast<SendingKeyBundle*>(bundle);
+
+            if (post_to_server) {
+                post_handshake_device(
+                    sending_bundle->get_their_device_public(),
+                    sending_bundle->get_their_signed_public(),
+                    sending_bundle->get_their_signed_signature(),
+                    sending_bundle->get_their_onetime_public(),
+                    sending_bundle->get_my_device_public(),
+                    sending_bundle->get_my_ephemeral_public()
+                );
+            }
         }
     }
+
 }
 
 
-std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>, MessageHeader *> > RatchetSessionManager::get_keys_for_identity(std::string username) {
+std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>, MessageHeader *> > RatchetSessionManager::get_keys_for_identity(std::string username, bool post_new_ratchets_to_server) {
     auto new_bundles = get_keybundles(username, get_device_ids_of_existing_handshakes(username));
-    create_ratchets_if_needed(username, new_bundles);
+    create_ratchets_if_needed(username, new_bundles, post_new_ratchets_to_server);
 
     std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>, MessageHeader *> > keys;
     auto& ratchets_for_user = ratchets[username];
