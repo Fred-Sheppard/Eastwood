@@ -18,9 +18,13 @@ public:
     void displayQRCode(const QImage& qr_code);
     void displayAuthCode(const std::string& auth_code);
 
+signals:
+    void userRegistered(); // Signal emitted when background thread detects registration
+
 private slots:
     void onBackButtonClicked();
     void onCopyButtonClicked();
+    void onUserRegistered(); // Slot to handle login in main thread
 
 private:
     Ui::DeviceRegister *ui;
