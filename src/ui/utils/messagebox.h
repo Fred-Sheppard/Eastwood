@@ -7,6 +7,7 @@
 #include <QStyle>
 #include <QPixmap>
 #include <QInputDialog>
+#include <QString>
 
 class StyledMessageBox {
 public:
@@ -235,6 +236,94 @@ public:
             return false;
         }
         return false;
+    }
+    
+    static QString getPassphraseWithVerification(QWidget* parent, QString& errorMessage) {
+        QInputDialog inputDialog(parent);
+        inputDialog.setWindowTitle("Set Passphrase");
+        inputDialog.setLabelText("Enter a passphrase (20-64 characters):");
+        inputDialog.setTextValue("");
+        inputDialog.setStyleSheet(R"(
+            QInputDialog {
+                background-color: #f5f6fa;
+                font-family: 'Helvetica Neue', Arial, sans-serif;
+            }
+            QInputDialog QLabel {
+                color: #2d3436;
+                font-size: 14px;
+                padding: 10px;
+            }
+            QInputDialog QLineEdit {
+                padding: 8px 12px;
+                font-size: 14px;
+                border-radius: 6px;
+                background-color: white;
+                border: 1px solid #dfe6e9;
+                color: #2d3436;
+                margin: 4px 0;
+                min-height: 20px;
+            }
+            QInputDialog QLineEdit:focus {
+                border: 2px solid #6c5ce7;
+            }
+            QInputDialog QPushButton {
+                background-color: #6c5ce7;
+                color: white;
+                border-radius: 6px;
+                padding: 8px 16px;
+                font-weight: bold;
+                min-width: 80px;
+                font-size: 13px;
+                margin: 5px;
+            }
+            QInputDialog QPushButton:hover {
+                background-color: #5049c9;
+            }
+            QInputDialog QPushButton:pressed {
+                background-color: #4040b0;
+            }
+        )");
+        
+        bool ok = inputDialog.exec();
+        QString passphrase = inputDialog.textValue();
+        
+        if (!ok || passphrase.isEmpty()) {
+            errorMessage = "Passphrase is required";
+            return QString();
+        }
+
+        if (passphrase.length() < 20) {
+            errorMessage = "Passphrase must be at least 20 characters long";
+            return QString();
+        }
+
+        if (passphrase.length() > 64) {
+            errorMessage = "Passphrase cannot be longer than 64 characters";
+            return QString();
+        }
+
+        // Verify passphrase
+        QInputDialog verifyDialog(parent);
+        verifyDialog.setWindowTitle("Verify Passphrase");
+        verifyDialog.setLabelText("Enter the passphrase again:");
+        verifyDialog.setTextValue("");
+        verifyDialog.setStyleSheet(inputDialog.styleSheet());
+        
+        ok = verifyDialog.exec();
+        QString verifyPassphrase = verifyDialog.textValue();
+        
+        if (!ok || verifyPassphrase.isEmpty()) {
+            errorMessage = "Passphrase verification is required";
+            return QString();
+        }
+
+        if (passphrase != verifyPassphrase) {
+            errorMessage = "Passphrases do not match";
+            return QString();
+        }
+
+        errorMessage = QString();
+        return passphrase;
     }
 };
 
