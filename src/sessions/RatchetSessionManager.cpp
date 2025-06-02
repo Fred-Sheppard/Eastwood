@@ -5,6 +5,14 @@
 #include "RatchetSessionManager.h"
 #include <iostream>
 
+#include "src/endpoints/endpoints.h"
+
+// Singleton instance method
+RatchetSessionManager& RatchetSessionManager::instance() {
+    static RatchetSessionManager instance;
+    return instance;
+}
+
 RatchetSessionManager::RatchetSessionManager() {
     // No need to initialize ratchets as it's already default-initialized
 }
@@ -27,6 +35,9 @@ void RatchetSessionManager::create_ratchets_if_needed(std::string username, std:
 
 
 std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>, MessageHeader *> > RatchetSessionManager::get_keys_for_identity(std::string username) {
+    auto new_bundles = get_keybundles(username, get_device_ids_of_existing_handshakes(username));
+    create_ratchets_if_needed(username, new_bundles);
+
     std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>, MessageHeader *> > keys;
     auto& ratchets_for_user = ratchets[username];
 
@@ -35,14 +46,10 @@ std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>
 
     for (auto& [device_id, ratchet] : ratchets_for_user) {
         auto [message_key_vector, header] = ratchet->advance_send();
-        
-        // Save the ratchet state after advancing send
         ratchet->save(username, device_id);
         
-        // Set the header device_id to the sender's (my) device ID so receiver can look up correct ratchet
         memcpy(header->device_id, my_device_public.constData(), 32);
         
-        // Convert vector to array
         std::array<unsigned char, 32> message_key_array;
         std::copy(message_key_vector.begin(), message_key_vector.begin() + 32, message_key_array.begin());
         
@@ -62,22 +69,6 @@ unsigned char* RatchetSessionManager::get_key_for_device(std::string username, M
         throw std::runtime_error("User not found: " + username);
     }
     
-    std::cout << "Looking for ratchets under username: " << username << std::endl;
-    std::cout << "Available ratchets for " << username << ":" << std::endl;
-    for (const auto& [stored_device_id, ratchet] : user_it->second) {
-        std::cout << "  Device ID: ";
-        for (int i = 0; i < 32; i++) {
-            printf("%02x", stored_device_id[i]);
-        }
-        std::cout << std::endl;
-    }
-    
-    std::cout << "Looking for device ID from header: ";
-    for (int i = 0; i < 32; i++) {
-        printf("%02x", header->device_id[i]);
-    }
-    std::cout << std::endl;
-    
     auto target_ratchet = user_it->second.find(device_id);
     if (target_ratchet == user_it->second.end()) {
         throw std::runtime_error("Device not found for user: " + username);
@@ -85,9 +76,22 @@ unsigned char* RatchetSessionManager::get_key_for_device(std::string username, M
     
     auto result = target_ratchet->second->advance_receive(header);
     
-    // Save the ratchet state after advancing receive
     target_ratchet->second->save(username, device_id);
     
     return result;
+}
+
+std::vector<std::array<unsigned char,32> > RatchetSessionManager::get_device_ids_of_existing_handshakes(std::string username) {
+    std::vector<std::array<unsigned char,32> > device_ids;
+
+    auto user_it = ratchets.find(username);
+    if (user_it == ratchets.end()) {
+        throw std::runtime_error("User not found: " + username);
+    }
+
+    for (auto [device_id, ratchet] : user_it->second) {
+        device_ids.push_back(device_id);
+    }
+    return device_ids;
 }
 

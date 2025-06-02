@@ -51,7 +51,7 @@ std::vector<std::tuple<std::string, KeyBundle*>> get_handshake_backlog();
 // [ <username, message (includes device id) > ]
 std::vector<std::tuple<std::string, DeviceMessage*>> get_messages();
 
-std::vector<KeyBundle*> get_keybundles(const std::string &username);
+std::vector<KeyBundle*> get_keybundles(const std::string &username, std::vector<std::array<unsigned char,32>> existing_device_ids);
 
 void post_new_keybundles(
     std::tuple<QByteArray, std::unique_ptr<SecureMemoryBuffer> > device_keypair,

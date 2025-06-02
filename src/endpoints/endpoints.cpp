@@ -166,8 +166,18 @@ void post_ratchet_message(std::vector<DeviceMessage*> messages) {
     post("/sendMessage", data);
 }
 
-std::vector<KeyBundle*> get_keybundles(const std::string &username) {
-    json response = get("/keybundle/" + username);
+std::vector<KeyBundle*> get_keybundles(const std::string &username, std::vector<std::array<unsigned char,32>> existing_device_ids) {
+    json array_of_device_ids = json::array();
+
+    for (auto device_id : existing_device_ids) {
+        array_of_device_ids.push_back(bin2hex(device_id.data(), device_id.size()));
+    }
+
+    json body = {
+        {"existing_device_ids", array_of_device_ids}
+    };
+
+    json response = post("/keybundle/" + username, body);
 
     // Get my identity public key
     std::string my_identity_public_hex = response["data"]["identity_public_key"];

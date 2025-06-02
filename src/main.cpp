@@ -4,6 +4,7 @@
 #include <QApplication>
 #include <random>
 #include "key_exchange/utils.h"
+#include "sessions/RatchetSessionManager.h"
 
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);

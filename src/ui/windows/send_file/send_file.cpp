@@ -14,7 +14,10 @@
 #include <QTimer>
 #include <QCheckBox>
 
+#include "src/endpoints/endpoints.h"
 #include "src/files/upload_file.h"
+#include "src/key_exchange/XChaCha20-Poly1305.h"
+#include "src/sessions/RatchetSessionManager.h"
 #include "src/sql/queries.h"
 
 SendFile::SendFile(QWidget *parent)
@@ -93,6 +96,22 @@ void SendFile::onSendClicked() {
     }
 
     upload_file(filePath.toStdString());
+    std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>, MessageHeader *>> keys_to_send_key = RatchetSessionManager::instance().get_keys_for_identity(ui->usernameInput->text().toStdString());
+
+    if (keys_to_send_key.size() > 0) {
+        std::vector<DeviceMessage*> messages;
+        for (const auto& pair : keys_to_send_key) {
+            const auto& device_id = pair.first;
+            const auto& [key, message_header] = pair.second;
+
+            auto message = new DeviceMessage();
+            message->header = message_header;
+            messages.push_back(message);
+
+        }
+        post_ratchet_message(messages);
+    }
+
 
     StyledMessageBox::info(this, "File Sent", "File has been sent successfully!");
 }

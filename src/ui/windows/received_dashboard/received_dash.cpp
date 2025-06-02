@@ -8,6 +8,8 @@
 #include <QTimer>
 #include <QCheckBox>
 
+#include "src/sessions/RatchetSessionManager.h"
+
 Received::Received(QWidget *parent, QWidget* sendFileWindow)
     : QWidget(parent)
     , ui(new Ui::Received)
