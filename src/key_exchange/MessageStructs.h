@@ -9,7 +9,6 @@
 #include <array>
 #include <string>
 
-#pragma pack(push, 1)
 struct MessageHeader {
     // Constructor to ensure proper initialization
     MessageHeader() : dh_public{}, prev_chain_length(0), message_index(0), device_id{} {
@@ -22,7 +21,6 @@ struct MessageHeader {
     std::array<unsigned char, crypto_box_PUBLICKEYBYTES> device_id; // Fixed-size array for device ID
     char file_uuid[64]; // Fixed-size array instead of std::string
 };
-#pragma pack(pop)
 
 struct Message {
     MessageHeader *header;

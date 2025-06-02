@@ -227,6 +227,7 @@ protected:
         memcpy(header->device_id.data(), device_id, crypto_box_PUBLICKEYBYTES);
         header->message_index = message_index;
         header->prev_chain_length = prev_chain_length;
+        strcpy(header->file_uuid, "test_file_uuid");
         return header;
     }
 

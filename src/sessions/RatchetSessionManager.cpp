@@ -54,10 +54,8 @@ void RatchetSessionManager::create_ratchets_if_needed(std::string username, std:
         }
     }
     
-    // Clean up KeyBundle objects after processing
-    for (KeyBundle* bundle : bundles) {
-        delete bundle;
-    }
+    // Note: Not deleting KeyBundle objects here as they may be reused
+    // Caller is responsible for cleanup
 }
 
 
@@ -78,16 +76,6 @@ std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>
         ratchet->save(username, device_id);
         
         memcpy(header->device_id.data(), my_device_public.data(), 32);
-        
-        // Debug: Print MessageHeader values after device_id is set
-        printf("=== DEBUG: MessageHeader after device_id set in RatchetSessionManager ===\n");
-        printf("message_index: %d\n", header->message_index);
-        printf("prev_chain_length: %d\n", header->prev_chain_length);
-        printf("dh_public: ");
-        for (int i = 0; i < 32; ++i) printf("%02x", header->dh_public[i]);
-        printf("\ndevice_id: ");
-        for (int i = 0; i < 32; ++i) printf("%02x", header->device_id[i]);
-        printf("\n=== END DEBUG ===\n");
         
         std::array<unsigned char, 32> message_key_array;
         std::copy(message_key_vector.begin(), message_key_vector.begin() + 32, message_key_array.begin());
