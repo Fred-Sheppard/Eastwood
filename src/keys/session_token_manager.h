@@ -13,8 +13,6 @@ public:
     bool hasToken() const;
     void clearToken();
 
-    void clearToken();
-
     // Non-copyable
     SessionTokenManager(const SessionTokenManager&) = delete;
     SessionTokenManager& operator=(const SessionTokenManager&) = delete;
