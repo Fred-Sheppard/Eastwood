@@ -66,4 +66,14 @@ void post_new_keybundles(
 
 std::string post_upload_file(std::vector<unsigned char> encrypted_bytes);
 
+bool post_check_user_exists(
+    const std::string& username
+);
+
+bool get_user_exists(
+    const std::string& username
+);
+
+std::vector<std::string> get_devices();
+
 #endif //ENDPOINTS_H

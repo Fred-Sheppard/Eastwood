@@ -52,11 +52,8 @@ void Login::onContinueButtonClicked()
     }
 
     try {
-        unsigned char pk_device[crypto_sign_PUBLICKEYBYTES];
-        auto sk_device = SecureMemoryBuffer::create(crypto_sign_SECRETKEYBYTES);
-
+        bool existsOnServer = get_user_exists(username.toStdString());
         bool hasDatabase = Database::user_has_database(username.toStdString());
-        bool existsOnServer = true;
 
         if (hasDatabase && existsOnServer) {
             qDebug() << "User has database and exists on server";

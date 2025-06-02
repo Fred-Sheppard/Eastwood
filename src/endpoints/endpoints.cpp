@@ -19,12 +19,17 @@ bool post_check_user_exists(const std::string& username, const unsigned char* pk
     };
 
     json response = post_unauth("/isDeviceRegistered", body);
-
-    std::cout << response.dump() << std::endl;
+    std::cout << "Response from server: " << response.dump(4) << std::endl;
 
     if (!response.contains("data") || !response["data"].is_boolean()) {
         throw std::runtime_error("Invalid or missing 'data' field in response");
     }
+    return response["data"].get<bool>();
+}
+
+bool get_user_exists(const std::string& username) {
+    json response = get_unauth("/isUserRegistered/" + username);
+    std::cout << "Response from server: " << response.dump(4) << std::endl;
     return response["data"].get<bool>();
 }
 

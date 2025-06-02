@@ -4,6 +4,7 @@
 #include <QDebug>
 #include <iostream>
 #include "src/key_exchange/utils.h"
+#include <sodium.h>
 
 CameraFunctionality::CameraFunctionality(QWidget* parent)
     : QObject(parent)
@@ -177,9 +178,19 @@ void CameraFunctionality::processFrame()
                         "A new device wants to connect.\n\nEnsure you trust this device before accepting.\n\nDo you wish to accept this connection?",
                         deviceName)) {
                         
-                        try {
-                            std::vector<unsigned char> decoded_key = base642bin(safeDecodedInfo.toStdString());
-                            if (decoded_key.size() != crypto_sign_PUBLICKEYBYTES) {
+                        try {                            
+                            qDebug() << "safe decoded info" << safeDecodedInfo;
+                            unsigned char pk_new_device[crypto_sign_PUBLICKEYBYTES];
+                            size_t bin_len;
+                            if (sodium_base642bin(pk_new_device, crypto_sign_PUBLICKEYBYTES,
+                                                safeDecodedInfo.toStdString().c_str(), safeDecodedInfo.length(),
+                                                nullptr, &bin_len, nullptr,
+                                                sodium_base64_VARIANT_ORIGINAL) != 0) {
+                                StyledMessageBox::error(m_parent, "Invalid Key", 
+                                    "The scanned QR code contains an invalid public key.");
+                                return;
+                            }
+                            if (bin_len != crypto_sign_PUBLICKEYBYTES) {
                                 StyledMessageBox::error(m_parent, "Invalid Key", 
                                     "The scanned QR code contains an invalid public key.");
                                 return;

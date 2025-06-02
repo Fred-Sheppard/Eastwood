@@ -17,12 +17,16 @@
 #include <QPixmap>
 #include <QLabel>
 #include <QDebug>
+#include <QPainter>
+#include <QIcon>
 #include "src/endpoints/endpoints.h"
 
 Settings::Settings(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::Settings)
     , m_cameraFunctionality(new CameraFunctionality(this))
+    , m_refreshSpinnerTimer(new QTimer(this))
+    , m_spinnerAngle(0)
 {
     ui->setupUi(this);
     setupConnections();
@@ -30,6 +34,9 @@ Settings::Settings(QWidget *parent)
     // Connect WindowManager signal to handle navbar highlighting
     connect(&WindowManager::instance(), &WindowManager::windowShown,
             this, &Settings::onWindowShown);
+
+    // Setup refresh spinner timer
+    connect(m_refreshSpinnerTimer, &QTimer::timeout, this, &Settings::handleRefreshSpinner);
 }
 
 Settings::~Settings()
@@ -257,7 +264,36 @@ void Settings::updateDeviceList()
     ui->deviceListWidgetLayout->addStretch();
 }
 
+void Settings::handleRefreshSpinner()
+{
+    m_spinnerAngle = (m_spinnerAngle + 30) % 360;
+    
+    // Update the button's icon with the new angle
+    QPixmap pixmap(16, 16);
+    pixmap.fill(Qt::transparent);
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.translate(8, 8);
+    painter.rotate(m_spinnerAngle);
+    painter.setPen(QPen(QColor("#6c5ce7"), 2));
+    painter.drawLine(0, -6, 0, 6);
+    painter.drawLine(-6, 0, 6, 0);
+    ui->refreshDevicesButton->setIcon(QIcon(pixmap));
+    ui->refreshDevicesButton->setIconSize(QSize(16, 16));
+}
+
 void Settings::onRefreshDevicesClicked()
 {
+    // Start the spinner animation
+    m_spinnerAngle = 0;
+    m_refreshSpinnerTimer->start(50); // Update every 50ms
+    
+    // Update the device list
     updateDeviceList();
+    
+    // Stop the spinner after 1 second
+    QTimer::singleShot(1000, [this]() {
+        m_refreshSpinnerTimer->stop();
+        ui->refreshDevicesButton->setIcon(QIcon());
+    });
 }
