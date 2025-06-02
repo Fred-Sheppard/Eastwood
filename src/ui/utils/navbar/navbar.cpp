@@ -2,6 +2,9 @@
 #include "ui_navbar.h"
 #include "../../utils/window_manager/window_manager.h"
 #include "../../utils/messagebox.h"
+#include "src/keys/session_token_manager.h"
+#include "src/keys/kek_manager.h"
+#include "src/database/database.h"
 
 NavBar::NavBar(QWidget *parent) : QWidget(parent), ui(new Ui::NavBar) {
     ui->setupUi(this);
@@ -107,11 +110,10 @@ void NavBar::onSettingsButtonClicked() {
 }
 
 void NavBar::onLogoutButtonClicked() {
+    // Clear session state
+    SessionTokenManager::instance().clearToken();
+    KekManager::instance().clearKEK();
+    Database::get().closeDatabase();
+    // Show login window
     WindowManager::instance().showLogin();
-    // TODO: Implement logout functionality
-    // - Show confirmation dialog
-    // - Clear sensitive data
-    // - Close all windows
-    // - Return to login screen
-    StyledMessageBox::info(this, "Not Implemented", "Logout functionality is not yet implemented.");
 }

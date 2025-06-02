@@ -16,6 +16,9 @@
 
 #include "src/files/upload_file.h"
 #include "src/sql/queries.h"
+#include "src/keys/session_token_manager.h"
+#include "src/keys/kek_manager.h"
+#include "src/database/database.h"
 
 SendFile::SendFile(QWidget *parent)
     : QWidget(parent)
@@ -141,5 +144,10 @@ void SendFile::onWindowShown(const QString &windowName) {
 }
 
 void SendFile::onLogoutButtonClicked() {
-    StyledMessageBox::info(this, "Not Implemented", "Logout functionality is not yet implemented.");
+    // Clear session state
+    SessionTokenManager::instance().clearToken();
+    KekManager::instance().clearKEK();
+    
+    // Show login window
+    WindowManager::instance().showLogin();
 }

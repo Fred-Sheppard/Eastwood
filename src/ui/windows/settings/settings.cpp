@@ -20,6 +20,9 @@
 #include <QPainter>
 #include <QIcon>
 #include "src/endpoints/endpoints.h"
+#include "src/keys/session_token_manager.h"
+#include "src/keys/kek_manager.h"
+#include "src/database/database.h"
 
 Settings::Settings(QWidget *parent)
     : QWidget(parent)
@@ -66,8 +69,8 @@ void Settings::setupConnections()
         connect(navbar, &NavBar::receivedClicked, this, &Settings::onReceivedButtonClicked);
         connect(navbar, &NavBar::sentClicked, this, &Settings::onSentButtonClicked);
         connect(navbar, &NavBar::sendFileClicked, this, &Settings::onSendFileButtonClicked);
-        connect(navbar, &NavBar::logoutClicked, this, &Settings::onLogoutButtonClicked);
         connect(navbar, &NavBar::settingsClicked, this, &Settings::onSettingsButtonClicked);
+        connect(navbar, &NavBar::logoutClicked, this, &Settings::onLogoutButtonClicked);
     }
     connect(ui->scanQRButton, &QPushButton::clicked, this, &Settings::onScanQRButtonClicked);
 
@@ -220,11 +223,6 @@ void Settings::onAuthVerifyClicked()
     }
 }
 
-void Settings::onLogoutButtonClicked() {
-    // TODO: Implement logout functionality
-    StyledMessageBox::info(this, "Not Implemented", "Logout functionality is not yet implemented.");
-}
-
 void Settings::onScanQRButtonClicked()
 {
     m_cameraFunctionality->showScanDialog();
@@ -307,4 +305,13 @@ void Settings::onRefreshDevicesClicked()
         m_refreshSpinnerTimer->stop();
         ui->refreshDevicesButton->setIcon(QIcon());
     });
+}
+
+void Settings::onLogoutButtonClicked() {
+    // Clear session state
+    SessionTokenManager::instance().clearToken();
+    KekManager::instance().clearKEK();
+    
+    // Show login window
+    WindowManager::instance().showLogin();
 }

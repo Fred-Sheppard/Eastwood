@@ -1,12 +1,14 @@
 #include "received_dash.h"
 #include "ui_received_dash.h"
-#include "../../utils/messagebox.h"
-#include "../../utils/window_manager/window_manager.h"
-#include "../../utils/navbar/navbar.h"
-#include "../sent_dashboard/sent_dash.h"
+#include "src/ui/utils/messagebox.h"
+#include "src/ui/utils/window_manager/window_manager.h"
+#include "src/ui/utils/navbar/navbar.h"
+#include "src/ui/windows/sent_dashboard/sent_dash.h"
 #include <QFileDialog>
 #include <QTimer>
 #include <QCheckBox>
+#include "src/keys/session_token_manager.h"
+#include "src/keys/kek_manager.h"
 
 Received::Received(QWidget *parent, QWidget* sendFileWindow)
     : QWidget(parent)
@@ -135,12 +137,16 @@ void Received::onWindowShown(const QString& windowName)
     }
 }
 
-void Received::onLogoutButtonClicked()
-{
-    WindowManager::instance().showLogin();
-}
-
 void Received::onDownloadFileClicked(FileItemWidget* widget)
 {
     StyledMessageBox::info(this, "Not Implemented", "Download functionality is not yet implemented.");
+}
+
+void Received::onLogoutButtonClicked() {
+    // Clear session state
+    SessionTokenManager::instance().clearToken();
+    KekManager::instance().clearKEK();
+    
+    // Show login window
+    WindowManager::instance().showLogin();
 }
