@@ -293,10 +293,11 @@ void post_handshake_device(
     const unsigned char *recipient_signed_prekey_public,
     const unsigned char *recipient_signed_prekey_signature,
     const unsigned char *recipient_onetime_prekey_public,
-    const unsigned char *my_device_key_public,
     const unsigned char *my_ephemeral_key_public
 ) {
+    auto my_device_key_public = get_public_key("device");
     json body = {
+        {"username", SessionTokenManager::instance().getUsername()},
         {"recipient_device_key", bin2hex(recipient_device_key_public, crypto_box_PUBLICKEYBYTES)},
         {"recipient_signed_public_prekey", bin2hex(recipient_signed_prekey_public, crypto_box_PUBLICKEYBYTES)},
         {
@@ -304,7 +305,7 @@ void post_handshake_device(
             bin2hex(recipient_signed_prekey_signature, crypto_box_PUBLICKEYBYTES)
         },
         {"initiator_ephemeral_public_key", bin2hex(my_ephemeral_key_public, crypto_box_PUBLICKEYBYTES)},
-        {"initiator_device_public_key", bin2hex(my_device_key_public, crypto_box_PUBLICKEYBYTES)},
+        {"initiator_device_public_key", bin2hex(reinterpret_cast<const unsigned char *>(my_device_key_public.data()), crypto_box_PUBLICKEYBYTES)},
     };
 
     // Only add one-time prekey if it exists

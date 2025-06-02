@@ -107,7 +107,7 @@ void SendFile::onSendClicked() {
             auto message = new DeviceMessage();
             message->header = message_header;
             messages.push_back(message);
-            delete[] message;
+            delete message;
         }
         post_ratchet_message(messages);
     }

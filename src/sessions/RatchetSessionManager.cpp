@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include "src/endpoints/endpoints.h"
+#include "src/utils/JsonParser.h"
 
 // Singleton instance method
 RatchetSessionManager& RatchetSessionManager::instance() {
@@ -32,19 +33,31 @@ void RatchetSessionManager::create_ratchets_if_needed(std::string username, std:
 
             auto sending_bundle = dynamic_cast<SendingKeyBundle*>(bundle);
 
-            if (post_to_server) {
-                post_handshake_device(
-                    sending_bundle->get_their_device_public(),
-                    sending_bundle->get_their_signed_public(),
-                    sending_bundle->get_their_signed_signature(),
-                    sending_bundle->get_their_onetime_public(),
-                    sending_bundle->get_my_device_public(),
-                    sending_bundle->get_my_ephemeral_public()
-                );
+            if (post_to_server && sending_bundle) {
+                try {
+                    post_handshake_device(
+                        sending_bundle->get_their_device_public(),
+                        sending_bundle->get_their_signed_public(),
+                        sending_bundle->get_their_signed_signature(),
+                        sending_bundle->get_their_onetime_public(),
+                        sending_bundle->get_my_ephemeral_public()
+                    );
+                    std::cout << "Successfully posted handshake to server for " << username << std::endl;
+                } catch (const webwood::HttpError& e) {
+                    std::cerr << "Server error when posting handshake for " << username << ": " << e.what() << std::endl;
+                    // Continue execution - ratchet is still created locally
+                } catch (const std::exception& e) {
+                    std::cerr << "Error posting handshake for " << username << ": " << e.what() << std::endl;
+                    // Continue execution - ratchet is still created locally
+                }
             }
         }
     }
-
+    
+    // Clean up KeyBundle objects after processing
+    for (KeyBundle* bundle : bundles) {
+        delete bundle;
+    }
 }
 
 
@@ -102,7 +115,7 @@ std::vector<std::array<unsigned char,32> > RatchetSessionManager::get_device_ids
 
     auto user_it = ratchets.find(username);
     if (user_it == ratchets.end()) {
-        throw std::runtime_error("User not found: " + username);
+        return device_ids;
     }
 
     for (const auto& [device_id, ratchet] : user_it->second) {
