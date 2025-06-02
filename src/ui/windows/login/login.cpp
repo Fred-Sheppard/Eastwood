@@ -65,6 +65,9 @@ void Login::onContinueButtonClicked()
                 throw std::runtime_error("Libsodium initialization failed");
             }
 
+            unsigned char pk_device[crypto_sign_PUBLICKEYBYTES];
+            const auto sk_device = SecureMemoryBuffer::create(crypto_sign_SECRETKEYBYTES);
+
             crypto_sign_keypair(pk_device, sk_device->data());
             std::string auth_code = bin2base64(pk_device, crypto_sign_PUBLICKEYBYTES);
             QImage qr_code = getQRCodeForMyDevicePublicKey(bin2base64(pk_device, 32));

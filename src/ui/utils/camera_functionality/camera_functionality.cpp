@@ -196,9 +196,6 @@ void CameraFunctionality::processFrame()
                                 return;
                             }
 
-                            unsigned char pk_new_device[crypto_sign_PUBLICKEYBYTES];
-                            std::copy(decoded_key.begin(), decoded_key.end(), pk_new_device);
-
                             add_trusted_device(pk_new_device, deviceName.toStdString());
                             StyledMessageBox::success(m_parent, "Connection Accepted", 
                                 QString("Connection request has been accepted for device: %1").arg(deviceName));
