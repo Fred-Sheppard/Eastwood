@@ -163,7 +163,7 @@ std::vector<std::tuple<std::string, DeviceMessage *> > get_messages() {
     return messages;
 }
 
-void post_ratchet_message(std::vector<std::tuple<std::array<unsigned char,32>, DeviceMessage*>> messages) {
+void post_ratchet_message(std::vector<std::tuple<std::array<unsigned char,32>, DeviceMessage*>> messages, std::string username) {
     json data = json::object();
     data["messages"] = json::array();
 
@@ -174,7 +174,7 @@ void post_ratchet_message(std::vector<std::tuple<std::array<unsigned char,32>, D
 
         json body = json::object();
         body["file_id"] = std::string(msg->header->file_uuid);
-        body["username"] = SessionTokenManager::instance().getUsername();
+        body["username"] = username;
         body["initiator_device_public_key"] = bin2hex(dev_pub, 32);
         body["recipient_device_public_key"] = bin2hex(recipient_dev_pub.data(), 32);
         body["dh_public"] = bin2hex(msg->header->dh_public.data(), 32);

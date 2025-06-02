@@ -198,6 +198,7 @@ protected:
         }
         if (charlie_from_alice_bundle) {
             delete charlie_from_alice_bundle;
+
             charlie_from_alice_bundle = nullptr;
         }
         if (bob_to_charlie_bundle) {

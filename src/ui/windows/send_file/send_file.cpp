@@ -120,7 +120,7 @@ void SendFile::onSendClicked() {
             
             messages.push_back(std::make_tuple(device_id, message));
         }
-        post_ratchet_message(messages);
+        post_ratchet_message(messages, ui->usernameInput->text().toStdString());
         
         // Clean up DeviceMessage objects after posting
         for (auto [key, msg] : messages) {
