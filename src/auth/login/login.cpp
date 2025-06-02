@@ -4,6 +4,9 @@
 #include "src/auth/salt.h"
 #include "src/endpoints/endpoints.h"
 #include "src/keys/session_token_manager.h"
+#include "src/key_exchange/utils.h"
+#include "src/key_exchange/XChaCha20-Poly1305.h"
+#include "src/sessions/RatchetSessionManager.h"
 #include "src/sql/queries.h"
 
 void login_user(const std::string &username, const std::unique_ptr<const std::string> &master_password) {
@@ -29,4 +32,28 @@ void login_user(const std::string &username, const std::unique_ptr<const std::st
         generate_signed_prekey(),
         generate_onetime_keys(50)
         );
+
+    auto messages = get_messages();
+    auto handshakes = get_handshake_backlog();
+    std::vector<KeyBundle*> proper_handshakes;
+    std::string username_out;
+    for (auto [username, bundles] : handshakes) {
+        username_out = username;
+        proper_handshakes.push_back(bundles);
+    }
+
+    RatchetSessionManager::instance().create_ratchets_if_needed(username_out,proper_handshakes);
+
+    std::vector<unsigned char*> keys;
+    DeviceMessage* msg_out;
+    unsigned char* key;
+    for (auto [username, msg]: messages) {
+        msg_out = msg;
+        key = RatchetSessionManager::instance().get_key_for_device(username_out, msg->header);
+    }
+
+    std::cout << bin2hex(decrypt_message_given_key(msg_out->ciphertext, msg_out->length, key).data(),32) << std::endl;
+
+    delete[] key;
+
 }

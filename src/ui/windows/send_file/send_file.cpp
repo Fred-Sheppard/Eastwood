@@ -16,6 +16,7 @@
 
 #include "src/endpoints/endpoints.h"
 #include "src/files/upload_file.h"
+#include "src/key_exchange/utils.h"
 #include "src/key_exchange/XChaCha20-Poly1305.h"
 #include "src/sessions/RatchetSessionManager.h"
 #include "src/sql/queries.h"
@@ -105,6 +106,7 @@ void SendFile::onSendClicked() {
             const auto& [key, message_header] = pair.second;
 
             auto file_key = get_decrypted_file_key(uuid);
+            std::cout << "key used to encrypt file "<< bin2hex(file_key->data(),32) << std::endl;
             auto message = new DeviceMessage();
             message->header = message_header;
             strncpy(message->header->file_uuid, uuid.c_str(), sizeof(message->header->file_uuid) - 1);
