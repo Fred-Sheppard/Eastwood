@@ -7,20 +7,20 @@
 #include "sodium.h"
 #include <cstring>
 #include <array>
+#include <string>
 
 #pragma pack(push, 1)
 struct MessageHeader {
     // Constructor to ensure proper initialization
     MessageHeader() : dh_public{}, prev_chain_length(0), message_index(0), device_id{} {
-        // Debug: verify initialization
-        static_assert(sizeof(MessageHeader) == crypto_kx_PUBLICKEYBYTES + 4 + 4 + crypto_box_PUBLICKEYBYTES, 
-                     "MessageHeader size mismatch");
+        memset(file_uuid, 0, sizeof(file_uuid));
     }
     
     std::array<unsigned char, crypto_kx_PUBLICKEYBYTES> dh_public; // Sender's current ratchet public key
     int prev_chain_length;                                         // Length of previous sending chain
     int message_index;                                             // Message number in the chain
     std::array<unsigned char, crypto_box_PUBLICKEYBYTES> device_id; // Fixed-size array for device ID
+    char file_uuid[64]; // Fixed-size array instead of std::string
 };
 #pragma pack(pop)
 
@@ -47,6 +47,8 @@ public:
             header->prev_chain_length = other.header->prev_chain_length;
             header->message_index = other.header->message_index;
             header->device_id = other.header->device_id;
+            strncpy(header->file_uuid, other.header->file_uuid, sizeof(header->file_uuid) - 1);
+            header->file_uuid[sizeof(header->file_uuid) - 1] = '\0';
         } else {
             header = nullptr;
         }
@@ -81,6 +83,8 @@ public:
                 header->prev_chain_length = other.header->prev_chain_length;
                 header->message_index = other.header->message_index;
                 header->device_id = other.header->device_id;
+                strncpy(header->file_uuid, other.header->file_uuid, sizeof(header->file_uuid) - 1);
+                header->file_uuid[sizeof(header->file_uuid) - 1] = '\0';
             } else {
                 header = nullptr;
             }

@@ -173,7 +173,7 @@ void post_ratchet_message(std::vector<DeviceMessage*> messages) {
         memcpy(dev_pub, dev_pub_byte.constData(), crypto_box_PUBLICKEYBYTES);
 
         json body = json::object();
-        body["file_id"] = 0; // update
+        body["file_id"] = std::string(msg->header->file_uuid);
         body["username"] = SessionTokenManager::instance().getUsername();
         body["initiator_device_public_key"] = bin2hex(dev_pub, 32);
         body["recipient_device_public_key"] = bin2hex(msg->header->device_id.data(), 32);
