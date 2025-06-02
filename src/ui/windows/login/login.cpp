@@ -12,6 +12,7 @@
 #include <QDebug>
 #include "src/database/database.h"
 #include "src/auth/set_up_client.h"
+#include <QInputDialog>
 
 Login::Login(QWidget *parent)
     : QWidget(parent)
@@ -83,8 +84,43 @@ void Login::onContinueButtonClicked()
                 return;
             }
 
-            // Initialize the database for the user
-            auto master_password = std::make_unique<std::string>("slog"); // Default password for new device registration
+            // Get password from user
+            bool ok;
+            QString password = QInputDialog::getText(this, "Set Password", 
+                "Enter a password (20-64 characters):", 
+                QLineEdit::Password, "", &ok);
+            
+            if (!ok || password.isEmpty()) {
+                StyledMessageBox::error(this, "Error", "Password is required");
+                return;
+            }
+
+            if (password.length() < 20) {
+                StyledMessageBox::error(this, "Error", "Password must be at least 20 characters long");
+                return;
+            }
+
+            if (password.length() > 64) {
+                StyledMessageBox::error(this, "Error", "Password cannot be longer than 64 characters");
+                return;
+            }
+
+            // Verify password
+            QString verifyPassword = QInputDialog::getText(this, "Verify Password", 
+                "Enter the password again:", 
+                QLineEdit::Password, "", &ok);
+            
+            if (!ok || verifyPassword.isEmpty()) {
+                StyledMessageBox::error(this, "Error", "Password verification is required");
+                return;
+            }
+
+            if (password != verifyPassword) {
+                StyledMessageBox::error(this, "Error", "Passwords do not match");
+                return;
+            }
+
+            auto master_password = std::make_unique<std::string>(password.toStdString());
             set_up_client_for_user(username.toStdString(), std::move(master_password));
 
             // Save the device keypair to the database

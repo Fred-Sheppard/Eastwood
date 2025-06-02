@@ -24,7 +24,6 @@ signals:
 private slots:
     void onBackButtonClicked();
     void onCopyButtonClicked();
-    void onUserRegistered(); // Slot to handle login in main thread
 
 private:
     Ui::DeviceRegister *ui;

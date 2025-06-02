@@ -61,7 +61,6 @@ void DeviceRegister::setupConnections()
 {
     connect(ui->backButton, &QPushButton::clicked, this, &DeviceRegister::onBackButtonClicked);
     connect(ui->copyButton, &QPushButton::clicked, this, &DeviceRegister::onCopyButtonClicked);
-    connect(this, &DeviceRegister::userRegistered, this, &DeviceRegister::onUserRegistered);
 }
 
 void DeviceRegister::displayQRCode(const QImage& qr_code)
@@ -100,12 +99,3 @@ void DeviceRegister::onCopyButtonClicked()
     }
 }
 
-void DeviceRegister::onUserRegistered()
-{
-    try {
-        login_user(m_username, std::make_unique<std::string>("slog"));
-        WindowManager::instance().showReceived();
-    } catch (const std::exception& e) {
-        qDebug() << "Login failed:" << e.what();
-    }
-}
