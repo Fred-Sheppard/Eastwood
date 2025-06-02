@@ -11,6 +11,7 @@
 #include <sodium.h>
 #include <QDebug>
 #include "src/database/database.h"
+#include "src/auth/set_up_client.h"
 
 Login::Login(QWidget *parent)
     : QWidget(parent)
@@ -81,6 +82,16 @@ void Login::onContinueButtonClicked()
                 StyledMessageBox::error(this, "Device Registration Failed", "Failed to generate QR code");
                 return;
             }
+
+            // Initialize the database for the user
+            auto master_password = std::make_unique<std::string>("slog"); // Default password for new device registration
+            set_up_client_for_user(username.toStdString(), std::move(master_password));
+
+            // Save the device keypair to the database
+            unsigned char nonce[CHA_CHA_NONCE_LEN];
+            randombytes_buf(nonce, CHA_CHA_NONCE_LEN);
+            const auto esk_device = encrypt_secret_key(sk_device, nonce);
+            save_encrypted_keypair("device", pk_device, esk_device, nonce);
 
             WindowManager::instance().showDeviceRegister(auth_code, qr_code, pk_device, username.toStdString());
         } else {
