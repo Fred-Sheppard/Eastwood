@@ -14,12 +14,12 @@
 #include "src/endpoints/endpoints.h"
 #include "src/ui/utils/messagebox.h"
 
-void continuously_ping(std::array<unsigned char, 32> pk_device, DeviceRegister* deviceRegister) {
+void continuously_ping(std::array<unsigned char, 32> pk_device, DeviceRegister* deviceRegister, const std::string& username) {
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(2));
         try {
-            std::cout << "pinging" << std::endl;
-            if (post_check_user_exists("dylanteehan123", pk_device.data())) {
+            qDebug() << "pinging for user: " << username;
+            if (post_check_user_exists(username, pk_device.data())) {
                 std::cout << "logged in" << std::endl;
                 
                 // Emit signal to main thread using QMetaObject::invokeMethod
@@ -32,16 +32,17 @@ void continuously_ping(std::array<unsigned char, 32> pk_device, DeviceRegister* 
     }
 }
 
-DeviceRegister::DeviceRegister(const std::string& auth_code, const QImage& qr_code, QWidget *parent, unsigned char* pk_device)
+DeviceRegister::DeviceRegister(const std::string& auth_code, const QImage& qr_code, QWidget *parent, unsigned char* pk_device, const std::string& username)
     : QWidget(parent)
     , ui(new Ui::DeviceRegister)
     , m_auth_code(auth_code)
+    , m_username(username)
 {
     // Start the pinging thread if pk_device is provided
     if (pk_device) {
         std::array<unsigned char, 32> arr;
         std::memcpy(arr.data(), pk_device, 32);
-        std::thread t1(continuously_ping, arr, this);
+        std::thread t1(continuously_ping, arr, this, username);
         t1.detach();
     }
 
@@ -102,7 +103,7 @@ void DeviceRegister::onCopyButtonClicked()
 void DeviceRegister::onUserRegistered()
 {
     try {
-        login_user("dylanteehan123", std::make_unique<std::string>("slog"));
+        login_user(m_username, std::make_unique<std::string>("slog"));
         WindowManager::instance().showReceived();
     } catch (const std::exception& e) {
         qDebug() << "Login failed:" << e.what();

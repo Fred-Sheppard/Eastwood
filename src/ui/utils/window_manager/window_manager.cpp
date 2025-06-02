@@ -209,7 +209,7 @@ void WindowManager::showRegister()
     emit windowShown("registerButton");
 }
 
-void WindowManager::showDeviceRegister(const std::string& auth_code, const QImage& qr_code, unsigned char* pk_dev)
+void WindowManager::showDeviceRegister(const std::string& auth_code, const QImage& qr_code, unsigned char* pk_dev, const std::string& username)
 {
     // Close all existing windows
     for (const QPointer<QWidget>& window : m_windows) {
@@ -220,7 +220,7 @@ void WindowManager::showDeviceRegister(const std::string& auth_code, const QImag
     m_windows.clear();
 
     if (m_deviceRegister.isNull()) {
-        m_deviceRegister = new DeviceRegister(auth_code, qr_code, nullptr, pk_dev);
+        m_deviceRegister = new DeviceRegister(auth_code, qr_code, nullptr, pk_dev, username);
         m_deviceRegister->setAttribute(Qt::WA_DeleteOnClose);
         m_windows.append(QPointer<QWidget>(m_deviceRegister));
         connect(m_deviceRegister, &DeviceRegister::destroyed, this, [this]() {

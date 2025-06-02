@@ -183,24 +183,35 @@ void Settings::onAuthVerifyClicked()
         "A new device wants to connect.\n\nEnsure you trust this device before accepting.\n\nDo you wish to accept this connection?",
         deviceName)) {
         
-        std::vector<unsigned char> decoded_key = base642bin(auth_code.toStdString());
-        if (decoded_key.size() != crypto_sign_PUBLICKEYBYTES) {
-            StyledMessageBox::error(this, "Invalid Key", 
-                "The authentication code contains an invalid public key.");
-            return;
-        }
-
-        unsigned char pk_new_device[crypto_sign_PUBLICKEYBYTES];
-        std::copy(decoded_key.begin(), decoded_key.end(), pk_new_device);
-        
         try {
+            unsigned char pk_new_device[crypto_sign_PUBLICKEYBYTES];
+            size_t bin_len;
+            if (sodium_base642bin(pk_new_device, crypto_sign_PUBLICKEYBYTES,
+                                auth_code.toStdString().c_str(), auth_code.length(),
+                                nullptr, &bin_len, nullptr,
+                                sodium_base64_VARIANT_ORIGINAL) != 0) {
+                StyledMessageBox::error(this, "Invalid Key", 
+                    "The authentication code contains an invalid public key.");
+                return;
+            }
+            if (bin_len != crypto_sign_PUBLICKEYBYTES) {
+                StyledMessageBox::error(this, "Invalid Key", 
+                    "The authentication code contains an invalid public key.");
+                return;
+            }
+
             add_trusted_device(pk_new_device, deviceName.toStdString());
             StyledMessageBox::success(this, "Connection Accepted", 
                 QString("Connection request has been accepted for device: %1").arg(deviceName));
             qDebug() << "Connection accepted with public key:" << auth_code << "and device name:" << deviceName;
-        } catch (const std::exception& e) {
+        } catch (const std::runtime_error& e) {
             StyledMessageBox::error(this, "Connection Failed", 
                 QString("Failed to add trusted device: %1").arg(e.what()));
+            qDebug() << "Connection failed:" << e.what();
+        } catch (const std::exception& e) {
+            StyledMessageBox::error(this, "Connection Failed", 
+                QString("An unexpected error occurred: %1").arg(e.what()));
+            qDebug() << "Unexpected error:" << e.what();
         }
     } else {
         StyledMessageBox::info(this, "Connection Denied", 

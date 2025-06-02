@@ -82,7 +82,7 @@ void Login::onContinueButtonClicked()
                 return;
             }
 
-            WindowManager::instance().showDeviceRegister(auth_code, qr_code, pk_device);
+            WindowManager::instance().showDeviceRegister(auth_code, qr_code, pk_device, username.toStdString());
         } else {
             qDebug() << "User doesn't exist - go straight to register";
             WindowManager::instance().showRegister();

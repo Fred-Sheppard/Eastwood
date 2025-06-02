@@ -28,7 +28,7 @@ public:
     void showSettings();
     void showLogin();
     void showRegister();
-    void showDeviceRegister(const std::string& auth_code, const QImage& qr_code, unsigned char* pk_dev);
+    void showDeviceRegister(const std::string& auth_code, const QImage& qr_code, unsigned char* pk_dev, const std::string& username);
     void cleanup();
 
 signals:
