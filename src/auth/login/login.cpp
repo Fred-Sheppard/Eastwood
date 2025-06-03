@@ -27,46 +27,4 @@ void login_user(const std::string &username, const std::unique_ptr<const std::st
     const std::string token = post_authenticate(username, q_byte_array_to_chars(pk_device), signature);
     SessionTokenManager::instance().setToken(token);
     SessionTokenManager::instance().setUsername(username);
-
-    // auto handshakes = get_handshake_backlog();
-    // auto messages = get_messages();
-    //
-    // // Group handshakes by username and create ratchets for each user
-    // std::map<std::string, std::vector<KeyBundle*>> handshakes_by_user;
-    // for (auto [username, bundle] : handshakes) {
-    //     handshakes_by_user[username].push_back(bundle);
-    // }
-    //
-    // // Create ratchets for each user that sent handshakes
-    // for (auto [username, bundles] : handshakes_by_user) {
-    //     RatchetSessionManager::instance().create_ratchets_if_needed(username, bundles);
-    //     std::cout << "Created ratchets for user: " << username << std::endl;
-    // }
-    //
-    // // Process each message individually and safely
-    // for (auto [msg_username, msg] : messages) {
-    //     if (msg == nullptr || msg->header == nullptr) {
-    //         std::cerr << "Null message or header, skipping" << std::endl;
-    //         continue;
-    //     }
-    //
-    //     try {
-    //         unsigned char* key = RatchetSessionManager::instance().get_key_for_device(msg_username, msg->header);
-    //         if (key != nullptr) {
-    //             auto decrypted = decrypt_message_given_key(msg->ciphertext, msg->length, key);
-    //             std::cout << "Decrypted message: " << bin2hex(decrypted.data(), std::min(32, (int)decrypted.size())) << std::endl;
-    //             delete[] key;
-    //         }
-    //     } catch (const std::exception& e) {
-    //         std::cerr << "Error processing message: " << e.what() << std::endl;
-    //     }
-    //
-    //     // Clean up message - DeviceMessage destructor handles header and ciphertext
-    //     delete msg;
-    // }
-    //
-    // // Clean up handshakes
-    // for (auto [username, bundle] : handshakes) {
-    //     delete bundle;
-    // }
 }
