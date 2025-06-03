@@ -11,6 +11,7 @@ public:
     const std::string& getToken() const;
     const std::string& getUsername() const;
     bool hasToken() const;
+    void clearToken();
 
     // Non-copyable
     SessionTokenManager(const SessionTokenManager&) = delete;

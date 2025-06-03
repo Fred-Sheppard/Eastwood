@@ -15,12 +15,16 @@
 #include <QCheckBox>
 
 #include "src/endpoints/endpoints.h"
+#include "src/auth/logout.h"
 #include "src/files/upload_file.h"
 #include "src/keys/session_token_manager.h"
 #include "src/key_exchange/utils.h"
 #include "src/key_exchange/XChaCha20-Poly1305.h"
 #include "src/sessions/RatchetSessionManager.h"
 #include "src/sql/queries.h"
+#include "src/keys/session_token_manager.h"
+#include "src/keys/kek_manager.h"
+#include "src/database/database.h"
 
 SendFile::SendFile(QWidget *parent)
     : QWidget(parent)
@@ -112,17 +116,17 @@ void SendFile::onSendClicked() {
             message->header = message_header;
             strncpy(message->header->file_uuid, uuid.c_str(), sizeof(message->header->file_uuid) - 1);
             message->header->file_uuid[sizeof(message->header->file_uuid) - 1] = '\0';
-            
+
             // Encrypt the file key using the message key
             std::vector<unsigned char> encrypted_data = encrypt_message_given_key(file_key->data(), file_key->size(), key.data());
             message->length = encrypted_data.size();
             message->ciphertext = new unsigned char[message->length];
             memcpy(message->ciphertext, encrypted_data.data(), message->length);
-            
+
             messages.push_back(std::make_tuple(device_id, message));
         }
         post_ratchet_message(messages, SessionTokenManager::instance().getUsername());
-        
+
         // Clean up DeviceMessage objects after posting
         for (auto [device_id, msg] : messages) {
             delete msg;  // DeviceMessage destructor handles header and ciphertext cleanup
@@ -176,5 +180,8 @@ void SendFile::onWindowShown(const QString &windowName) {
 }
 
 void SendFile::onLogoutButtonClicked() {
-    StyledMessageBox::info(this, "Not Implemented", "Logout functionality is not yet implemented.");
+    logout();
+
+    // Show login window
+    WindowManager::instance().showLogin();
 }

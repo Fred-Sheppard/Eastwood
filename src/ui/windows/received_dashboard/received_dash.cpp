@@ -1,14 +1,13 @@
 #include "received_dash.h"
 #include "ui_received_dash.h"
-#include "../../utils/messagebox.h"
-#include "../../utils/window_manager/window_manager.h"
-#include "../../utils/navbar/navbar.h"
-#include "../sent_dashboard/sent_dash.h"
+#include "src/ui/utils/messagebox.h"
+#include "src/ui/utils/window_manager/window_manager.h"
+#include "src/ui/utils/navbar/navbar.h"
+#include "src/ui/windows/sent_dashboard/sent_dash.h"
 #include <QFileDialog>
 #include <QTimer>
 #include <QCheckBox>
-
-#include "src/sessions/RatchetSessionManager.h"
+#include "src/auth/logout.h"
 
 Received::Received(QWidget *parent, QWidget* sendFileWindow)
     : QWidget(parent)
@@ -139,6 +138,7 @@ void Received::onWindowShown(const QString& windowName)
 
 void Received::onLogoutButtonClicked()
 {
+    logout();
     WindowManager::instance().showLogin();
 }
 
