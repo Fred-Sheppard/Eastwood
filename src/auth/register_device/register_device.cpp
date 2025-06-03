@@ -16,15 +16,6 @@ void add_trusted_device(unsigned char pk_new_device[crypto_sign_PUBLICKEYBYTES],
         throw std::runtime_error("Libsodium initialization failed");
     }
 
-    try {
-        if (!Database::get().isInitialized()) {
-            throw std::runtime_error("Database not initialized");
-        }
-    } catch (const std::exception& e) {
-        qDebug() << "Database initialization error:" << e.what();
-        throw std::runtime_error("Failed to initialize database");
-    }
-
     const auto [pk_identity,sk_identity] = get_decrypted_keypair("identity");
 
     unsigned char nonce[CHA_CHA_NONCE_LEN];
@@ -39,6 +30,12 @@ void add_trusted_device(unsigned char pk_new_device[crypto_sign_PUBLICKEYBYTES],
         qDebug() << "Failed to register device:" << e.what();
         throw std::runtime_error("Failed to register device with server");
     }
+
+    post_new_keybundles(
+        get_decrypted_keypair("device"),
+        generate_signed_prekey(),
+        generate_onetime_keys(50)
+        );
 }
 
 void register_first_device() {
