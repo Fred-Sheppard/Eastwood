@@ -388,6 +388,7 @@ std::vector<std::tuple<std::string, KeyBundle *> > get_handshake_backlog() {
     return bundles;
 }
 
+// Version with signed prekey (original behavior)
 void post_new_keybundles(
     std::tuple<QByteArray, std::unique_ptr<SecureMemoryBuffer> > device_keypair,
     std::tuple<unsigned char *, std::unique_ptr<SecureMemoryBuffer> > signed_prekeypair,
@@ -408,6 +409,24 @@ void post_new_keybundles(
     json body = {
         {"signedpre_key", signed_prekey_pub_hex},
         {"signedpk_signature", signature_hex},
+        {"one_time_keys", json::array()}
+    };
+
+    for (const auto &[pk, sk, nonce]: otks) {
+        body["one_time_keys"].push_back(bin2hex(pk, crypto_box_PUBLICKEYBYTES));
+    }
+    post("/updateKeybundle", body);
+}
+
+// Version without signed prekey (new behavior)
+void post_new_keybundles(
+    std::tuple<QByteArray, std::unique_ptr<SecureMemoryBuffer> > device_keypair,
+    const std::vector<std::tuple<unsigned char *, std::unique_ptr<SecureMemoryBuffer>, unsigned char *> > &otks
+) {
+    auto [pk_device_q, sk_device] = std::move(device_keypair);
+
+    // Create JSON payload with only one-time keys
+    json body = {
         {"one_time_keys", json::array()}
     };
 

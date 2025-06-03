@@ -27,11 +27,6 @@ void login_user(const std::string &username, const std::unique_ptr<const std::st
     const std::string token = post_authenticate(username, q_byte_array_to_chars(pk_device), signature);
     SessionTokenManager::instance().setToken(token);
     SessionTokenManager::instance().setUsername(username);
-    post_new_keybundles(
-        get_decrypted_keypair("device"),
-        generate_signed_prekey(),
-        generate_onetime_keys(50)
-        );
 
     // auto handshakes = get_handshake_backlog();
     // auto messages = get_messages();
