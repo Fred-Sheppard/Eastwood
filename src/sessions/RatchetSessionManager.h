@@ -27,10 +27,9 @@ public:
     // device id : <key, message header>
     std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>, MessageHeader*>> get_keys_for_identity(const std::string &username, bool post_new_ratchets_to_server = true);
     // essentially receive
-    unsigned char* get_key_for_device(std::string username, MessageHeader* header);
+    unsigned char* get_key_for_device(const std::string &username, MessageHeader* header);
 
     void load_ratchets_from_db();
-    unsigned char* get_key_for_device(const std::string &username, MessageHeader* header);
 
     std::vector<std::array<unsigned char,32>>get_device_ids_of_existing_handshakes(const std::string &username);
 private:
