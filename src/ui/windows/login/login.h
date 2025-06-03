@@ -17,15 +17,16 @@ public:
 private slots:
     void onContinueButtonClicked();
     void onLoginButtonClicked();
-    void onRegisterButtonClicked();
+
+    static void onRegisterButtonClicked();
     void onTogglePassphraseClicked();
 
 private:
     Ui::Login *ui;
     void setupConnections();
     bool m_passphraseVisible = false;
-    void showPassphraseStage();
-    void showUsernameStage();
+    void showPassphraseStage() const;
+    void showUsernameStage() const;
 };
 
 #endif //LOGIN_H

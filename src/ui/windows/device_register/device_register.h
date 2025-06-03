@@ -13,18 +13,19 @@ class DeviceRegister : public QWidget {
     Q_OBJECT
 
 public:
-    explicit DeviceRegister(const std::string& auth_code, const QImage& qr_code, QWidget *parent = nullptr, unsigned char* pk_device = nullptr);
+    explicit DeviceRegister(const std::string& auth_code, const QImage& qr_code, QWidget *parent = nullptr, const unsigned char* pk_device = nullptr);
     ~DeviceRegister() override;
-    void displayQRCode(const QImage& qr_code);
-    void displayAuthCode(const std::string& auth_code);
+    void displayQRCode(const QImage& qr_code) const;
+    void displayAuthCode(const std::string& auth_code) const;
 
 signals:
     void userRegistered(); // Signal emitted when background thread detects registration
 
 private slots:
-    void onBackButtonClicked();
+    static void onBackButtonClicked();
     void onCopyButtonClicked();
-    void onUserRegistered(); // Slot to handle login in main thread
+
+    static void onUserRegistered(); // Slot to handle login in main thread
 
 private:
     Ui::DeviceRegister *ui;

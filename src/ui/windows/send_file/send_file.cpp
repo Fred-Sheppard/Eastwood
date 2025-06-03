@@ -2,20 +2,13 @@
 #include "ui_send_file.h"
 #include "../../utils/messagebox.h"
 #include "../../utils/window_manager/window_manager.h"
-#include "../../utils/messagebox.h"
 #include "../../utils/navbar/navbar.h"
-#include <QVBoxLayout>
-#include <QHBoxLayout>
 #include <QFileInfo>
 #include <QFileDialog>
 #include <QLineEdit>
-#include <QDialog>
-#include <QScrollArea>
-#include <QTimer>
 #include <QCheckBox>
 
 #include "src/files/upload_file.h"
-#include "src/sql/queries.h"
 
 SendFile::SendFile(QWidget *parent)
     : QWidget(parent)
@@ -37,8 +30,7 @@ void SendFile::setupConnections() {
     connect(ui->sendButton, &QPushButton::clicked, this, &SendFile::onSendClicked);
 
     // Connect NavBar signals
-    NavBar *navbar = findChild<NavBar *>();
-    if (navbar) {
+    if (NavBar *navbar = findChild<NavBar *>()) {
         connect(navbar, &NavBar::receivedClicked, this, &SendFile::onReceivedButtonClicked);
         connect(navbar, &NavBar::sentClicked, this, &SendFile::onSentButtonClicked);
         connect(navbar, &NavBar::settingsClicked, this, &SendFile::onSettingsButtonClicked);
@@ -104,14 +96,14 @@ void SendFile::navigateTo(QWidget *newWindow) {
     close(); // This will trigger deletion due to WA_DeleteOnClose
 }
 
-void SendFile::onReceivedButtonClicked() {
+void SendFile::onReceivedButtonClicked() const {
     ui->usernameInput->clear();
     ui->filePathInput->clear();
     ui->fileDetailsLabel->clear();
     WindowManager::instance().showReceived();
 }
 
-void SendFile::onSentButtonClicked() {
+void SendFile::onSentButtonClicked() const {
     ui->usernameInput->clear();
     ui->filePathInput->clear();
     ui->fileDetailsLabel->clear();
@@ -119,23 +111,22 @@ void SendFile::onSentButtonClicked() {
 }
 
 // navbar button
-void SendFile::onSendFileButtonClicked() {
+void SendFile::onSendFileButtonClicked() const {
     ui->usernameInput->clear();
     ui->filePathInput->clear();
     ui->fileDetailsLabel->clear();
 }
 
-void SendFile::onSettingsButtonClicked() {
+void SendFile::onSettingsButtonClicked() const {
     ui->filePathInput->clear();
     ui->fileDetailsLabel->clear();
     ui->usernameInput->clear();
     WindowManager::instance().showSettings();
 }
 
-void SendFile::onWindowShown(const QString &windowName) {
+void SendFile::onWindowShown(const QString &windowName) const {
     // Find the navbar and update its active button
-    NavBar *navbar = findChild<NavBar *>();
-    if (navbar) {
+    if (NavBar *navbar = findChild<NavBar *>()) {
         navbar->setActiveButton(windowName);
     }
 }

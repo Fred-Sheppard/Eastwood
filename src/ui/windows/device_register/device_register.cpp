@@ -14,7 +14,7 @@
 #include "src/endpoints/endpoints.h"
 #include "src/ui/utils/messagebox.h"
 
-void continuously_ping(std::array<unsigned char, 32> pk_device, DeviceRegister* deviceRegister) {
+void continuously_ping(const std::array<unsigned char, 32> &pk_device, DeviceRegister* deviceRegister) {
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(2));
         try {
@@ -32,7 +32,7 @@ void continuously_ping(std::array<unsigned char, 32> pk_device, DeviceRegister* 
     }
 }
 
-DeviceRegister::DeviceRegister(const std::string& auth_code, const QImage& qr_code, QWidget *parent, unsigned char* pk_device)
+DeviceRegister::DeviceRegister(const std::string& auth_code, const QImage& qr_code, QWidget *parent, const unsigned char* pk_device)
     : QWidget(parent)
     , ui(new Ui::DeviceRegister)
     , m_auth_code(auth_code)
@@ -63,8 +63,7 @@ void DeviceRegister::setupConnections()
     connect(this, &DeviceRegister::userRegistered, this, &DeviceRegister::onUserRegistered);
 }
 
-void DeviceRegister::displayQRCode(const QImage& qr_code)
-{
+void DeviceRegister::displayQRCode(const QImage& qr_code) const {
     if (!qr_code.isNull()) {
         QPixmap pixmap = QPixmap::fromImage(qr_code);
         ui->qrCodeLabel->setPixmap(pixmap.scaled(200, 200, Qt::KeepAspectRatio, Qt::SmoothTransformation));
@@ -73,8 +72,7 @@ void DeviceRegister::displayQRCode(const QImage& qr_code)
     }
 }
 
-void DeviceRegister::displayAuthCode(const std::string& auth_code)
-{
+void DeviceRegister::displayAuthCode(const std::string& auth_code) const {
     int partLen = auth_code.length() / 4;
     QString code = QString::fromStdString(auth_code);
     ui->codeEdit1->setText(code.mid(0, partLen));
@@ -95,7 +93,7 @@ void DeviceRegister::onCopyButtonClicked()
     clipboard->setText(QString::fromStdString(m_auth_code));
     StyledMessageBox::success(this, "Copied to Clipboard", "All codes have been successfully copied to your clipboard");
     } catch (const std::exception& e) {
-        StyledMessageBox::error(this, "Copy Failed", "Failed to copy codes to clipboard");
+        StyledMessageBox::error(this, "Copy Failed", "Failed to copy codes to clipboard" + QString::fromStdString(e.what()));
     }
 }
 
