@@ -18,6 +18,7 @@ public:
                           const QString& fileSize, 
                           const QString& timestamp,
                           const QString& owner,
+                          const QString& uuid,
                           Mode mode = Mode::Received,
                           QWidget* parent = nullptr);
 
@@ -26,6 +27,7 @@ public:
     QString getFileSize() const { return fileSize; }
     QString getTimestamp() const { return timestamp; }
     QString getOwner() const { return owner; }
+    QString getUuid() const { return uuid; }
 
 signals:
     void revokeAccessClicked(FileItemWidget* widget);
@@ -43,6 +45,7 @@ private:
     QString fileSize;
     QString timestamp;
     QString owner;
+    QString uuid;
     Mode mode;
 
     void setupUI();

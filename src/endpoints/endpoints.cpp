@@ -141,6 +141,12 @@ std::vector<std::tuple<std::string, DeviceMessage *> > get_messages() {
 
         int prev_chain_length = message["prev_chain_length"].get<int>();
         int message_index = message["message_index"].get<int>();
+        
+        // Extract file_id if present
+        std::string file_id;
+        if (message.contains("file_id") && !message["file_id"].is_null()) {
+            file_id = message["file_id"].get<std::string>();
+        }
 
         // Validate hex string lengths before allocation
         if (dev_key_str.length() != 64 || dh_pub_str.length() != 64) { // 32 bytes = 64 hex chars
@@ -175,6 +181,12 @@ std::vector<std::tuple<std::string, DeviceMessage *> > get_messages() {
         header->message_index = message_index;
         header->prev_chain_length = prev_chain_length;
         memcpy(header->device_id.data(), initator_dev_key, 32);
+        
+        // Set file_uuid if available
+        if (!file_id.empty()) {
+            strncpy(header->file_uuid, file_id.c_str(), sizeof(header->file_uuid) - 1);
+            header->file_uuid[sizeof(header->file_uuid) - 1] = '\0';
+        }
 
         msg->header = header;
         msg->ciphertext = ciphertext.release(); // Transfer ownership
@@ -496,4 +508,9 @@ std::string post_upload_file(std::vector<unsigned char> encrypted_bytes) {
 std::vector<std::string> get_devices() {
     const json response = get("/getDevices");
     return response["data"];
+}
+
+std::vector<unsigned char> get_encrypted_file(std::string uuid) {
+    json response = get("/downloadFile/"+uuid);
+    return std::vector<unsigned char>();
 }

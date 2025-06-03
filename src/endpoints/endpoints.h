@@ -77,4 +77,6 @@ bool get_user_exists(
 
 std::vector<std::string> get_devices();
 
+std::vector<unsigned char> get_encrypted_file(std::string uuid);
+
 #endif //ENDPOINTS_H

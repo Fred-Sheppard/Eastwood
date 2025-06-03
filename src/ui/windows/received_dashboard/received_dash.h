@@ -38,7 +38,8 @@ private:
     void addFileItem(const QString& fileName, 
                     const QString& fileSize, 
                     const QString& timestamp,
-                    const QString& owner);
+                    const QString& owner,
+                    const QString& uuid);
     void navigateTo(QWidget* newWindow);
 };
 

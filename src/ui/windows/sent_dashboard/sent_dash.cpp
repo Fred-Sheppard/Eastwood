@@ -63,10 +63,11 @@ void Sent::setupFileList()
 void Sent::addFileItem(const QString& fileName,
                      const QString& fileSize,
                      const QString& timestamp,
-                     const QString& owner)
+                     const QString& owner,
+                     const QString& uuid)
 {
     auto* item = new QListWidgetItem(ui->fileList);
-    auto* widget = new FileItemWidget(fileName, fileSize, timestamp, owner, 
+    auto* widget = new FileItemWidget(fileName, fileSize, timestamp, owner, uuid,
                                     FileItemWidget::Mode::Sent, this);
 
     connect(widget, &FileItemWidget::revokeAccessClicked, this, &Sent::onRevokeAccessClicked);
@@ -85,9 +86,9 @@ void Sent::refreshFileList()
 
     // TODO: Fetch actual files from server
     // Example data for demonstration
-    addFileItem("Important Document.pdf", "2.5 MB", "2024-03-15 14:30", "John Doe");
-    addFileItem("Project Presentation.pptx", "5.8 MB", "2024-03-14 09:15", "Alice Smith");
-    addFileItem("Budget Report.xlsx", "1.2 MB", "2024-03-13 16:45", "Bob Johnson");
+    addFileItem("Important Document.pdf", "2.5 MB", "2024-03-15 14:30", "John Doe","");
+    addFileItem("Project Presentation.pptx", "5.8 MB", "2024-03-14 09:15", "Alice Smith","");
+    addFileItem("Budget Report.xlsx", "1.2 MB", "2024-03-13 16:45", "Bob Johnson","");
 }
 
 void Sent::onFileItemClicked(FileItemWidget* widget)

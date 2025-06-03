@@ -11,6 +11,8 @@
 #include "src/endpoints/endpoints.h"
 #include "src/key_exchange/XChaCha20-Poly1305.h"
 #include "src/sessions/RatchetSessionManager.h"
+#include <iostream>
+#include <ctime>
 
 Received::Received(QWidget *parent, QWidget* sendFileWindow)
     : QWidget(parent)
@@ -20,8 +22,6 @@ Received::Received(QWidget *parent, QWidget* sendFileWindow)
     ui->setupUi(this);
     setupConnections();
     setupFileList();
-    refreshFileList();
-
     // Connect WindowManager signal to handle navbar highlighting
     connect(&WindowManager::instance(), &WindowManager::windowShown,
             this, &Received::onWindowShown);
@@ -54,15 +54,15 @@ Received::Received(QWidget *parent, QWidget* sendFileWindow)
         auto message_nonce = new unsigned char[CHA_CHA_NONCE_LEN];
         randombytes_buf(message_nonce, CHA_CHA_NONCE_LEN);
 
+        // Copy the encryption key for saving BEFORE moving it
+        auto sk_buffer = SecureMemoryBuffer::create(32);
+        memcpy(sk_buffer->data(), message_encryption_key->data(), 32);
+
         auto encrypted_message_again = encrypt_bytes(
             QByteArray(reinterpret_cast<const char*>(decrypted_message.data()), decrypted_message.size()), 
             std::move(message_encryption_key), 
             message_nonce
         );
-
-        // Copy the encryption key for saving
-        auto sk_buffer = SecureMemoryBuffer::create(32);
-        memcpy(sk_buffer->data(), message_encryption_key->data(), 32);
 
         auto key_nonce = new unsigned char[CHA_CHA_NONCE_LEN];
         randombytes_buf(key_nonce, CHA_CHA_NONCE_LEN);
@@ -72,12 +72,23 @@ Received::Received(QWidget *parent, QWidget* sendFileWindow)
         // Extract file_uuid from header (convert char array to string)
         std::string file_uuid(msg->header->file_uuid);
         
-        save_message_and_key(username, msg->header->device_id, file_uuid, encrypted_message_again, message_nonce, std::move(encrypted_key), key_nonce);
+        // Debug output
+        std::cout << "Processing message from user: " << username << std::endl;
+        std::cout << "file_uuid length: " << file_uuid.length() << std::endl;
+        std::cout << "file_uuid content: '" << file_uuid << "'" << std::endl;
+        if (file_uuid.empty()) {
+            std::cout << "WARNING: file_uuid is empty! Using placeholder." << std::endl;
+            file_uuid = "unknown_file_" + std::to_string(std::time(nullptr));
+        }
+        
+        save_message_and_key(username, msg->header->device_id, file_uuid, encrypted_message_again, message_nonce, encrypted_key, key_nonce);
         
         // Clean up allocated arrays
         delete[] message_nonce;
         delete[] key_nonce;
     }
+
+    refreshFileList();
 }
 
 Received::~Received()
@@ -109,10 +120,11 @@ void Received::setupFileList()
 void Received::addFileItem(const QString& fileName,
                          const QString& fileSize,
                          const QString& timestamp,
-                         const QString& owner)
+                         const QString& owner,
+                         const QString& uuid)
 {
     auto* item = new QListWidgetItem(ui->fileList);
-    auto* widget = new FileItemWidget(fileName, fileSize, timestamp, owner, 
+    auto* widget = new FileItemWidget(fileName, fileSize, timestamp, owner, uuid,
                                     FileItemWidget::Mode::Received, this);
 
     connect(widget, &FileItemWidget::fileClicked, this, &Received::onFileItemClicked);
@@ -131,9 +143,8 @@ void Received::refreshFileList()
     // TODO: Fetch actual files from server
     // Example data for demonstration
     for (auto [username, file_uuid, device_id, decrypted_message] : pre_existing_messages) {
-        addFileItem(QString::fromStdString(file_uuid), bin2hex(decrypted_message.data(), sizeof(decrypted_message)).data(), "2024-03-15 14:30", bin2hex(device_id.data(),32).data());
+        addFileItem(QString::fromStdString(file_uuid), bin2hex(decrypted_message.data(), sizeof(decrypted_message)).data(), "2024-03-15 14:30", bin2hex(device_id.data(),32).data(), QString::fromStdString(file_uuid));
     }
-    addFileItem("Budget Report.xlsx", "1.2 MB", "2024-03-13 16:45", "Bob Johnson");
 }
 
 void Received::navigateTo(QWidget* newWindow)
@@ -202,5 +213,6 @@ void Received::onLogoutButtonClicked()
 
 void Received::onDownloadFileClicked(FileItemWidget* widget)
 {
-    StyledMessageBox::info(this, "Not Implemented", "Download functionality is not yet implemented.");
+    std::string uuid = widget->getUuid().toStdString();
+
 }

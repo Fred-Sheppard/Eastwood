@@ -9,11 +9,13 @@ FileItemWidget::FileItemWidget(const QString& fileName,
                              const QString& fileSize,
                              const QString& timestamp,
                              const QString& owner,
+                             const QString& uuid,
                              Mode mode,
                              QWidget* parent)
     : QWidget(parent)
     , fileName(fileName)
     , fileSize(fileSize)
+    , uuid(uuid)
     , timestamp(timestamp)
     , owner(owner)
     , mode(mode)

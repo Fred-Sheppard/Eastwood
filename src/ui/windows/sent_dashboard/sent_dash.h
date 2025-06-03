@@ -35,7 +35,7 @@ private:
     void setupFileList();
     void refreshFileList();
     void addFileItem(const QString& fileName, const QString& fileSize, 
-                    const QString& timestamp, const QString& owner);
+                    const QString& timestamp, const QString& owner, const QString& uuid);
     void showFileMetadata(FileItemWidget* widget);
     void sendFileToUser(const QString& username, const QString& fileId);
     void navigateTo(QWidget* newWindow);
