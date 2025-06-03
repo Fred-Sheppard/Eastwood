@@ -21,9 +21,9 @@
 #include <QIcon>
 
 #include "src/auth/logout.h"
+#include "src/auth/rotate_master_key/rotate_master_key.h"
 #include "src/endpoints/endpoints.h"
 #include "src/keys/session_token_manager.h"
-#include "src/keys/kek_manager.h"
 #include "src/database/database.h"
 
 Settings::Settings(QWidget *parent)
@@ -161,8 +161,15 @@ void Settings::onPassphraseCancelClicked()
 
 void Settings::onPassphraseSaveClicked()
 {
-    // TODO: Implement passphrase change functionality
-    StyledMessageBox::info(this, "Not Implemented", "Passphrase change functionality is not yet implemented.");
+    validatePassphrase();
+    const auto new_password = ui->newPassphrase->text().toStdString();
+    qDebug() << "New password:" << new_password;
+    rotate_master_password(Database::get().get_username(), new_password);
+    StyledMessageBox::info(this, "Password Updated", "Your password was updated");
+
+    ui->currentPassphrase->clear();
+    ui->newPassphrase->clear();
+    ui->confirmPassphrase->clear();
 }
 
 void Settings::onAuthCancelClicked()

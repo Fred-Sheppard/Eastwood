@@ -34,6 +34,10 @@ public:
 
     static bool user_has_database(std::string username);
 
+    [[nodiscard]] std::string get_username() const {
+        return username;
+    }
+
 private:
     Database();
     ~Database();
@@ -44,6 +48,7 @@ private:
 
     sqlite3 *db = nullptr;
     bool initialized = false;
+    std::string username;
 };
 
 #endif // DATABASE_INTERFACE_H

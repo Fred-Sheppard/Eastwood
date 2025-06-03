@@ -65,6 +65,7 @@ void Database::initialize(
         throw std::runtime_error("Database verification failed: " + err);
     }
     initialized = true;
+    this->username = username;
     qDebug() << "Database loaded successfully";
 }
 
