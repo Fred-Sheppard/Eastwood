@@ -462,9 +462,13 @@ void post_new_keybundles(
     post("/updateKeybundle", body);
 }
 
-std::string post_upload_file(std::vector<unsigned char> encrypted_bytes) {
+std::string post_upload_file(
+    const std::vector<unsigned char>& encrypted_file_data,
+    const std::vector<unsigned char>& encrypted_metadata
+) {
     const json body = {
-        {"encrypted_bytes", encrypted_bytes}
+        {"encrypted_file", encrypted_file_data},
+        {"encrypted_metadata", encrypted_metadata}
     };
 
     const json response = post("/uploadFile", body);
