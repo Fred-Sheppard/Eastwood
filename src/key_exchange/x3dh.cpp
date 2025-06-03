@@ -63,6 +63,8 @@ unsigned char *x3dh_initiator(
     unsigned char *shared_secret = new unsigned char[KEY_LEN];
     crypto_generichash(shared_secret, KEY_LEN, ikm, sizeof(ikm), nullptr, 0);
 
+    qDebug() << "Shared secret" << bin2hex(shared_secret, KEY_LEN);
+
     return shared_secret;
 }
 
