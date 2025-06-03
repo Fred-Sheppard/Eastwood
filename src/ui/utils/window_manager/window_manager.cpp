@@ -63,9 +63,12 @@ void WindowManager::showWindow(QPointer<T>& windowPtr, const QString& buttonName
     if (windowPtr.isNull()) {
         windowPtr = new T(std::forward<Args>(args)...);
         windowPtr->setAttribute(Qt::WA_DeleteOnClose);
-        m_windows.append(QPointer<QWidget>(windowPtr));
-        QObject::connect(windowPtr, &T::destroyed, this, [this, &windowPtr]() {
-            m_windows.removeOne(QPointer<QWidget>(windowPtr));
+        
+        QPointer<QWidget> widgetPtr(windowPtr);
+        m_windows.append(widgetPtr);
+        
+        QObject::connect(windowPtr, &T::destroyed, this, [this, widgetPtr]() {
+            m_windows.removeOne(widgetPtr);
         });
     }
     windowPtr->show();
