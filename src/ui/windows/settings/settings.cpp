@@ -28,11 +28,10 @@
 
 Settings::Settings(QWidget *parent)
     : QWidget(parent)
-    , ui(new Ui::Settings)
-    , m_cameraFunctionality(new CameraFunctionality(this))
-    , m_refreshSpinnerTimer(new QTimer(this))
-    , m_spinnerAngle(0)
-{
+      , ui(new Ui::Settings)
+      , m_cameraFunctionality(new CameraFunctionality(this))
+      , m_refreshSpinnerTimer(new QTimer(this))
+      , m_spinnerAngle(0) {
     ui->setupUi(this);
     setupConnections();
 
@@ -44,13 +43,11 @@ Settings::Settings(QWidget *parent)
     connect(m_refreshSpinnerTimer, &QTimer::timeout, this, &Settings::handleRefreshSpinner);
 }
 
-Settings::~Settings()
-{
+Settings::~Settings() {
     delete ui;
 }
 
-void Settings::setupConnections()
-{
+void Settings::setupConnections() {
     // Connect passphrase fields to validation
     connect(ui->currentPassphrase, &QLineEdit::textChanged, this, &Settings::validatePassphrase);
     connect(ui->currentPassphrase, &QLineEdit::textChanged, this, &Settings::validatePassphrase);
@@ -66,7 +63,7 @@ void Settings::setupConnections()
     connect(ui->refreshDevicesButton, &QPushButton::clicked, this, &Settings::onRefreshDevicesClicked);
 
     // Connect NavBar signals
-    NavBar* navbar = findChild<NavBar*>();
+    NavBar *navbar = findChild<NavBar *>();
     if (navbar) {
         connect(navbar, &NavBar::receivedClicked, this, &Settings::onReceivedButtonClicked);
         connect(navbar, &NavBar::sentClicked, this, &Settings::onSentButtonClicked);
@@ -80,8 +77,7 @@ void Settings::setupConnections()
     updateDeviceList();
 }
 
-void Settings::validatePassphrase()
-{
+void Settings::validatePassphrase() {
     QString newPassphrase = ui->newPassphrase->text();
     QString confirmPassphrase = ui->confirmPassphrase->text();
 
@@ -100,56 +96,49 @@ void Settings::validatePassphrase()
     }
 }
 
-void Settings::navigateTo(QWidget* newWindow)
-{
-    newWindow->setParent(this->parentWidget());  // Set the same parent
+void Settings::navigateTo(QWidget *newWindow) {
+    newWindow->setParent(this->parentWidget()); // Set the same parent
     newWindow->show();
-    this->setAttribute(Qt::WA_DeleteOnClose);  // Mark for deletion when closed
-    close();  // This will trigger deletion due to WA_DeleteOnClose
+    this->setAttribute(Qt::WA_DeleteOnClose); // Mark for deletion when closed
+    close(); // This will trigger deletion due to WA_DeleteOnClose
 }
 
-void Settings::onReceivedButtonClicked()
-{
+void Settings::onReceivedButtonClicked() {
     ui->currentPassphrase->clear();
     ui->newPassphrase->clear();
     ui->confirmPassphrase->clear();
     WindowManager::instance().showReceived();
 }
 
-void Settings::onSentButtonClicked()
-{
+void Settings::onSentButtonClicked() {
     ui->currentPassphrase->clear();
     ui->newPassphrase->clear();
     ui->confirmPassphrase->clear();
     WindowManager::instance().showSent();
 }
 
-void Settings::onSendFileButtonClicked()
-{
+void Settings::onSendFileButtonClicked() {
     ui->currentPassphrase->clear();
     ui->newPassphrase->clear();
     ui->confirmPassphrase->clear();
     WindowManager::instance().showSendFile();
 }
 
-void Settings::onSettingsButtonClicked()
-{
+void Settings::onSettingsButtonClicked() {
     ui->currentPassphrase->clear();
     ui->newPassphrase->clear();
     ui->confirmPassphrase->clear();
 }
 
-void Settings::onWindowShown(const QString& windowName) const
-{
+void Settings::onWindowShown(const QString &windowName) const {
     // Find the navbar and update its active button
-    NavBar* navbar = findChild<NavBar*>();
+    NavBar *navbar = findChild<NavBar *>();
     if (navbar) {
         navbar->setActiveButton(windowName);
     }
 }
 
-void Settings::onPassphraseCancelClicked()
-{
+void Settings::onPassphraseCancelClicked() {
     // Clear all passphrase fields
     ui->currentPassphrase->clear();
     ui->newPassphrase->clear();
@@ -159,12 +148,18 @@ void Settings::onPassphraseCancelClicked()
     WindowManager::instance().showReceived();
 }
 
-void Settings::onPassphraseSaveClicked()
-{
+void Settings::onPassphraseSaveClicked() {
     validatePassphrase();
+    const auto old_password = ui->currentPassphrase->text().toStdString();
     const auto new_password = ui->newPassphrase->text().toStdString();
     qDebug() << "New password:" << new_password;
-    rotate_master_password(Database::get().get_username(), new_password);
+    try {
+        rotate_master_password(Database::get().get_username(), old_password, new_password);
+    } catch (std::runtime_error &e) {
+        StyledMessageBox::error(
+            this, "Invalid password", "Invalid password");
+        return;
+    }
     StyledMessageBox::info(this, "Password Updated", "Your password was updated");
 
     ui->currentPassphrase->clear();
@@ -172,8 +167,7 @@ void Settings::onPassphraseSaveClicked()
     ui->confirmPassphrase->clear();
 }
 
-void Settings::onAuthCancelClicked()
-{
+void Settings::onAuthCancelClicked() {
     // Clear auth code input
     ui->authCodeInput->clear();
 
@@ -181,8 +175,7 @@ void Settings::onAuthCancelClicked()
     WindowManager::instance().showReceived();
 }
 
-void Settings::onAuthVerifyClicked()
-{
+void Settings::onAuthVerifyClicked() {
     QString auth_code = ui->authCodeInput->text().trimmed();
 
     if (auth_code.length() != 44) {
@@ -193,60 +186,56 @@ void Settings::onAuthVerifyClicked()
     handleDeviceConnection(auth_code);
 }
 
-bool Settings::handleDeviceConnection(const QString& publicKey)
-{
+bool Settings::handleDeviceConnection(const QString &publicKey) {
     QString deviceName;
     if (StyledMessageBox::connectionRequest(this, "Connection Request",
-        "A new device wants to connect.\n\nEnsure you trust this device before accepting.\n\nDo you wish to accept this connection?",
-        deviceName)) {
-
+                                            "A new device wants to connect.\n\nEnsure you trust this device before accepting.\n\nDo you wish to accept this connection?",
+                                            deviceName)) {
         try {
             unsigned char pk_new_device[crypto_sign_PUBLICKEYBYTES];
             size_t bin_len;
             if (sodium_base642bin(pk_new_device, crypto_sign_PUBLICKEYBYTES,
-                                publicKey.toStdString().c_str(), publicKey.length(),
-                                nullptr, &bin_len, nullptr,
-                                sodium_base64_VARIANT_ORIGINAL) != 0) {
+                                  publicKey.toStdString().c_str(), publicKey.length(),
+                                  nullptr, &bin_len, nullptr,
+                                  sodium_base64_VARIANT_ORIGINAL) != 0) {
                 StyledMessageBox::error(this, "Invalid Key",
-                    "The authentication code contains an invalid public key.");
+                                        "The authentication code contains an invalid public key.");
                 return false;
             }
             if (bin_len != crypto_sign_PUBLICKEYBYTES) {
                 StyledMessageBox::error(this, "Invalid Key",
-                    "The authentication code contains an invalid public key.");
+                                        "The authentication code contains an invalid public key.");
                 return false;
             }
 
             add_trusted_device(pk_new_device, deviceName.toStdString());
             StyledMessageBox::success(this, "Connection Accepted",
-                QString("Connection request has been accepted for device: %1").arg(deviceName));
+                                      QString("Connection request has been accepted for device: %1").arg(deviceName));
             qDebug() << "Connection accepted with public key:" << publicKey << "and device name:" << deviceName;
             return true;
-        } catch (const std::runtime_error& e) {
+        } catch (const std::runtime_error &e) {
             StyledMessageBox::error(this, "Connection Failed",
-                QString("Failed to add trusted device: %1").arg(e.what()));
+                                    QString("Failed to add trusted device: %1").arg(e.what()));
             qDebug() << "Connection failed:" << e.what();
-        } catch (const std::exception& e) {
+        } catch (const std::exception &e) {
             StyledMessageBox::error(this, "Connection Failed",
-                QString("An unexpected error occurred: %1").arg(e.what()));
+                                    QString("An unexpected error occurred: %1").arg(e.what()));
             qDebug() << "Unexpected error:" << e.what();
         }
     } else {
         StyledMessageBox::info(this, "Connection Denied",
-            "Connection request has been denied.");
+                               "Connection request has been denied.");
         qDebug() << "Connection denied";
     }
     return false;
 }
 
-void Settings::onScanQRButtonClicked()
-{
+void Settings::onScanQRButtonClicked() {
     m_cameraFunctionality->showScanDialog();
 }
 
-void Settings::createDeviceBox(const std::string& deviceName)
-{
-    QWidget* deviceBox = new QWidget();
+void Settings::createDeviceBox(const std::string &deviceName) {
+    QWidget *deviceBox = new QWidget();
     deviceBox->setStyleSheet(R"(
         QWidget {
             background-color: white;
@@ -256,21 +245,20 @@ void Settings::createDeviceBox(const std::string& deviceName)
         }
     )");
 
-    QHBoxLayout* layout = new QHBoxLayout(deviceBox);
+    QHBoxLayout *layout = new QHBoxLayout(deviceBox);
     layout->setContentsMargins(8, 8, 8, 8);
     layout->setSpacing(8);
 
-    QLabel* deviceLabel = new QLabel(QString::fromStdString(deviceName));
+    QLabel *deviceLabel = new QLabel(QString::fromStdString(deviceName));
     deviceLabel->setStyleSheet("font-size: 14px; color: #2d3436;");
     layout->addWidget(deviceLabel);
 
     ui->deviceListWidgetLayout->addWidget(deviceBox);
 }
 
-void Settings::updateDeviceList()
-{
+void Settings::updateDeviceList() {
     // Clear existing device boxes
-    QLayoutItem* item;
+    QLayoutItem *item;
     while ((item = ui->deviceListWidgetLayout->takeAt(0)) != nullptr) {
         delete item->widget();
         delete item;
@@ -280,7 +268,7 @@ void Settings::updateDeviceList()
     std::vector<std::string> devices = get_devices();
     qDebug() << "Number of devices received:" << devices.size();
     qDebug() << "Devices:";
-    for (const auto& device : devices) {
+    for (const auto &device: devices) {
         qDebug() << "Device:" << QString::fromStdString(device);
         createDeviceBox(device);
     }
@@ -289,8 +277,7 @@ void Settings::updateDeviceList()
     ui->deviceListWidgetLayout->addStretch();
 }
 
-void Settings::handleRefreshSpinner()
-{
+void Settings::handleRefreshSpinner() {
     m_spinnerAngle = (m_spinnerAngle + 30) % 360;
 
     // Update the button's icon with the new angle
@@ -307,8 +294,7 @@ void Settings::handleRefreshSpinner()
     ui->refreshDevicesButton->setIconSize(QSize(16, 16));
 }
 
-void Settings::onRefreshDevicesClicked()
-{
+void Settings::onRefreshDevicesClicked() {
     // Start the spinner animation
     m_spinnerAngle = 0;
     m_refreshSpinnerTimer->start(50); // Update every 50ms
