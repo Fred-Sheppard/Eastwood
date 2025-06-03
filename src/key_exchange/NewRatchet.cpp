@@ -205,9 +205,7 @@ std::array<unsigned char, 32> NewRatchet::advance_receive(const MessageHeader he
         // if we need to forward cache keys due to prev chain length being longer than expected
         for (int i = header.prev_chain_length; i < skipped_count; ++i) {
             auto message_key = progress_receive_ratchet();
-            std::array<unsigned char, 32> key_ptr{};
-            memcpy(key_ptr.data(), message_key.data(), 32);
-            skipped_keys[i] = key_ptr;
+            skipped_keys[i] = message_key;
         }
         memcpy(remote_dh_public.data(), header.dh_public.data(), 32);
         dh_ratchet_step(true); // true as we received the new dh
@@ -219,9 +217,7 @@ std::array<unsigned char, 32> NewRatchet::advance_receive(const MessageHeader he
         if (skipped_keys.find(header.message_index) == skipped_keys.end()) {
             throw std::runtime_error("Key not found in backlog");
         }
-        auto key_ptr = skipped_keys[header.message_index];
-        std::array<unsigned char, 32> key{};
-        memcpy(key.data(), key_ptr.data(), 32);
+        auto key = skipped_keys[header.message_index];
         skipped_keys.erase(header.message_index);
         return key;
     }
@@ -234,12 +230,7 @@ std::array<unsigned char, 32> NewRatchet::advance_receive(const MessageHeader he
             receive_chain.index = i + 1;
             return message_key;
         }
-        if (skipped_keys.find(i) != skipped_keys.end()) {
-            delete[] skipped_keys[i].data();  // Delete old key if it exists
-        }
-        auto key_ptr = std::array<unsigned char, 32>();
-        memcpy(key_ptr.data(), message_key.data(), 32);
-        skipped_keys[i] = key_ptr;
+        skipped_keys[i] = message_key;
     }
 
     throw std::runtime_error("Unexpected error in advance_receive");
@@ -300,9 +291,9 @@ void NewRatchet::serialise(std::ostream &out) const {
     // serialize skipped_keys count
     uint32_t skipped_count = skipped_keys.size();
     out.write(reinterpret_cast<const char*>(&skipped_count), sizeof(skipped_count));
-    for (auto &pair : skipped_keys) {
+    for (const auto &pair : skipped_keys) {
         out.write(reinterpret_cast<const char*>(&pair.first), sizeof(pair.first));
-        out.write(reinterpret_cast<const char*>(&pair.second), 32);
+        out.write(reinterpret_cast<const char*>(pair.second.data()), 32);
     }
 
     out.write(reinterpret_cast<const char*>(&due_to_send_new_dh), sizeof(due_to_send_new_dh));
@@ -335,10 +326,10 @@ void NewRatchet::deserialise(std::istream &in) {
     skipped_keys.clear();
     for (uint32_t i = 0; i < skipped_count; ++i) {
         int key;
-        auto val = std::make_unique<unsigned char[]>(32);
+        std::array<unsigned char, 32> val{};
         in.read(reinterpret_cast<char*>(&key), sizeof(key));
-        in.read(reinterpret_cast<char*>(val.get()), 32);
-        skipped_keys[key] = val.release();  // Transfer ownership to the map
+        in.read(reinterpret_cast<char*>(val.data()), 32);
+        skipped_keys[key] = val;
     }
 
     in.read(reinterpret_cast<char*>(&due_to_send_new_dh), sizeof(due_to_send_new_dh));

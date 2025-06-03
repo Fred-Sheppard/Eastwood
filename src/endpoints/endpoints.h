@@ -54,7 +54,7 @@ void post_handshake_device(
 std::vector<std::tuple<std::string, KeyBundle*>> get_handshake_backlog();
 
 // [ <username, message (includes device id) > ]
-std::vector<std::tuple<std::string, DeviceMessage*>> get_messages();
+std::vector<std::tuple<std::string, DeviceMessage>> get_messages();
 
 std::vector<KeyBundle*> get_keybundles(const std::string &username, std::vector<std::array<unsigned char,32>> existing_device_ids);
 

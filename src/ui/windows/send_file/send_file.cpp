@@ -102,7 +102,7 @@ void SendFile::onSendClicked() {
     }
 
     std::string uuid = upload_file(filePath.toStdString());
-    std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>, MessageHeader *>> keys_to_send_key = RatchetSessionManager::instance().get_keys_for_identity(ui->usernameInput->text().toStdString());
+    std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>, MessageHeader>> keys_to_send_key = RatchetSessionManager::instance().get_keys_for_identity(ui->usernameInput->text().toStdString());
 
     if (keys_to_send_key.size() > 0) {
         std::vector<std::tuple<std::array<unsigned char,32>, DeviceMessage*>> messages;
@@ -114,8 +114,8 @@ void SendFile::onSendClicked() {
             std::cout << "key used to encrypt file "<< bin2hex(file_key->data(),32) << std::endl;
             auto message = new DeviceMessage();
             message->header = message_header;
-            strncpy(message->header->file_uuid, uuid.c_str(), sizeof(message->header->file_uuid) - 1);
-            message->header->file_uuid[sizeof(message->header->file_uuid) - 1] = '\0';
+            strncpy(message->header.file_uuid, uuid.c_str(), sizeof(message->header.file_uuid) - 1);
+            message->header.file_uuid[sizeof(message->header.file_uuid) - 1] = '\0';
 
             // Encrypt the file key using the message key
             std::vector<unsigned char> encrypted_data = encrypt_message_given_key(file_key->data(), file_key->size(), key.data());
@@ -157,7 +157,7 @@ void SendFile::onSendClicked() {
             auto encrypted_key = encrypt_symmetric_key(sk_buffer, key_nonce);
             
             // Extract file_uuid from header
-            std::string file_uuid(msg->header->file_uuid);
+            std::string file_uuid(msg->header.file_uuid);
             
             // Get current username and save the message
             std::string current_username = SessionTokenManager::instance().getUsername();

@@ -50,8 +50,8 @@ public:
                 std::shared_ptr<SecureMemoryBuffer> my_ephemeral_private_in,
                 std::array<unsigned char, 32> their_device_public_in,
                 std::array<unsigned char, 32> their_signed_public_in,
-                std::array<unsigned char, 32> their_onetime_public_in,
-                std::array<unsigned char, 32> their_signed_signature_in
+                std::optional<std::array<unsigned char, 32>> their_onetime_public_in,
+                std::array<unsigned char, 64> their_signed_signature_in
             ) : KeyBundle(my_device_public_in, their_device_public_in) {
         my_ephemeral_public = my_ephemeral_public_in;
         my_ephemeral_private = std::move(my_ephemeral_private_in);
@@ -96,8 +96,8 @@ public:
     std::array<unsigned char, 32> get_my_ephemeral_public() const { return my_ephemeral_public; }
     const std::shared_ptr<SecureMemoryBuffer>& get_my_ephemeral_private() const { return my_ephemeral_private; }
     std::array<unsigned char, 32> get_their_signed_public() const { return their_signed_public; }
-    std::array<unsigned char, 32> get_their_onetime_public() const { return their_onetime_public.value(); }
-    std::array<unsigned char, 32> get_their_signed_signature() const { return their_signed_signature; }
+    std::optional<std::array<unsigned char, 32>> get_their_onetime_public() const { return their_onetime_public; }
+    std::array<unsigned char, 64> get_their_signed_signature() const { return their_signed_signature; }
 
     std::unique_ptr<NewRatchet> create_ratchet() override {
         // Use the overloaded constructor to ensure the ephemeral keypair is used for the initial ratchet state
@@ -114,7 +114,7 @@ private:
     std::shared_ptr<SecureMemoryBuffer> my_ephemeral_private;
     std::array<unsigned char, 32> their_signed_public;
     std::optional<std::array<unsigned char, 32>> their_onetime_public;
-    std::array<unsigned char, 32> their_signed_signature;
+    std::array<unsigned char, 64> their_signed_signature;
 };
 
 class ReceivingKeyBundle: public KeyBundle {
@@ -123,7 +123,7 @@ public:
                 std::array<unsigned char, 32> their_device_public_in,
                 std::array<unsigned char, 32> their_ephemeral_public_in,
                 std::array<unsigned char, 32> my_device_public_in,
-                std::array<unsigned char, 32> my_onetime_public_in
+                std::optional<std::array<unsigned char, 32>> my_onetime_public_in
             ): KeyBundle(my_device_public_in, their_device_public_in) {
         their_ephemeral_public = their_ephemeral_public_in;
         my_onetime_public = my_onetime_public_in;
@@ -140,12 +140,17 @@ public:
         auto my_signed_private_key = get_my_signed_private();
         auto my_signed_public_key = get_public_key("signed");
 
+        std::optional<std::unique_ptr<SecureMemoryBuffer>> my_onetime_private_opt = std::nullopt;
+        if (my_onetime_public.has_value()) {
+            my_onetime_private_opt = get_my_onetime_private(my_onetime_public.value());
+        }
+
         return x3dh_responder(
                 their_device_public,
                 their_ephemeral_public,
                 get_my_device_private(),
                 get_my_signed_private(),
-                get_my_onetime_private(my_onetime_public)
+                std::move(my_onetime_private_opt)
             );
     };
 
@@ -153,7 +158,7 @@ public:
     std::array<unsigned char, 32> get_their_ephemeral_public() const { return their_ephemeral_public; }
     static std::unique_ptr<SecureMemoryBuffer> get_my_device_private() { return get_decrypted_sk("device"); }
     static std::unique_ptr<SecureMemoryBuffer> get_my_signed_private() { return get_decrypted_sk("signed"); }
-    static std::unique_ptr<SecureMemoryBuffer> get_my_onetime_private(const std::array<unsigned char, 32> my_onetime_public) { return get_onetime_private_key(my_onetime_public); }
+    static std::unique_ptr<SecureMemoryBuffer> get_my_onetime_private(const std::array<unsigned char, 32> &my_onetime_public) { return get_onetime_private_key(my_onetime_public.data()); }
 
     std::unique_ptr<NewRatchet> create_ratchet() override {
         return std::make_unique<NewRatchet>(get_shared_secret(), their_ephemeral_public);

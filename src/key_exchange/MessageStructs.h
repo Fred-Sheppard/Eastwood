@@ -23,48 +23,35 @@ struct MessageHeader {
 };
 
 struct Message {
-    MessageHeader *header;
+    MessageHeader header;
     unsigned char* message;
 };
 
 // Common message class for device communication
 class DeviceMessage {
 public:
-    DeviceMessage() : header(nullptr), ciphertext(nullptr), length(0) {}
+    DeviceMessage() : header{}, ciphertext(nullptr), length(0) {}
 
     ~DeviceMessage() {
-        if (header) delete header;
-        if (ciphertext) delete[] ciphertext;
+        if (ciphertext) {
+            delete[] ciphertext;
+            ciphertext = nullptr;
+        }
     }
 
     // Copy constructor
-    DeviceMessage(const DeviceMessage& other) {
-        if (other.header) {
-            header = new MessageHeader();
-            header->dh_public = other.header->dh_public;
-            header->prev_chain_length = other.header->prev_chain_length;
-            header->message_index = other.header->message_index;
-            header->device_id = other.header->device_id;
-            strncpy(header->file_uuid, other.header->file_uuid, sizeof(header->file_uuid) - 1);
-            header->file_uuid[sizeof(header->file_uuid) - 1] = '\0';
-        } else {
-            header = nullptr;
-        }
-
-        if (other.ciphertext) {
+    DeviceMessage(const DeviceMessage& other) : header(other.header), length(other.length) {
+        if (other.ciphertext && other.length > 0) {
             ciphertext = new unsigned char[other.length];
             memcpy(ciphertext, other.ciphertext, other.length);
         } else {
             ciphertext = nullptr;
         }
-
-        length = other.length;
     }
 
     // Move constructor
     DeviceMessage(DeviceMessage&& other) noexcept
-        : header(other.header), ciphertext(other.ciphertext), length(other.length) {
-        other.header = nullptr;
+        : header(std::move(other.header)), ciphertext(other.ciphertext), length(other.length) {
         other.ciphertext = nullptr;
         other.length = 0;
     }
@@ -72,22 +59,17 @@ public:
     // Assignment operator
     DeviceMessage& operator=(const DeviceMessage& other) {
         if (this != &other) {
-            if (header) delete header;
-            if (ciphertext) delete[] ciphertext;
-
-            if (other.header) {
-                header = new MessageHeader();
-                header->dh_public = other.header->dh_public;
-                header->prev_chain_length = other.header->prev_chain_length;
-                header->message_index = other.header->message_index;
-                header->device_id = other.header->device_id;
-                strncpy(header->file_uuid, other.header->file_uuid, sizeof(header->file_uuid) - 1);
-                header->file_uuid[sizeof(header->file_uuid) - 1] = '\0';
-            } else {
-                header = nullptr;
+            // Clean up existing ciphertext
+            if (ciphertext) {
+                delete[] ciphertext;
+                ciphertext = nullptr;
             }
 
-            if (other.ciphertext) {
+            // Copy header directly
+            header = other.header;
+
+            // Copy ciphertext
+            if (other.ciphertext && other.length > 0) {
                 ciphertext = new unsigned char[other.length];
                 memcpy(ciphertext, other.ciphertext, other.length);
             } else {
@@ -102,21 +84,22 @@ public:
     // Move assignment operator
     DeviceMessage& operator=(DeviceMessage&& other) noexcept {
         if (this != &other) {
-            if (header) delete header;
-            if (ciphertext) delete[] ciphertext;
+            // Clean up existing ciphertext
+            if (ciphertext) {
+                delete[] ciphertext;
+            }
 
-            header = other.header;
+            header = std::move(other.header);
             ciphertext = other.ciphertext;
             length = other.length;
 
-            other.header = nullptr;
             other.ciphertext = nullptr;
             other.length = 0;
         }
         return *this;
     }
 
-    MessageHeader* header;
+    MessageHeader header;
     unsigned char* ciphertext;
     size_t length;
 };

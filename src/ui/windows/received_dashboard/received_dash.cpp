@@ -301,9 +301,9 @@ void Received::initializeData()
 
         for (auto [username, msg] : messages) {
             try {
-                auto key = RatchetSessionManager::instance().get_key_for_device(username, msg->header);
+                auto key = RatchetSessionManager::instance().get_key_for_device(username, msg.header);
 
-                auto decrypted_message = decrypt_message_given_key(msg->ciphertext, msg->length, key);
+                auto decrypted_message = decrypt_message_given_key(msg.ciphertext, msg.length, key.data());
 
                 // encrypt again and save to db
                 auto message_encryption_key = SecureMemoryBuffer::create(32);
@@ -329,7 +329,7 @@ void Received::initializeData()
                 auto encrypted_key = encrypt_symmetric_key(sk_buffer, key_nonce);
                 
                 // Extract file_uuid from header (convert char array to string)
-                std::string file_uuid(msg->header->file_uuid);
+                std::string file_uuid(msg.header.file_uuid);
                 
                 // Debug output
                 std::cout << "Processing message from user: " << username << std::endl;
@@ -342,7 +342,7 @@ void Received::initializeData()
                 
                 // Save to database
                 try {
-                    save_message_and_key(username, msg->header->device_id, file_uuid, encrypted_message_again, message_nonce, encrypted_key, key_nonce);
+                    save_message_and_key(username, msg.header.device_id, file_uuid, encrypted_message_again, message_nonce, encrypted_key, key_nonce);
                     std::cout << "Successfully saved message for file_uuid: " << file_uuid << std::endl;
                 } catch (const std::exception& save_error) {
                     std::cout << "ERROR: Failed to save message for file_uuid: " << file_uuid << " - " << save_error.what() << std::endl;
@@ -357,9 +357,7 @@ void Received::initializeData()
             }
             
             // Clean up the DeviceMessage and its components - CRITICAL for preventing memory leaks
-            delete[] msg->ciphertext;  // Clean up ciphertext array
-            delete msg->header;        // Clean up MessageHeader
-            delete msg;                // Clean up DeviceMessage
+            delete[] msg.ciphertext;  // Clean up ciphertext array
         }
 
         std::cout << "Finished processing messages. Refreshing file list..." << std::endl;
