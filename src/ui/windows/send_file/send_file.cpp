@@ -8,7 +8,11 @@
 #include <QLineEdit>
 #include <QCheckBox>
 
+#include "src/auth/logout.h"
 #include "src/files/upload_file.h"
+#include "src/keys/session_token_manager.h"
+#include "src/keys/kek_manager.h"
+#include "src/database/database.h"
 
 SendFile::SendFile(QWidget *parent)
     : QWidget(parent)
@@ -132,5 +136,8 @@ void SendFile::onWindowShown(const QString &windowName) const {
 }
 
 void SendFile::onLogoutButtonClicked() {
-    StyledMessageBox::info(this, "Not Implemented", "Logout functionality is not yet implemented.");
+    logout();
+
+    // Show login window
+    WindowManager::instance().showLogin();
 }
