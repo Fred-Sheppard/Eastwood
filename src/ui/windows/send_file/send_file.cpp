@@ -111,7 +111,11 @@ void SendFile::onSendClicked() {
             message->header->file_uuid[sizeof(message->header->file_uuid) - 1] = '\0';
 
             // Encrypt the file key using the message key
+            qDebug() << "Encrypting message using ratchet key";
+            qDebug() << "Message:" << bin2hex(file_key->data(), file_key->size());
             std::vector<unsigned char> encrypted_data = encrypt_message_given_key(file_key->data(), file_key->size(), key.data());
+            qDebug() << "Encrypted message:" << bin2hex(encrypted_data.data(), encrypted_data.size());
+            qDebug() << "Ratchet key:" << bin2hex(key.data(), key.size());
             message->length = encrypted_data.size();
             message->ciphertext = new unsigned char[message->length];
             memcpy(message->ciphertext, encrypted_data.data(), message->length);
