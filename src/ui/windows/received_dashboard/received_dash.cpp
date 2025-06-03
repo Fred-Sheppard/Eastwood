@@ -294,11 +294,6 @@ void Received::initializeData()
             RatchetSessionManager::instance().create_ratchets_if_needed(username, keybundles);
         }
 
-        // Clean up KeyBundle objects from handshake_backlog
-        for (const auto& [username, keybundle] : handshake_backlog) {
-            delete keybundle;
-        }
-
         // get any messages
         auto messages = get_messages();
         

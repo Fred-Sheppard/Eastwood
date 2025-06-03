@@ -195,15 +195,3 @@ QString FileItemWidget::getFileTypeAbbreviation(const QString& fileName)
     
     return ext.toUpper().left(3);
 }
-
-FileItemWidget::~FileItemWidget()
-{
-    // Disconnect all signals to prevent issues during destruction
-    if (downloadButton) downloadButton->disconnect();
-    if (revokeButton) revokeButton->disconnect();
-    if (deleteButton) deleteButton->disconnect();
-    
-    // Qt's parent-child system should handle cleanup automatically,
-    // but we can be explicit about it for critical widgets
-    // Note: layouts and widgets with proper parents will be cleaned up by Qt
-}

@@ -25,8 +25,6 @@ public:
                           Mode mode = Mode::Received,
                           QWidget* parent = nullptr);
 
-    ~FileItemWidget() override;
-
     // Add getter methods
     QString getFileName() const { return fileName; }
     QString getFileSize() const { return fileSize; }
