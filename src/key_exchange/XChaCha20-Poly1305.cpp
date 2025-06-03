@@ -82,7 +82,6 @@ std::vector<unsigned char> encrypt_message_auto_key(const unsigned char* message
     unsigned char key_nonce[CHA_CHA_NONCE_LEN];
     randombytes_buf(key_nonce, sizeof key_nonce);
 
-    // encrypts the key with a random nonce and
     const auto encrypted_key = encrypt_symmetric_key(key, key_nonce);
 
     std::vector<unsigned char> result(sizeof(nonce) + sizeof(key_nonce) + encrypted_key->size() + ciphertext_len);
