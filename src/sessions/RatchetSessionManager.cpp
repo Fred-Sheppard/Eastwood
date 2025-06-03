@@ -134,6 +134,7 @@ void RatchetSessionManager::load_ratchets_from_db() {
         std::cerr << "Failed to load ratchets from database: " << e.what() << std::endl;
         throw;
     }
+}
 
 std::vector<std::array<unsigned char,32> > RatchetSessionManager::get_device_ids_of_existing_handshakes(const std::string &username) {
     std::vector<std::array<unsigned char,32> > device_ids;
