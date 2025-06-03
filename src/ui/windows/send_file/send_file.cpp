@@ -7,6 +7,7 @@
 #include <QFileDialog>
 #include <QLineEdit>
 #include <QCheckBox>
+#include <tuple>
 
 #include "src/endpoints/endpoints.h"
 #include "src/auth/logout.h"
@@ -95,7 +96,7 @@ void SendFile::onSendClicked() {
         return;
     }
 
-    std::string uuid = upload_file(filePath.toStdString());
+    auto [uuid, file_key] = upload_file(filePath.toStdString());
     std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>, MessageHeader *>> keys_to_send_key = RatchetSessionManager::instance().get_keys_for_identity(ui->usernameInput->text().toStdString());
 
     if (keys_to_send_key.size() > 0) {
@@ -104,8 +105,6 @@ void SendFile::onSendClicked() {
             const auto device_id = pair.first;
             const auto& [key, message_header] = pair.second;
 
-            auto file_key = get_decrypted_file_key(uuid);
-            std::cout << "key used to encrypt file "<< bin2hex(file_key->data(),32) << std::endl;
             auto message = new DeviceMessage();
             message->header = message_header;
             strncpy(message->header->file_uuid, uuid.c_str(), sizeof(message->header->file_uuid) - 1);

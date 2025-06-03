@@ -467,8 +467,8 @@ std::string post_upload_file(
     const std::vector<unsigned char>& encrypted_metadata
 ) {
     const json body = {
-        {"encrypted_file", encrypted_file_data},
-        {"encrypted_metadata", encrypted_metadata}
+        {"encrypted_file", bin2hex(encrypted_file_data.data(), encrypted_file_data.size())},
+        {"encrypted_metadata", bin2hex(encrypted_metadata.data(), encrypted_file_data.size())}
     };
 
     const json response = post("/uploadFile", body);

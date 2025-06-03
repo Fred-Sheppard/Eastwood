@@ -274,6 +274,6 @@ std::vector<unsigned char> decrypt_bytes(
         ) != 0) {
         throw std::runtime_error("Failed to encrypt file");
     }
-    decrypted_bytes.resize(size_out);
+    // decrypted_bytes.resize(size_out);
     return decrypted_bytes;
 }

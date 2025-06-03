@@ -14,6 +14,7 @@
 #include <memory>
 
 #include "auth/logout.h"
+#include "files/upload_file.h"
 #include "src/auth/rotate_master_key/rotate_master_key.h"
 
 std::string generateRandomString(int length) {
@@ -47,6 +48,9 @@ int main() {
     register_first_device();
     qDebug() << "Logging in";
     login_user(username, password, false);
+
+    upload_file("/Users/fred/Code/Cpp/Nightwood/Eastwood/.gitignore");
+    return 0;
     const auto new_password = std::make_unique<const std::string>("even_stronger_password");
     qDebug() << "Trying to rotate password without current master key";
     const auto fake_password = SecureMemoryBuffer::create(MASTER_KEY_LEN);
