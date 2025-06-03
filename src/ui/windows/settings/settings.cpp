@@ -33,10 +33,6 @@ Settings::Settings(QWidget *parent)
     ui->setupUi(this);
     setupConnections();
 
-    // Connect WindowManager signal to handle navbar highlighting
-    connect(&WindowManager::instance(), &WindowManager::windowShown,
-            this, &Settings::onWindowShown);
-
     // Setup refresh spinner timer
     connect(m_refreshSpinnerTimer, &QTimer::timeout, this, &Settings::handleRefreshSpinner);
 }
@@ -128,14 +124,6 @@ void Settings::onSettingsButtonClicked() const {
     ui->currentPassphrase->clear();
     ui->newPassphrase->clear();
     ui->confirmPassphrase->clear();
-}
-
-void Settings::onWindowShown(const QString& windowName) const
-{
-    // Find the navbar and update its active button
-    if (NavBar* navbar = findChild<NavBar*>()) {
-        navbar->setActiveButton(windowName);
-    }
 }
 
 void Settings::onPassphraseCancelClicked() const {

@@ -26,10 +26,6 @@ SendFile::SendFile(QWidget *parent)
       , ui(new Ui::SendFile) {
     ui->setupUi(this);
     setupConnections();
-
-    // Connect WindowManager signal to handle navbar highlighting
-    connect(&WindowManager::instance(), &WindowManager::windowShown,
-            this, &SendFile::onWindowShown);
 }
 
 SendFile::~SendFile() {
@@ -45,7 +41,6 @@ void SendFile::setupConnections() {
         connect(navbar, &NavBar::receivedClicked, this, &SendFile::onReceivedButtonClicked);
         connect(navbar, &NavBar::sentClicked, this, &SendFile::onSentButtonClicked);
         connect(navbar, &NavBar::settingsClicked, this, &SendFile::onSettingsButtonClicked);
-        connect(navbar, &NavBar::logoutClicked, this, &SendFile::onLogoutButtonClicked);
         connect(navbar, &NavBar::sendFileClicked, this, &SendFile::onSendFileButtonClicked);
     }
 }
@@ -163,18 +158,4 @@ void SendFile::onSettingsButtonClicked() const {
     ui->fileDetailsLabel->clear();
     ui->usernameInput->clear();
     WindowManager::instance().showSettings();
-}
-
-void SendFile::onWindowShown(const QString &windowName) const {
-    // Find the navbar and update its active button
-    if (NavBar *navbar = findChild<NavBar *>()) {
-        navbar->setActiveButton(windowName);
-    }
-}
-
-void SendFile::onLogoutButtonClicked() {
-    logout();
-
-    // Show login window
-    WindowManager::instance().showLogin();
 }
