@@ -111,6 +111,7 @@ std::tuple<std::string, QImage, std::array<unsigned char, crypto_sign_PUBLICKEYB
     }
 
     return std::make_tuple(std::move(auth_code), std::move(qr_code), std::move(pk_device), std::move(sk_device));
+    // check
 }
 
 void Login::initializeDatabase(const std::string& username, const QString& password, 
