@@ -62,7 +62,7 @@ std::tuple<std::string, std::unique_ptr<SecureMemoryBuffer>> upload_file(const s
     const std::string file_uuid = post_upload_file(encrypted_file_data, encrypted_metadata);
 
     auto output_key = SecureMemoryBuffer::create(SYM_KEY_LEN);
-    memcpy(metadata_key->data(), output_key->data(), SYM_KEY_LEN);
+    memcpy(output_key->data(), file_key->data(), SYM_KEY_LEN);
 
     return std::make_tuple(file_uuid, std::move(output_key));
 }
