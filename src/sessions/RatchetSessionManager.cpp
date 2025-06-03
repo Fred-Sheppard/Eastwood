@@ -14,15 +14,13 @@ RatchetSessionManager& RatchetSessionManager::instance() {
     return instance;
 }
 
-RatchetSessionManager::RatchetSessionManager() {
-    // No need to initialize ratchets as it's already default-initialized
-}
+RatchetSessionManager::RatchetSessionManager() = default;
 
-void RatchetSessionManager::create_ratchets_if_needed(std::string username, std::vector<KeyBundle*> bundles, bool post_to_server) {
+void RatchetSessionManager::create_ratchets_if_needed(const std::string &username, const std::vector<KeyBundle*> &bundles, const bool post_to_server) {
     auto& user_ratchets = ratchets[username];
 
     for (KeyBundle* bundle : bundles) {
-        std::array<unsigned char, 32> device_id;
+        std::array<unsigned char, 32> device_id{};
         std::memcpy(device_id.data(), bundle->get_their_device_public(), 32);
 
         if (user_ratchets.find(device_id) == user_ratchets.end()) {
@@ -59,7 +57,7 @@ void RatchetSessionManager::create_ratchets_if_needed(std::string username, std:
 }
 
 
-std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>, MessageHeader *> > RatchetSessionManager::get_keys_for_identity(std::string username, bool post_new_ratchets_to_server) {
+std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>, MessageHeader *> > RatchetSessionManager::get_keys_for_identity(const std::string &username, bool post_new_ratchets_to_server) {
     if (post_new_ratchets_to_server) {
         const auto new_bundles = get_keybundles(username, get_device_ids_of_existing_handshakes(username));
         create_ratchets_if_needed(username, new_bundles, post_new_ratchets_to_server);
@@ -77,8 +75,8 @@ std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>
         
         memcpy(header->device_id.data(), my_device_public.data(), 32);
         
-        std::array<unsigned char, 32> message_key_array;
-        std::copy(message_key_vector.begin(), message_key_vector.begin() + 32, message_key_array.begin());
+        std::array<unsigned char, 32> message_key_array{};
+        std::copy_n(message_key_vector.begin(), 32, message_key_array.begin());
         
         keys[device_id] = std::make_tuple(message_key_array, header);
     }
@@ -87,8 +85,8 @@ std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>
 }
 
 
-unsigned char* RatchetSessionManager::get_key_for_device(std::string username, MessageHeader* header) {
-    std::array<unsigned char, 32> device_id;
+unsigned char* RatchetSessionManager::get_key_for_device(const std::string &username, MessageHeader* header) {
+    std::array<unsigned char, 32> device_id{};
     std::copy(header->device_id.begin(), header->device_id.end(), device_id.begin());
     
     auto user_it = ratchets.find(username);
@@ -108,7 +106,7 @@ unsigned char* RatchetSessionManager::get_key_for_device(std::string username, M
     return result;
 }
 
-std::vector<std::array<unsigned char,32> > RatchetSessionManager::get_device_ids_of_existing_handshakes(std::string username) {
+std::vector<std::array<unsigned char,32> > RatchetSessionManager::get_device_ids_of_existing_handshakes(const std::string &username) {
     std::vector<std::array<unsigned char,32> > device_ids;
 
     auto user_it = ratchets.find(username);
