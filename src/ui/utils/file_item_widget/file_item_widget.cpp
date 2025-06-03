@@ -19,6 +19,16 @@ FileItemWidget::FileItemWidget(const QString& fileName,
     , timestamp(timestamp)
     , owner(owner)
     , mode(mode)
+    , fileNameLabel(nullptr)
+    , detailsLabel(nullptr)
+    , fileTypeLabel(nullptr)
+    , fileIconContainer(nullptr)
+    , revokeButton(nullptr)
+    , deleteButton(nullptr)
+    , downloadButton(nullptr)
+    , mainLayout(nullptr)
+    , infoLayout(nullptr)
+    , buttonLayout(nullptr)
 {
     setupUI();
     setupConnections();
@@ -26,19 +36,19 @@ FileItemWidget::FileItemWidget(const QString& fileName,
 
 void FileItemWidget::setupUI()
 {
-    auto* mainLayout = new QHBoxLayout(this);
+    mainLayout = new QHBoxLayout(this);
     mainLayout->setSpacing(16);
     mainLayout->setContentsMargins(20, 16, 20, 16);
 
     // File icon with file type indicator
-    auto* fileIconContainer = new QWidget(this);
+    fileIconContainer = new QWidget(this);
     fileIconContainer->setFixedSize(42, 42);
     fileIconContainer->setStyleSheet(R"(
         background-color: #f5f6fa;
         border-radius: 8px;
     )");
     
-    auto* fileTypeLabel = new QLabel(getFileTypeAbbreviation(fileName), fileIconContainer);
+    fileTypeLabel = new QLabel(getFileTypeAbbreviation(fileName), fileIconContainer);
     fileTypeLabel->setAlignment(Qt::AlignCenter);
     fileTypeLabel->setStyleSheet(R"(
         font-size: 12px;
@@ -48,37 +58,45 @@ void FileItemWidget::setupUI()
     fileTypeLabel->setFixedSize(42, 42);
     
     // File info section
-    auto* infoLayout = new QVBoxLayout();
+    infoLayout = new QVBoxLayout();
     infoLayout->setSpacing(4);
 
-    fileNameLabel = new QLabel(fileName, this);
+    fileNameLabel = new QLabel(fileName.isNull() ? "Unknown File" : fileName, this);
     fileNameLabel->setStyleSheet("font-size: 15px; font-weight: 500; color: #2d3436;");
 
-    detailsLabel = new QLabel(QString("%1 • %2 • Shared by %3")
-                            .arg(fileSize)
-                            .arg(timestamp)
-                            .arg(owner), this);
+    // Safely construct the details string with null checks and simpler separator
+    QString safeFileSize = fileSize.isNull() || fileSize.isEmpty() ? "Unknown size" : fileSize;
+    QString safeTimestamp = timestamp.isNull() || timestamp.isEmpty() ? "Unknown time" : timestamp;
+    QString safeOwner = owner.isNull() || owner.isEmpty() ? "Unknown owner" : owner;
+    
+    QString detailsText = QString("%1 | %2 | Shared by %3")
+                         .arg(safeFileSize)
+                         .arg(safeTimestamp)
+                         .arg(safeOwner);
+
+    detailsLabel = new QLabel(detailsText, this);
     detailsLabel->setStyleSheet("font-size: 13px; color: #636e72;");
 
     infoLayout->addWidget(fileNameLabel);
     infoLayout->addWidget(detailsLabel);
 
     // Action buttons
-    auto* buttonLayout = new QHBoxLayout();
+    buttonLayout = new QHBoxLayout();
     buttonLayout->setSpacing(8);
     buttonLayout->addStretch();
 
-    // Add download button
-    downloadButton = new QPushButton(this);
-    downloadButton->setFixedSize(30, 30);
+    // Add download button - remove the problematic icon for now
+    downloadButton = new QPushButton("Download", this);
+    downloadButton->setFixedSize(80, 30);
     downloadButton->setCursor(Qt::PointingHandCursor);
-    downloadButton->setIcon(QIcon(":icons/logos/download.svg"));
-    downloadButton->setIconSize(QSize(16, 16));
     downloadButton->setStyleSheet(R"(
         QPushButton {
             background-color: #6c5ce7;
+            color: white;
             border: none;
             border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
         }
         QPushButton:hover {
             background-color: #5049c9;
@@ -176,4 +194,16 @@ QString FileItemWidget::getFileTypeAbbreviation(const QString& fileName)
     if (ext == "jpg" || ext == "jpeg" || ext == "png") return "IMG";
     
     return ext.toUpper().left(3);
+}
+
+FileItemWidget::~FileItemWidget()
+{
+    // Disconnect all signals to prevent issues during destruction
+    if (downloadButton) downloadButton->disconnect();
+    if (revokeButton) revokeButton->disconnect();
+    if (deleteButton) deleteButton->disconnect();
+    
+    // Qt's parent-child system should handle cleanup automatically,
+    // but we can be explicit about it for critical widgets
+    // Note: layouts and widgets with proper parents will be cleaned up by Qt
 }

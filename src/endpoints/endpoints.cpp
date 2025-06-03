@@ -511,6 +511,113 @@ std::vector<std::string> get_devices() {
 }
 
 std::vector<unsigned char> get_encrypted_file(std::string uuid) {
-    json response = get("/downloadFile/"+uuid);
-    return std::vector<unsigned char>();
+    try {
+        json response = get("/downloadFile/"+uuid);
+        
+        // Debug: Print the raw response to see what we're actually getting
+        std::cout << "Raw JSON response: " << response.dump() << std::endl;
+        std::cout << "Response keys: ";
+        for (auto& [key, value] : response.items()) {
+            std::cout << key << " ";
+        }
+        std::cout << std::endl;
+        
+        // Check if the response contains data.encrypted_bytes field
+        if (!response.contains("data") || !response["data"].contains("encrypted_bytes") || !response["data"]["encrypted_bytes"].is_string()) {
+            std::cout << "No encrypted_bytes hex string in response data for UUID: " << uuid << std::endl;
+            return std::vector<unsigned char>();
+        }
+        
+        // Parse the encrypted_bytes hex string
+        std::string hex_data = response["data"]["encrypted_bytes"].get<std::string>();
+        std::cout << "Hex data length: " << hex_data.length() << std::endl;
+        std::cout << "First 100 chars of hex: " << hex_data.substr(0, 100) << std::endl;
+        
+        size_t binary_size = hex_data.length() / 2;
+        
+        if (binary_size == 0) {
+            std::cout << "Empty encrypted_bytes hex string for UUID: " << uuid << std::endl;
+            return std::vector<unsigned char>();
+        }
+        
+        std::cout << "Binary size will be: " << binary_size << " bytes" << std::endl;
+        
+        std::vector<unsigned char> file_data(binary_size);
+        size_t bin_len;
+        const char *hex_end;
+        
+        // Use libsodium's hex2bin function for more reliable hex parsing
+        if (sodium_hex2bin(file_data.data(), file_data.size(), 
+                          hex_data.c_str(), hex_data.length(), 
+                          nullptr, &bin_len, &hex_end) != 0) {
+            std::cout << "Failed to convert hex to binary using sodium_hex2bin for UUID: " << uuid << std::endl;
+            std::cout << "Hex string length: " << hex_data.length() << std::endl;
+            std::cout << "Expected binary size: " << binary_size << std::endl;
+            return std::vector<unsigned char>();
+        }
+        
+        // Resize vector to actual parsed length (might be smaller if hex had whitespace)
+        file_data.resize(bin_len);
+        
+        std::cout << "Successfully converted hex to binary using sodium" << std::endl;
+        std::cout << "Downloaded file data, size: " << file_data.size() << " bytes" << std::endl;
+        std::cout << "First 20 bytes: ";
+        for (size_t i = 0; i < std::min((size_t)20, file_data.size()); i++) {
+            printf("%02x ", file_data[i]);
+        }
+        std::cout << std::endl;
+        
+        return file_data;
+        
+    } catch (const std::exception &e) {
+        std::cout << "Failed to download file " << uuid << ": " << e.what() << std::endl;
+        return std::vector<unsigned char>();
+    }
+}
+
+// file uuid : ciphertext
+std::map<std::string, std::vector<unsigned char>> get_encrypted_file_metadata(std::vector<std::string> uuids) {
+    json body = {
+        {"file_ids", json::array()}
+    };
+
+    for (auto uuid : uuids) {
+        body["file_ids"].push_back(uuid);
+    }
+
+    json response = post("/getFilesMetadata", body);
+
+    std::map<std::string, std::vector<unsigned char>> files_metadata;
+    
+    // Check if response contains data and metadata
+    if (!response.contains("data") || !response["data"].contains("metadata")) {
+        std::cerr << "Invalid response format for file metadata" << std::endl;
+        return files_metadata;
+    }
+    
+    for (const auto& file_data : response["data"]["metadata"]) {
+        if (!file_data.contains("file_id") || !file_data.contains("encrypted_metadata")) {
+            std::cerr << "Missing uuid or encrypted_metadata in file data" << std::endl;
+            continue;
+        }
+        
+        std::string uuid = file_data["file_id"].get<std::string>();
+        std::string hex_metadata = file_data["encrypted_metadata"].get<std::string>();
+        
+        size_t binary_size = hex_metadata.length() / 2;
+        if (binary_size == 0) {
+            std::cerr << "Empty encrypted metadata for file " << uuid << std::endl;
+            continue;
+        }
+        
+        std::vector<unsigned char> binary_metadata(binary_size);
+        
+        if (hex_to_bin(hex_metadata, binary_metadata.data(), binary_size)) {
+            files_metadata[uuid] = std::move(binary_metadata);
+        } else {
+            std::cerr << "Failed to convert hex metadata to binary for file " << uuid << std::endl;
+        }
+    }
+    
+    return files_metadata;
 }

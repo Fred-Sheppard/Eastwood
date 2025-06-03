@@ -16,6 +16,9 @@
 #include "src/auth/logout.h"
 #include "src/keys/session_token_manager.h"
 #include "src/keys/kek_manager.h"
+#include "src/key_exchange/utils.h"
+#include "src/sql/queries.h"
+#include "src/utils/ConversionUtils.h"
 
 // Sent implementation
 Sent::Sent(QWidget *parent, QWidget* receivedWindow)
@@ -84,11 +87,16 @@ void Sent::refreshFileList()
 {
     ui->fileList->clear();
 
-    // TODO: Fetch actual files from server
-    // Example data for demonstration
-    addFileItem("Important Document.pdf", "2.5 MB", "2024-03-15 14:30", "John Doe","");
-    addFileItem("Project Presentation.pptx", "5.8 MB", "2024-03-14 09:15", "Alice Smith","");
-    addFileItem("Budget Report.xlsx", "1.2 MB", "2024-03-13 16:45", "Bob Johnson","");
+    auto sent_messages = get_all_decrypted_sent_messages();
+    for (auto [username, file_uuid, device_id, decrypted_message] : sent_messages) {
+        addFileItem(
+            QString::fromStdString(file_uuid),
+            QString("%1 bytes").arg(decrypted_message.size()),
+            "2024-03-15 14:30",
+            bin2hex(device_id.data(), 32).data(),
+            QString::fromStdString(file_uuid)
+        );
+    }
 }
 
 void Sent::onFileItemClicked(FileItemWidget* widget)

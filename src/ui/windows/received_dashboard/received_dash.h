@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QListWidgetItem>
+#include <QTimer>
 #include "src/ui/utils/file_item_widget/file_item_widget.h"
 #include "src/ui/utils/window_manager/window_manager.h"
 
@@ -27,12 +28,14 @@ private slots:
     void onSendFileButtonClicked();
     void onWindowShown(const QString& windowName);
     void onLogoutButtonClicked();
+    void initializeData();
 
 private:
     Ui::Received *ui;
     QWidget* m_sendFileWindow;
     void setupConnections();
     void setupFileList();
+    void clearFileList();  // Helper method for proper cleanup of QListWidgetItem objects
     void showFileMetadata(FileItemWidget* widget);
     void sendFileToUser(const QString& username, const QString& fileId);
     void addFileItem(const QString& fileName, 
