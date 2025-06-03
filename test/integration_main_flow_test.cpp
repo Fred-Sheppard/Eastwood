@@ -46,7 +46,7 @@ int main() {
     qDebug() << "Registering device";
     register_first_device();
     qDebug() << "Logging in";
-    login_user(username, password);
+    login_user(username, password, false);
     const std::string new_password = "even_stronger_password";
     qDebug() << "Rotating password";
     rotate_master_password(username, new_password);
