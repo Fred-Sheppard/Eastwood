@@ -31,7 +31,7 @@ private slots:
     static void onBackButtonClicked();
     void onCopyButtonClicked();
 
-    static void onUserRegistered();
+    void onUserRegistered();
 
 private:
     Ui::DeviceRegister *ui;
