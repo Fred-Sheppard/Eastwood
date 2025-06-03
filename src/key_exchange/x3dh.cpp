@@ -22,10 +22,22 @@ unsigned char *x3dh_initiator(
 ) {
     std::cout << "\n===== INITIATOR X3DH =====" << std::endl;
     
-    // Debug: Print all input keys
+    // Debug: Print all input keys with corresponding public keys
     std::cout << "INITIATOR KEYS:" << std::endl;
     std::cout << "  my_identity_private: " << bin2hex(my_identity_key_private->data(), 32) << std::endl;
+    
+    // Derive my identity public key from private
+    unsigned char my_identity_public[32];
+    crypto_scalarmult_base(my_identity_public, my_identity_key_private->data());
+    std::cout << "  my_identity_public (derived): " << bin2hex(my_identity_public, 32) << std::endl;
+    
     std::cout << "  my_ephemeral_private: " << bin2hex(my_ephemeral_key_private->data(), 32) << std::endl;
+    
+    // Derive my ephemeral public key from private
+    unsigned char my_ephemeral_public[32];
+    crypto_scalarmult_base(my_ephemeral_public, my_ephemeral_key_private->data());
+    std::cout << "  my_ephemeral_public (derived): " << bin2hex(my_ephemeral_public, 32) << std::endl;
+    
     std::cout << "  recipient_identity_public: " << bin2hex(recipient_identity_key_public, 32) << std::endl;
     std::cout << "  recipient_signed_prekey_public: " << bin2hex(recipient_signed_prekey_public, 32) << std::endl;
     if (recipient_onetime_prekey_public) {
@@ -98,14 +110,31 @@ unsigned char *x3dh_responder(
     ) {
     std::cout << "\n===== RESPONDER X3DH =====" << std::endl;
 
-    // Debug: Print all input keys
+    // Debug: Print all input keys with corresponding public keys
     std::cout << "RESPONDER KEYS:" << std::endl;
     std::cout << "  initiator_identity_public: " << bin2hex(initiator_identity_key_public, 32) << std::endl;
     std::cout << "  initiator_ephemeral_public: " << bin2hex(initiator_ephemeral_key_public, 32) << std::endl;
     std::cout << "  my_identity_private: " << bin2hex(my_identity_key_private->data(), 32) << std::endl;
+    
+    // Derive my identity public key from private
+    unsigned char my_identity_public[32];
+    crypto_scalarmult_base(my_identity_public, my_identity_key_private->data());
+    std::cout << "  my_identity_public (derived): " << bin2hex(my_identity_public, 32) << std::endl;
+    
     std::cout << "  my_signed_prekey_private: " << bin2hex(my_signed_prekey_private->data(), 32) << std::endl;
+    
+    // Derive my signed prekey public from private
+    unsigned char my_signed_prekey_public[32];
+    crypto_scalarmult_base(my_signed_prekey_public, my_signed_prekey_private->data());
+    std::cout << "  my_signed_prekey_public (derived): " << bin2hex(my_signed_prekey_public, 32) << std::endl;
+    
     if (my_onetime_prekey_private) {
         std::cout << "  my_onetime_prekey_private: " << bin2hex(my_onetime_prekey_private->data(), 32) << std::endl;
+        
+        // Derive my onetime public key from private
+        unsigned char my_onetime_prekey_public[32];
+        crypto_scalarmult_base(my_onetime_prekey_public, my_onetime_prekey_private->data());
+        std::cout << "  my_onetime_prekey_public (derived): " << bin2hex(my_onetime_prekey_public, 32) << std::endl;
     } else {
         std::cout << "  my_onetime_prekey_private: NULL" << std::endl;
     }
