@@ -54,7 +54,7 @@ inline void init_schema() {
     AFTER UPDATE ON onetime_prekeys
     FOR EACH ROW
     BEGIN
-        UPDATE onetime_prekeys SET last_modified = CURRENT_TIMESTAMP WHERE onetime_prekey_id = OLD.onetime_prekey_id;
+        UPDATE onetime_prekeys SET last_modified = CURRENT_TIMESTAMP WHERE public_key = OLD.public_key;
     END;
 
     CREATE TABLE IF NOT EXISTS file_keys (
@@ -69,7 +69,7 @@ inline void init_schema() {
     AFTER UPDATE ON file_keys
     FOR EACH ROW
     BEGIN
-        UPDATE file_keys SET last_modified = CURRENT_TIMESTAMP WHERE label = OLD.label;
+        UPDATE file_keys SET last_modified = CURRENT_TIMESTAMP WHERE file_uuid = OLD.file_uuid;
     END;
 
     CREATE TABLE IF NOT EXISTS ratchets (
@@ -85,7 +85,7 @@ inline void init_schema() {
     AFTER UPDATE ON ratchets
     FOR EACH ROW
     BEGIN
-        UPDATE ratchets SET last_modified = CURRENT_TIMESTAMP WHERE label = OLD.label;
+        UPDATE ratchets SET last_modified = CURRENT_TIMESTAMP WHERE device_id = OLD.device_id;
     END;
 
     CREATE TABLE IF NOT EXISTS ratchet_keys (
@@ -101,7 +101,41 @@ inline void init_schema() {
     AFTER UPDATE ON ratchet_keys
     FOR EACH ROW
     BEGIN
-        UPDATE ratchet_keys SET last_modified = CURRENT_TIMESTAMP WHERE label = OLD.label;
+        UPDATE ratchet_keys SET last_modified = CURRENT_TIMESTAMP WHERE device_id = OLD.device_id;
+    END;
+
+    CREATE TABLE IF NOT EXISTS received_messages (
+        username       TEXT,
+        from_device_id BLOB,
+        nonce         BLOB UNIQUE,
+        encrypted_message         BLOB UNIQUE,
+        file_uuid TEXT PRIMARY KEY,
+        created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+        last_modified DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TRIGGER IF NOT EXISTS received_messages_last_modified_trigger
+    AFTER UPDATE ON received_messages
+    FOR EACH ROW
+    BEGIN
+        UPDATE received_messages SET last_modified = CURRENT_TIMESTAMP WHERE file_uuid = OLD.file_uuid;
+    END;
+
+    CREATE TABLE IF NOT EXISTS received_message_keys (
+        username TEXT,
+        device_id       BLOB,
+        nonce         BLOB UNIQUE,
+        encrypted_key         BLOB UNIQUE,
+        file_uuid TEXT PRIMARY KEY,
+        created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+        last_modified DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TRIGGER IF NOT EXISTS received_message_keys_last_modified_trigger
+    AFTER UPDATE ON received_message_keys
+    FOR EACH ROW
+    BEGIN
+        UPDATE received_message_keys SET last_modified = CURRENT_TIMESTAMP WHERE file_uuid = OLD.file_uuid;
     END;
 )sql";
 

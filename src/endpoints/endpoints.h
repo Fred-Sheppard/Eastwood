@@ -61,13 +61,7 @@ std::vector<KeyBundle*> get_keybundles(const std::string &username, std::vector<
 // Overloaded versions - with signed prekey (original signature)
 void post_new_keybundles(
     std::tuple<QByteArray, std::unique_ptr<SecureMemoryBuffer> > device_keypair,
-    std::tuple<unsigned char *, std::unique_ptr<SecureMemoryBuffer> > signed_prekeypair,
-    const std::vector<std::tuple<unsigned char *, std::unique_ptr<SecureMemoryBuffer>, unsigned char *> > &otks
-);
-
-// Overloaded versions - without signed prekey (new version)
-void post_new_keybundles(
-    std::tuple<QByteArray, std::unique_ptr<SecureMemoryBuffer> > device_keypair,
+    std::tuple<unsigned char *, std::unique_ptr<SecureMemoryBuffer> > *signed_prekeypair,
     const std::vector<std::tuple<unsigned char *, std::unique_ptr<SecureMemoryBuffer>, unsigned char *> > &otks
 );
 
