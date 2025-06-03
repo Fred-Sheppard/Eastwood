@@ -42,6 +42,7 @@ std::tuple<std::string, std::unique_ptr<SecureMemoryBuffer> > upload_file(const 
 
     qDebug() << "Raw buffer" << bin2hex(reinterpret_cast<const unsigned char *>(buff.data()), buff.size());
     const auto encrypted_file_data = encrypt_message_given_key(reinterpret_cast<const unsigned char *>(buff.data()), buff.size(), file_key->data());
+    qDebug() << "Encrypted file" << bin2hex(encrypted_file_data.data(), encrypted_file_data.size());
 
     const auto decrypted_file_data = decrypt_message_given_key(encrypted_file_data.data(), encrypted_file_data.size(), file_key->data());
     qDebug() << "Decrypted file" << bin2hex(decrypted_file_data.data(), decrypted_file_data.size());
