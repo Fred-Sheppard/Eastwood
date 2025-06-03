@@ -342,7 +342,7 @@ inline void save_message_and_key(
     const std::string& username, 
     const std::array<unsigned char, 32>& from_device_id, 
     const std::string& file_uuid,
-    const std::vector<unsigned char>& encrypted_message, 
+    const std::vector<unsigned char>& encrypted_message,
     const unsigned char* message_nonce, 
     const std::unique_ptr<SecureMemoryBuffer>& encrypted_key, 
     const unsigned char* key_nonce

@@ -103,7 +103,12 @@ std::string post_authenticate(
 }
 
 std::vector<std::tuple<std::string, DeviceMessage *> > get_messages() {
-    json response = get("/incomingMessages");
+    json response;
+    try {
+        response = get("/incomingMessages");
+    } catch (const std::exception &e) {
+        return std::vector<std::tuple<std::string, DeviceMessage *>>();
+    }
 
     std::cout << "Raw response: " << response.dump() << std::endl;
     std::cout << "Response keys: ";
@@ -218,7 +223,12 @@ std::vector<KeyBundle*> get_keybundles(const std::string &username, std::vector<
         {"existing_device_ids", array_of_device_ids}
     };
 
-    json response = post("/keybundle/" + username, body);
+    json response;
+    try {
+         response = post("/keybundle/" + username, body);
+    } catch (const std::exception &e) {
+        return std::vector<KeyBundle*>();
+    }
 
     // Get my identity public key
     std::string my_identity_public_hex = response["data"]["identity_public_key"];
@@ -335,7 +345,13 @@ void post_handshake_device(
 }
 
 std::vector<std::tuple<std::string, KeyBundle *> > get_handshake_backlog() {
-    json response = get("/incomingHandshakes");
+    json response;
+    try {
+        response = get("/incomingHandshakes");
+    } catch (const std::exception &e) {
+        return std::vector<std::tuple<std::string, KeyBundle *>>();
+    }
+    
     std::cout << "Raw response: " << response.dump() << std::endl;
     std::cout << "Response keys: ";
     for (auto &[key, value]: response.items()) {
@@ -344,6 +360,12 @@ std::vector<std::tuple<std::string, KeyBundle *> > get_handshake_backlog() {
     std::cout << std::endl;
 
     std::vector<std::tuple<std::string, KeyBundle *> > bundles;
+
+    // Check if data array exists
+    if (!response.contains("data") || !response["data"].is_array()) {
+        std::cout << "No handshakes in response" << std::endl;
+        return bundles;
+    }
 
     for (const auto &handshake: response["data"]) {
         auto initator_dev_key = new unsigned char[crypto_box_PUBLICKEYBYTES];

@@ -8,6 +8,9 @@
 #include <QTimer>
 #include <QCheckBox>
 #include "src/auth/logout.h"
+#include "src/endpoints/endpoints.h"
+#include "src/key_exchange/XChaCha20-Poly1305.h"
+#include "src/sessions/RatchetSessionManager.h"
 
 Received::Received(QWidget *parent, QWidget* sendFileWindow)
     : QWidget(parent)
@@ -22,6 +25,59 @@ Received::Received(QWidget *parent, QWidget* sendFileWindow)
     // Connect WindowManager signal to handle navbar highlighting
     connect(&WindowManager::instance(), &WindowManager::windowShown,
             this, &Received::onWindowShown);
+
+    // get any ratchets im missing
+    auto handshake_backlog = get_handshake_backlog();
+    std::unordered_map<std::string, std::vector<KeyBundle*>> grouped_unordered;
+
+    for (const auto& [username, keybundle] : handshake_backlog) {
+        grouped_unordered[username].push_back(keybundle);
+    }
+
+    for (auto [username, keybundles] : grouped_unordered) {
+        RatchetSessionManager::instance().create_ratchets_if_needed(username, keybundles);
+    }
+
+    // get any messages
+    auto messages = get_messages();
+
+    for (auto [username, msg] : messages) {
+        auto key = RatchetSessionManager::instance().get_key_for_device(username, msg->header);
+
+        auto decrypted_message = decrypt_message_given_key(msg->ciphertext, msg->length, key);
+
+        // encrypt again and save to db
+        auto message_encryption_key = SecureMemoryBuffer::create(32);
+        crypto_aead_chacha20poly1305_ietf_keygen(message_encryption_key->data());
+
+        // Generate nonce for message encryption
+        auto message_nonce = new unsigned char[CHA_CHA_NONCE_LEN];
+        randombytes_buf(message_nonce, CHA_CHA_NONCE_LEN);
+
+        auto encrypted_message_again = encrypt_bytes(
+            QByteArray(reinterpret_cast<const char*>(decrypted_message.data()), decrypted_message.size()), 
+            std::move(message_encryption_key), 
+            message_nonce
+        );
+
+        // Copy the encryption key for saving
+        auto sk_buffer = SecureMemoryBuffer::create(32);
+        memcpy(sk_buffer->data(), message_encryption_key->data(), 32);
+
+        auto key_nonce = new unsigned char[CHA_CHA_NONCE_LEN];
+        randombytes_buf(key_nonce, CHA_CHA_NONCE_LEN);
+
+        auto encrypted_key = encrypt_symmetric_key(sk_buffer, key_nonce);
+        
+        // Extract file_uuid from header (convert char array to string)
+        std::string file_uuid(msg->header->file_uuid);
+        
+        save_message_and_key(username, msg->header->device_id, file_uuid, encrypted_message_again, message_nonce, std::move(encrypted_key), key_nonce);
+        
+        // Clean up allocated arrays
+        delete[] message_nonce;
+        delete[] key_nonce;
+    }
 }
 
 Received::~Received()
@@ -71,10 +127,12 @@ void Received::refreshFileList()
 {
     ui->fileList->clear();
 
+    auto pre_existing_messages = get_all_decrypted_messages();
     // TODO: Fetch actual files from server
     // Example data for demonstration
-    addFileItem("Important Document.pdf", "2.5 MB", "2024-03-15 14:30", "John Doe");
-    addFileItem("Project Presentation.pptx", "5.8 MB", "2024-03-14 09:15", "Alice Smith");
+    for (auto [username, file_uuid, device_id, decrypted_message] : pre_existing_messages) {
+        addFileItem(QString::fromStdString(file_uuid), bin2hex(decrypted_message.data(), sizeof(decrypted_message)).data(), "2024-03-15 14:30", bin2hex(device_id.data(),32).data());
+    }
     addFileItem("Budget Report.xlsx", "1.2 MB", "2024-03-13 16:45", "Bob Johnson");
 }
 
