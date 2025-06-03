@@ -62,12 +62,18 @@ void WindowManager::showWindow(QPointer<T>& windowPtr, const QString& buttonName
 
     // Create new window if needed
     if (windowPtr.isNull()) {
-        windowPtr = new T(std::forward<Args>(args)...);
-        windowPtr->setAttribute(Qt::WA_DeleteOnClose);
-        m_windows.append(windowPtr);
+        auto uniqueWindow = std::make_unique<T>(std::forward<Args>(args)...);
+        uniqueWindow->setAttribute(Qt::WA_DeleteOnClose);
+        
+        windowPtr = uniqueWindow.get();
+        m_windows.append(QPointer<QWidget>(windowPtr.data()));
+        
         QObject::connect(windowPtr, &T::destroyed, this, [this, windowPtr]() {
-            m_windows.removeOne(windowPtr);
+            m_windows.removeOne(QPointer<QWidget>(windowPtr.data()));
         });
+        
+        // Release ownership to Qt's parent-child system
+        uniqueWindow.release();
     }
     
     windowPtr->show();
