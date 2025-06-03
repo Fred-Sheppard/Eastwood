@@ -31,11 +31,12 @@ void add_trusted_device(unsigned char pk_new_device[crypto_sign_PUBLICKEYBYTES],
         throw std::runtime_error("Failed to register device with server");
     }
 
+    auto signed_prekey = generate_signed_prekey();
     post_new_keybundles(
         get_decrypted_keypair("device"),
-        generate_signed_prekey(),
+        &signed_prekey,
         generate_onetime_keys(50)
-        );
+    );
 }
 
 void register_first_device() {
