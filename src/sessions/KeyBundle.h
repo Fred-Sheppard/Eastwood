@@ -60,22 +60,6 @@ public:
         their_signed_signature = their_signed_signature_in;
     };
 
-    // Temporarily disable destructor to prevent malloc errors with test stack arrays
-    // TODO: Implement proper memory management strategy
-    /*
-    ~SendingKeyBundle() override {
-        // Clean up allocated memory - but NOT my_device_public (comes from QByteArray)
-        delete[] my_ephemeral_public;
-        delete[] their_device_public;
-        delete[] their_signed_public;
-        delete[] their_signed_signature;
-        if (their_onetime_public) {
-            delete[] their_onetime_public;
-        }
-        // Do NOT delete my_device_public - it comes from QByteArray data
-    }
-    */
-
     Role get_role() const override { return Role::Initiator; }
 
     unsigned char *get_shared_secret() override {
@@ -161,19 +145,6 @@ public:
         my_onetime_public = my_onetime_public_in;
     };
 
-    // Temporarily disable destructor to prevent malloc errors with test stack arrays
-    // TODO: Implement proper memory management strategy  
-    /*
-    ~ReceivingKeyBundle() override {
-        // Clean up allocated memory - but NOT my_device_public (comes from QByteArray)
-        delete[] their_device_public;
-        delete[] their_ephemeral_public;
-        if (my_onetime_public) {
-            delete[] my_onetime_public;
-        }
-        // Do NOT delete my_device_public - it comes from QByteArray data
-    }
-    */
 
     Role get_role() const override { return Role::Responder; }
 
