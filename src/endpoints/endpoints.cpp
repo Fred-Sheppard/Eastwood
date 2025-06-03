@@ -278,7 +278,7 @@ std::vector<KeyBundle*> get_keybundles(const std::string &username, std::vector<
             throw std::runtime_error("Failed to decode key bundle data");
         }
 
-        auto pk_eph = new unsigned char[crypto_sign_BYTES];
+        auto pk_eph = new unsigned char[crypto_box_PUBLICKEYBYTES];
         auto sk_buffer_eph = SecureMemoryBuffer::create(ENC_SECRET_KEY_LEN);
         crypto_box_keypair(pk_eph, sk_buffer_eph->data());
 
@@ -320,7 +320,7 @@ void post_handshake_device(
         {"recipient_signed_public_prekey", bin2hex(recipient_signed_prekey_public, crypto_box_PUBLICKEYBYTES)},
         {
             "recipient_signed_public_prekey_signature",
-            bin2hex(recipient_signed_prekey_signature, crypto_box_PUBLICKEYBYTES)
+            bin2hex(recipient_signed_prekey_signature, crypto_sign_BYTES)
         },
         {"initiator_ephemeral_public_key", bin2hex(my_ephemeral_key_public, crypto_box_PUBLICKEYBYTES)},
         {"initiator_device_public_key", bin2hex(reinterpret_cast<const unsigned char *>(my_device_key_public.constData()), crypto_box_PUBLICKEYBYTES)},
@@ -388,6 +388,7 @@ std::vector<std::tuple<std::string, KeyBundle *> > get_handshake_backlog() {
     return bundles;
 }
 
+// Version with signed prekey (original behavior)
 void post_new_keybundles(
     std::tuple<QByteArray, std::unique_ptr<SecureMemoryBuffer> > device_keypair,
     std::tuple<unsigned char *, std::unique_ptr<SecureMemoryBuffer> > signed_prekeypair,
@@ -408,6 +409,24 @@ void post_new_keybundles(
     json body = {
         {"signedpre_key", signed_prekey_pub_hex},
         {"signedpk_signature", signature_hex},
+        {"one_time_keys", json::array()}
+    };
+
+    for (const auto &[pk, sk, nonce]: otks) {
+        body["one_time_keys"].push_back(bin2hex(pk, crypto_box_PUBLICKEYBYTES));
+    }
+    post("/updateKeybundle", body);
+}
+
+// Version without signed prekey (new behavior)
+void post_new_keybundles(
+    std::tuple<QByteArray, std::unique_ptr<SecureMemoryBuffer> > device_keypair,
+    const std::vector<std::tuple<unsigned char *, std::unique_ptr<SecureMemoryBuffer>, unsigned char *> > &otks
+) {
+    auto [pk_device_q, sk_device] = std::move(device_keypair);
+
+    // Create JSON payload with only one-time keys
+    json body = {
         {"one_time_keys", json::array()}
     };
 

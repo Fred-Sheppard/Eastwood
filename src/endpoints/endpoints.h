@@ -58,9 +58,16 @@ std::vector<std::tuple<std::string, DeviceMessage*>> get_messages();
 
 std::vector<KeyBundle*> get_keybundles(const std::string &username, std::vector<std::array<unsigned char,32>> existing_device_ids);
 
+// Overloaded versions - with signed prekey (original signature)
 void post_new_keybundles(
     std::tuple<QByteArray, std::unique_ptr<SecureMemoryBuffer> > device_keypair,
     std::tuple<unsigned char *, std::unique_ptr<SecureMemoryBuffer> > signed_prekeypair,
+    const std::vector<std::tuple<unsigned char *, std::unique_ptr<SecureMemoryBuffer>, unsigned char *> > &otks
+);
+
+// Overloaded versions - without signed prekey (new version)
+void post_new_keybundles(
+    std::tuple<QByteArray, std::unique_ptr<SecureMemoryBuffer> > device_keypair,
     const std::vector<std::tuple<unsigned char *, std::unique_ptr<SecureMemoryBuffer>, unsigned char *> > &otks
 );
 
