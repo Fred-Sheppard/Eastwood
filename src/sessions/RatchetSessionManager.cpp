@@ -33,27 +33,28 @@ void RatchetSessionManager::create_ratchets_if_needed(const std::string &usernam
             // Save the newly created ratchet
             user_ratchets[device_id]->save(username, device_id);
 
-            auto sending_bundle = dynamic_cast<SendingKeyBundle*>(bundle);
+            if (bundle->get_role() == Role::Initiator) {
+                auto sending_bundle = dynamic_cast<SendingKeyBundle*>(bundle);
+                if (post_to_server && sending_bundle) {
+                    try {
+                        auto onetime_opt = sending_bundle->get_their_onetime_public();
+                        const unsigned char* onetime_ptr = onetime_opt.has_value() ? onetime_opt.value().data() : nullptr;
 
-            if (post_to_server && sending_bundle) {
-                try {
-                    auto onetime_opt = sending_bundle->get_their_onetime_public();
-                    const unsigned char* onetime_ptr = onetime_opt.has_value() ? onetime_opt.value().data() : nullptr;
-                    
-                    post_handshake_device(
-                        sending_bundle->get_their_device_public().data(),
-                        sending_bundle->get_their_signed_public().data(),
-                        sending_bundle->get_their_signed_signature().data(),
-                        onetime_ptr,
-                        sending_bundle->get_my_ephemeral_public().data()
-                    );
-                    std::cout << "Successfully posted handshake to server for " << username << std::endl;
-                } catch (const webwood::HttpError& e) {
-                    std::cerr << "Server error when posting handshake for " << username << ": " << e.what() << std::endl;
-                    // Continue execution - ratchet is still created locally
-                } catch (const std::exception& e) {
-                    std::cerr << "Error posting handshake for " << username << ": " << e.what() << std::endl;
-                    // Continue execution - ratchet is still created locally
+                        post_handshake_device(
+                            sending_bundle->get_their_device_public().data(),
+                            sending_bundle->get_their_signed_public().data(),
+                            sending_bundle->get_their_signed_signature().data(),
+                            onetime_ptr,
+                            sending_bundle->get_my_ephemeral_public().data()
+                        );
+                        std::cout << "Successfully posted handshake to server for " << username << std::endl;
+                    } catch (const webwood::HttpError& e) {
+                        std::cerr << "Server error when posting handshake for " << username << ": " << e.what() << std::endl;
+                        // Continue execution - ratchet is still created locally
+                    } catch (const std::exception& e) {
+                        std::cerr << "Error posting handshake for " << username << ": " << e.what() << std::endl;
+                        // Continue execution - ratchet is still created locally
+                    }
                 }
             }
         }
