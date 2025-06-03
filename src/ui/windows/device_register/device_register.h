@@ -30,7 +30,6 @@ signals:
 private slots:
     static void onBackButtonClicked();
     void onCopyButtonClicked();
-
     void onUserRegistered();
 
 private:

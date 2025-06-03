@@ -213,7 +213,8 @@ void Settings::onAuthVerifyClicked()
     }
 }
 
-void Settings::onScanQRButtonClicked() const {
+void Settings::onScanQRButtonClicked() const
+{
     m_cameraFunctionality->showScanDialog();
 }
 

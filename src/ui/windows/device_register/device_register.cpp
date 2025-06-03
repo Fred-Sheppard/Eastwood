@@ -33,8 +33,8 @@ void continuously_ping(const std::array<unsigned char, 32> &pk_device, QObject* 
     }
 }
 
-DeviceRegister::DeviceRegister(const std::string& auth_code, const QImage& qr_code, QWidget *parent, const 
-                             unsigned char* pk_device, std::unique_ptr<SecureMemoryBuffer> sk_device,
+DeviceRegister::DeviceRegister(const std::string& auth_code, const QImage& qr_code, QWidget *parent,
+                             const unsigned char* pk_device, std::unique_ptr<SecureMemoryBuffer> sk_device,
                              const std::string& username)
     : QWidget(parent)
     , ui(new Ui::DeviceRegister)

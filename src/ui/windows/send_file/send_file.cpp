@@ -10,9 +10,9 @@
 
 #include "src/auth/logout.h"
 #include "src/files/upload_file.h"
-#include "src/keys/session_token_manager.h"
 #include "src/keys/kek_manager.h"
 #include "src/database/database.h"
+#include "src/keys/session_token_manager.h"
 
 SendFile::SendFile(QWidget *parent)
     : QWidget(parent)
