@@ -13,11 +13,11 @@
 
 class RatchetSessionManager{
 public:
-    // Singleton access method
     static RatchetSessionManager& instance();
     
-    // Public constructor for direct instantiation
     RatchetSessionManager();
+
+    ~RatchetSessionManager();
 
     // Delete copy constructor and assignment operator to prevent copying
     RatchetSessionManager(const RatchetSessionManager&) = delete;

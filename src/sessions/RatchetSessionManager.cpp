@@ -16,6 +16,10 @@ RatchetSessionManager& RatchetSessionManager::instance() {
 
 RatchetSessionManager::RatchetSessionManager() = default;
 
+RatchetSessionManager::~RatchetSessionManager() {
+    ratchets.clear();
+}
+
 void RatchetSessionManager::create_ratchets_if_needed(const std::string &username, const std::vector<KeyBundle*> &bundles, const bool post_to_server) {
     auto& user_ratchets = ratchets[username];
 
@@ -61,6 +65,10 @@ std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>
     if (post_new_ratchets_to_server) {
         const auto new_bundles = get_keybundles(username, get_device_ids_of_existing_handshakes(username));
         create_ratchets_if_needed(username, new_bundles, post_new_ratchets_to_server);
+        
+        for (auto* bundle : new_bundles) {
+            delete bundle;
+        }
     }
 
     std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>, MessageHeader *> > keys;

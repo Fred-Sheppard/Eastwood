@@ -145,7 +145,6 @@ public:
         my_onetime_public = my_onetime_public_in;
     };
 
-
     Role get_role() const override { return Role::Responder; }
 
     unsigned char *get_shared_secret() override {
