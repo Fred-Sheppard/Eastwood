@@ -39,7 +39,7 @@ int main() {
     }
 
     const std::string username = generateRandomString(8);
-    const auto password = std::make_unique<const std::string>("password1234");
+    auto password = std::make_unique<const std::string>("password1234");
 
     qDebug() << "Registering user";
     register_user(username, password);
@@ -47,13 +47,14 @@ int main() {
     register_first_device();
     qDebug() << "Logging in";
     login_user(username, password);
-    const auto new_password = std::make_unique<const std::string>("even_stronger_password");
+    const std::string new_password = "even_stronger_password";
     qDebug() << "Rotating password";
-    rotate_master_password(username, *new_password.get());
+    rotate_master_password(username, new_password);
     qDebug() << "Posting keybundles";
+    auto signed_prekey = generate_signed_prekey();
     post_new_keybundles(
         get_decrypted_keypair("device"),
-        generate_signed_prekey(),
+        &signed_prekey,
         generate_onetime_keys(100)
     );
     qDebug() << "Getting devices";
