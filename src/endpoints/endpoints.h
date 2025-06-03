@@ -77,4 +77,6 @@ bool get_user_exists(
 
 std::vector<std::string> get_devices();
 
+void delete_file(const std::string &uuid);
+
 #endif //ENDPOINTS_H

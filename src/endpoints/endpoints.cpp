@@ -475,3 +475,10 @@ std::vector<std::string> get_devices() {
     const json response = get("/getDevices");
     return response["data"];
 }
+
+void delete_file(const std::string &uuid) {
+    const json body = {
+      {"file_id", uuid}
+    };
+    post("/deleteFile", body);
+}
