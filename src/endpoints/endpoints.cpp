@@ -278,7 +278,7 @@ std::vector<KeyBundle*> get_keybundles(const std::string &username, std::vector<
             throw std::runtime_error("Failed to decode key bundle data");
         }
 
-        auto pk_eph = new unsigned char[crypto_sign_BYTES];
+        auto pk_eph = new unsigned char[crypto_box_PUBLICKEYBYTES];
         auto sk_buffer_eph = SecureMemoryBuffer::create(ENC_SECRET_KEY_LEN);
         crypto_box_keypair(pk_eph, sk_buffer_eph->data());
 
@@ -320,7 +320,7 @@ void post_handshake_device(
         {"recipient_signed_public_prekey", bin2hex(recipient_signed_prekey_public, crypto_box_PUBLICKEYBYTES)},
         {
             "recipient_signed_public_prekey_signature",
-            bin2hex(recipient_signed_prekey_signature, crypto_box_PUBLICKEYBYTES)
+            bin2hex(recipient_signed_prekey_signature, crypto_sign_BYTES)
         },
         {"initiator_ephemeral_public_key", bin2hex(my_ephemeral_key_public, crypto_box_PUBLICKEYBYTES)},
         {"initiator_device_public_key", bin2hex(reinterpret_cast<const unsigned char *>(my_device_key_public.constData()), crypto_box_PUBLICKEYBYTES)},
