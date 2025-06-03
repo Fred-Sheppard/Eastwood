@@ -98,7 +98,8 @@ int main() {
     }
 
     qDebug() << "Logging in first user with new password";
-    login_user(username, new_password);
+    const auto new_password_ptr = std::make_unique<const std::string>(new_password);
+    login_user(username, new_password_ptr);
 
     qDebug() << "Registering second device for first user";
     const std::string new_device_name = "device 2";
