@@ -916,7 +916,7 @@ TEST_F(RatchetSessionManagerTest, LoadRatchetsFromDatabaseTest) {
     memcpy(bob_device_id.data(), bob_device_pub, 32);
     memcpy(charlie_device_id.data(), charlie_device_pub, 32);
     
-    auto alice_keys1 = alice_session_manager1->get_keys_for_identity("contacts");
+    auto alice_keys1 = alice_session_manager1->get_keys_for_identity("contacts", false);
     auto [alice_key_bob1, alice_header_bob1] = alice_keys1[bob_device_id];
     auto [alice_key_charlie1, alice_header_charlie1] = alice_keys1[charlie_device_id];
     
@@ -925,7 +925,7 @@ TEST_F(RatchetSessionManagerTest, LoadRatchetsFromDatabaseTest) {
     print_key("Alice->Charlie key 1", alice_key_charlie1);
     
     // Advance ratchets further
-    auto alice_keys2 = alice_session_manager1->get_keys_for_identity("contacts");
+    auto alice_keys2 = alice_session_manager1->get_keys_for_identity("contacts", false);
     auto [alice_key_bob2, alice_header_bob2] = alice_keys2[bob_device_id];
     auto [alice_key_charlie2, alice_header_charlie2] = alice_keys2[charlie_device_id];
     
@@ -945,7 +945,7 @@ TEST_F(RatchetSessionManagerTest, LoadRatchetsFromDatabaseTest) {
     std::cout << "Phase 3: Verifying loaded ratchets..." << std::endl;
     
     // Generate keys with loaded ratchets - these should continue from where we left off
-    auto alice_keys3 = alice_session_manager2->get_keys_for_identity("contacts");
+    auto alice_keys3 = alice_session_manager2->get_keys_for_identity("contacts", false);
     auto [alice_key_bob3, alice_header_bob3] = alice_keys3[bob_device_id];
     auto [alice_key_charlie3, alice_header_charlie3] = alice_keys3[charlie_device_id];
     
@@ -996,7 +996,7 @@ TEST_F(RatchetSessionManagerTest, LoadRatchetsFromDatabaseTest) {
     std::array<unsigned char, 32> alice_device_id;
     memcpy(alice_device_id.data(), alice_device_pub, 32);
     
-    auto bob_keys = bob_session_manager->get_keys_for_identity("alice");
+    auto bob_keys = bob_session_manager->get_keys_for_identity("alice", false);
     auto [bob_key, bob_header] = bob_keys[alice_device_id];
     print_key("Bob response key", bob_key);
     
@@ -1035,7 +1035,7 @@ TEST_F(RatchetSessionManagerTest, LoadRatchetsFromEmptyDatabaseTest) {
     ASSERT_NO_THROW(alice_session_manager->load_ratchets_from_db());
     
     // Verify no ratchets were loaded by checking that get_keys_for_identity returns empty
-    auto keys = alice_session_manager->get_keys_for_identity("nonexistent_user");
+    auto keys = alice_session_manager->get_keys_for_identity("nonexistent_user", false);
     EXPECT_EQ(keys.size(), 0) << "Should return empty map for non-existent user";
     
     std::cout << "Successfully handled empty database case" << std::endl;
