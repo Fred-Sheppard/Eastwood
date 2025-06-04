@@ -9,6 +9,7 @@
 #include "src/algorithms/constants.h"
 #include <iostream>
 #include <set>
+#include <set>
 
 #include "src/database/database.h"
 #include "src/keys/secure_memory_buffer.h"
@@ -16,6 +17,7 @@
 #include <memory>
 
 #include "src/utils/ConversionUtils.h"
+#include "src/keys/session_token_manager.h"
 #include "src/keys/session_token_manager.h"
 
 
@@ -345,6 +347,7 @@ inline void save_message_and_key(
     const std::array<unsigned char, 32>& from_device_id, 
     const std::string& file_uuid,
     const std::vector<unsigned char>& encrypted_message,
+    const std::vector<unsigned char>& encrypted_message,
     const unsigned char* message_nonce, 
     const std::unique_ptr<SecureMemoryBuffer>& encrypted_key, 
     const unsigned char* key_nonce
@@ -383,6 +386,8 @@ inline std::vector<unsigned char> get_decrypted_message(const std::string& file_
     
     std::cout << "\n--- DEBUG: get_decrypted_message for UUID: " << file_uuid << " ---" << std::endl;
     
+    std::cout << "\n--- DEBUG: get_decrypted_message for UUID: " << file_uuid << " ---" << std::endl;
+    
     // Get the encrypted message data and its nonce
     db.prepare_or_throw(
         "SELECT encrypted_message, nonce FROM received_messages WHERE file_uuid = ?;", &stmt
@@ -392,12 +397,22 @@ inline std::vector<unsigned char> get_decrypted_message(const std::string& file_
     auto rows = db.query(stmt);
     if (rows.empty()) {
         std::cout << "DEBUG: No message found in received_messages for UUID: " << file_uuid << std::endl;
+        std::cout << "DEBUG: No message found in received_messages for UUID: " << file_uuid << std::endl;
         throw std::runtime_error("No message found with the given file_uuid");
     }
     
     const auto &row = rows[0];
     QByteArray encrypted_message = row["encrypted_message"].toByteArray();
     QByteArray message_nonce = row["nonce"].toByteArray();
+    
+    std::cout << "DEBUG: Found encrypted message in DB" << std::endl;
+    std::cout << "Encrypted message size: " << encrypted_message.size() << " bytes" << std::endl;
+    std::cout << "Message nonce size: " << message_nonce.size() << " bytes" << std::endl;
+    std::cout << "Encrypted message first 16 bytes: ";
+    for (int i = 0; i < std::min(static_cast<qsizetype>(16), encrypted_message.size()); i++) {
+        printf("%02x ", static_cast<unsigned char>(encrypted_message[i]));
+    }
+    std::cout << std::endl;
     
     std::cout << "DEBUG: Found encrypted message in DB" << std::endl;
     std::cout << "Encrypted message size: " << encrypted_message.size() << " bytes" << std::endl;
@@ -418,12 +433,17 @@ inline std::vector<unsigned char> get_decrypted_message(const std::string& file_
     auto key_rows = db.query(key_stmt);
     if (key_rows.empty()) {
         std::cout << "DEBUG: No key found in received_message_keys for UUID: " << file_uuid << std::endl;
+        std::cout << "DEBUG: No key found in received_message_keys for UUID: " << file_uuid << std::endl;
         throw std::runtime_error("No key found for the given file_uuid");
     }
     
     const auto &key_row = key_rows[0];
     QByteArray encrypted_key = key_row["encrypted_key"].toByteArray();
     QByteArray key_nonce = key_row["nonce"].toByteArray();
+    
+    std::cout << "DEBUG: Found encryption key in DB" << std::endl;
+    std::cout << "Encrypted key size: " << encrypted_key.size() << " bytes" << std::endl;
+    std::cout << "Key nonce size: " << key_nonce.size() << " bytes" << std::endl;
     
     std::cout << "DEBUG: Found encryption key in DB" << std::endl;
     std::cout << "Encrypted key size: " << encrypted_key.size() << " bytes" << std::endl;
@@ -443,12 +463,30 @@ inline std::vector<unsigned char> get_decrypted_message(const std::string& file_
     }
     std::cout << std::endl;
     
+    std::cout << "DEBUG: Decrypted symmetric key" << std::endl;
+    std::cout << "Decrypted key size: " << decrypted_key->size() << " bytes" << std::endl;
+    std::cout << "Decrypted key first 8 bytes: ";
+    for (size_t i = 0; i < std::min((size_t)8, decrypted_key->size()); i++) {
+        printf("%02x ", decrypted_key->data()[i]);
+    }
+    std::cout << std::endl;
+    
     // Decrypt the message using the decrypted symmetric key
     auto decrypted_message = decrypt_message_with_nonce(
         encrypted_message,
         decrypted_key,
         std::vector<unsigned char>(message_nonce.begin(), message_nonce.end())
     );
+    
+    std::cout << "DEBUG: Final decrypted message" << std::endl;
+    std::cout << "Final decrypted message size: " << decrypted_message.size() << " bytes" << std::endl;
+    if (!decrypted_message.empty()) {
+        std::cout << "Final decrypted message first 8 bytes: ";
+        for (size_t i = 0; i < std::min((size_t)8, decrypted_message.size()); i++) {
+            printf("%02x ", decrypted_message[i]);
+        }
+        std::cout << std::endl;
+    }
     
     std::cout << "DEBUG: Final decrypted message" << std::endl;
     std::cout << "Final decrypted message size: " << decrypted_message.size() << " bytes" << std::endl;
@@ -592,6 +630,7 @@ inline std::vector<std::tuple<std::string, std::array<unsigned char, 32>, std::v
 }
 
 // Function to get all decrypted messages from database (excluding current user's messages)
+// Function to get all decrypted messages from database (excluding current user's messages)
 inline std::vector<std::tuple<std::string, std::string, std::array<unsigned char, 32>, std::vector<unsigned char>>> get_all_decrypted_messages() {
     const auto &db = Database::get();
     sqlite3_stmt *stmt;
@@ -600,13 +639,20 @@ inline std::vector<std::tuple<std::string, std::string, std::array<unsigned char
     std::string current_username = SessionTokenManager::instance().getUsername();
     
     // Get all messages except those from the current user
+    // Get current user's username to exclude their messages
+    std::string current_username = SessionTokenManager::instance().getUsername();
+    
+    // Get all messages except those from the current user
     db.prepare_or_throw(
         "SELECT username, from_device_id, encrypted_message, nonce, file_uuid FROM received_messages WHERE username != ?;", &stmt
+        "SELECT username, from_device_id, encrypted_message, nonce, file_uuid FROM received_messages WHERE username != ?;", &stmt
     );
+    sqlite3_bind_text(stmt, 1, current_username.c_str(), static_cast<int>(current_username.length()), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 1, current_username.c_str(), static_cast<int>(current_username.length()), SQLITE_TRANSIENT);
     
     auto rows = db.query(stmt);
     std::vector<std::tuple<std::string, std::string, std::array<unsigned char, 32>, std::vector<unsigned char>>> result;
+    std::set<std::string> seen_file_uuids; // Track unique file UUIDs
     std::set<std::string> seen_file_uuids; // Track unique file UUIDs
     
     for (const auto& row : rows) {
@@ -615,6 +661,12 @@ inline std::vector<std::tuple<std::string, std::string, std::array<unsigned char
         QByteArray encrypted_message = row["encrypted_message"].toByteArray();
         QByteArray message_nonce = row["nonce"].toByteArray();
         std::string file_uuid = row["file_uuid"].toString().toStdString();
+        
+        // Skip if we've already seen this file_uuid
+        if (seen_file_uuids.find(file_uuid) != seen_file_uuids.end()) {
+            continue;
+        }
+        seen_file_uuids.insert(file_uuid);
         
         // Skip if we've already seen this file_uuid
         if (seen_file_uuids.find(file_uuid) != seen_file_uuids.end()) {
@@ -668,6 +720,37 @@ inline std::vector<std::tuple<std::string, std::string, std::array<unsigned char
     }
     
     return result;
+}
+
+inline std::vector<std::string> get_all_received_file_uuids() {
+    const auto &db = Database::get();
+    sqlite3_stmt *stmt;
+
+    // Get current user's username to exclude their messages
+    std::string current_username = SessionTokenManager::instance().getUsername();
+
+    // Get all messages except those from the current user
+    db.prepare_or_throw(
+        "SELECT file_uuid FROM received_messages WHERE username != ?;", &stmt
+    );
+    sqlite3_bind_text(stmt, 1, current_username.c_str(), static_cast<int>(current_username.length()), SQLITE_TRANSIENT);
+
+    auto rows = db.query(stmt);
+    std::set<std::string> seen_file_uuids; // Track unique file UUIDs
+    std::vector<std::string> file_uuids;
+
+    for (const auto& row : rows) {
+        std::string file_uuid = row["file_uuid"].toString().toStdString();
+
+        // Skip if we've already seen this file_uuid
+        if (seen_file_uuids.find(file_uuid) != seen_file_uuids.end()) {
+            continue;
+        }
+        seen_file_uuids.insert(file_uuid);
+        file_uuids.emplace_back(file_uuid);
+    }
+
+    return file_uuids;
 }
 
 inline std::vector<std::string> get_all_received_file_uuids() {
@@ -830,7 +913,7 @@ inline std::vector<std::tuple<std::string, std::string, std::array<unsigned char
                 q_byte_array_to_chars(encrypted_key),
                 q_byte_array_to_chars(key_nonce)
             );
-            auto decrypted_message = decrypt_message_with_nonce(
+            auto decrypted_message = decrypt_bytes(
                 encrypted_message,
                 decrypted_key,
                 std::vector<unsigned char>(message_nonce.begin(), message_nonce.end())
