@@ -77,19 +77,14 @@ inline void update_messages() {
     }
 }
 
-// vector of file name, file size, mime type, uuid
-inline std::vector<std::tuple<std::string, int, std::string, std::string>> get_file_metadata() {
+// vector of file name, file size, mime type, uuid, username
+inline std::vector<std::tuple<std::string, int, std::string, std::string, std::string>> get_file_metadata() {
     auto uuids = get_all_received_file_uuids();
-    std::cout << "Found " << uuids.size() << " file UUIDs" << std::endl;
-    for (const auto& uuid : uuids) {
-        std::cout << "UUID in DB: " << uuid << std::endl;
-    }
-    
     auto encrypted_metadata = get_encrypted_file_metadata(uuids);
-    std::cout << "Retrieved encrypted metadata for " << encrypted_metadata.size() << " files" << std::endl;
 
-    std::vector<std::tuple<std::string, int, std::string, std::string>> file_metadata;
-    for (auto &[uuid, ciphertext] : encrypted_metadata) {
+    std::vector<std::tuple<std::string, int, std::string, std::string, std::string>> file_metadata;
+    for (auto &[uuid, tuple] : encrypted_metadata) {
+        auto [username, ciphertext] = tuple;
         std::cout << "\n--- Processing UUID: " << uuid << " ---" << std::endl;
         std::cout << "UUID from server: " << uuid << std::endl;
         std::cout << "Encrypted metadata size: " << ciphertext.size() << " bytes" << std::endl;
@@ -161,7 +156,8 @@ inline std::vector<std::tuple<std::string, int, std::string, std::string>> get_f
                 metadata["name"].get<std::string>(), 
                 metadata["size"].get<int>(), 
                 metadata["mime_type"].get<std::string>(),
-                uuid
+                uuid,
+                username
             ));
         } catch (const std::exception& e) {
             std::cerr << "ERROR processing metadata for UUID " << uuid << ": " << e.what() << std::endl;

@@ -77,9 +77,9 @@ void Received::refreshFileList()
 
     auto metadata = get_file_metadata();
 
-    for (const auto& [file_name, file_size, mime_type, uuid] : metadata) {
+    for (const auto& [file_name, file_size, mime_type, uuid, username] : metadata) {
         std::string file_size_str = std::to_string(file_size);
-        addFileItem(QString::fromStdString(file_name), QString::fromStdString(file_size_str), "sadfa", "asdfadf", uuid, mime_type);
+        addFileItem(QString::fromStdString(file_name), QString::fromStdString(file_size_str), "sadfa", QString::fromStdString(username), uuid, mime_type);
     }
 }
 

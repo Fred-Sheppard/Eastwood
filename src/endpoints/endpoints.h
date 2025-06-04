@@ -86,6 +86,6 @@ std::vector<std::string> get_devices();
 
 std::vector<unsigned char> get_encrypted_file(std::string uuid);
 
-std::map<std::string, std::vector<unsigned char>> get_encrypted_file_metadata(std::vector<std::string> uuids);
+std::map<std::string, std::tuple<std::string, std::vector<unsigned char>> > get_encrypted_file_metadata(std::vector<std::tuple<std::string,std::string>> uuids);
 
 #endif //ENDPOINTS_H
