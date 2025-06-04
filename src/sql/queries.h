@@ -277,7 +277,7 @@ inline std::vector<unsigned char> get_decrypted_ratchet(const unsigned char* rat
         q_byte_array_to_chars(key_nonce)
     );
     
-    auto decrypted_ratchet = decrypt_bytes(
+    auto decrypted_ratchet = decrypt_message_with_nonce(
         encrypted_data,
         decrypted_key,
         std::vector<unsigned char>(ratchet_nonce.begin(), ratchet_nonce.end())
@@ -328,7 +328,7 @@ inline std::vector<unsigned char> get_decrypted_ratchet_by_username_device(const
         q_byte_array_to_chars(key_nonce)
     );
     
-    auto decrypted_ratchet = decrypt_bytes(
+    auto decrypted_ratchet = decrypt_message_with_nonce(
         encrypted_data,
         decrypted_key,
         std::vector<unsigned char>(ratchet_nonce.begin(), ratchet_nonce.end())
@@ -417,7 +417,7 @@ inline std::vector<unsigned char> get_decrypted_message(const std::string& file_
     );
     
     // Decrypt the message using the decrypted symmetric key
-    auto decrypted_message = decrypt_bytes(
+    auto decrypted_message = decrypt_message_with_nonce(
         encrypted_message,
         decrypted_key,
         std::vector<unsigned char>(message_nonce.begin(), message_nonce.end())
@@ -476,7 +476,7 @@ inline std::vector<unsigned char> get_decrypted_message_by_username_device(
     );
     
     // Decrypt the message using the decrypted symmetric key
-    auto decrypted_message = decrypt_bytes(
+    auto decrypted_message = decrypt_message_with_nonce(
         encrypted_message,
         decrypted_key,
         std::vector<unsigned char>(message_nonce.begin(), message_nonce.end())
@@ -537,7 +537,7 @@ inline std::vector<std::tuple<std::string, std::array<unsigned char, 32>, std::v
                 q_byte_array_to_chars(key_nonce)
             );
             
-            auto decrypted_message = decrypt_bytes(
+            auto decrypted_message = decrypt_message_with_nonce(
                 encrypted_message,
                 decrypted_key,
                 std::vector<unsigned char>(message_nonce.begin(), message_nonce.end())
@@ -605,7 +605,7 @@ inline std::vector<std::tuple<std::string, std::string, std::array<unsigned char
                 q_byte_array_to_chars(encrypted_key),
                 q_byte_array_to_chars(key_nonce)
             );
-            auto decrypted_message = decrypt_bytes(
+            auto decrypted_message = decrypt_message_with_nonce(
                 encrypted_message,
                 decrypted_key,
                 std::vector<unsigned char>(message_nonce.begin(), message_nonce.end())
@@ -672,7 +672,7 @@ inline std::vector<std::tuple<std::string, std::array<unsigned char, 32>, std::v
                 q_byte_array_to_chars(key_nonce)
             );
 
-            auto decrypted_ratchet = decrypt_bytes(
+            auto decrypted_ratchet = decrypt_message_with_nonce(
                 encrypted_data,
                 decrypted_key,
                 std::vector<unsigned char>(ratchet_nonce.begin(), ratchet_nonce.end())

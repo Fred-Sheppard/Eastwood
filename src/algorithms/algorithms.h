@@ -71,13 +71,13 @@ std::vector<std::tuple<unsigned char*, std::unique_ptr<SecureMemoryBuffer>, unsi
 unsigned char* generate_unique_id_pair(std::string *input_one, std::string *input_two);
 
 
-std::vector<unsigned char> encrypt_bytes(
+std::vector<unsigned char> encrypt_message_with_nonce(
     const QByteArray &data,
     const std::unique_ptr<SecureMemoryBuffer> &key,
     const unsigned char nonce[CHA_CHA_NONCE_LEN]
 );
 
-std::vector<unsigned char> decrypt_bytes(
+std::vector<unsigned char> decrypt_message_with_nonce(
     const QByteArray &encrypted_bytes,
     const std::unique_ptr<SecureMemoryBuffer> &key,
     const std::vector<unsigned char> &nonce

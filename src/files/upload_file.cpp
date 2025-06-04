@@ -22,7 +22,7 @@ std::string upload_file(const std::string &file_path) {
     unsigned char nonce[CHA_CHA_NONCE_LEN];
     randombytes_buf(nonce, CHA_CHA_NONCE_LEN);
 
-    const auto encrypted_bytes = encrypt_bytes(buff, std::move(file_key), nonce);
+    const auto encrypted_bytes = encrypt_message_with_nonce(buff, std::move(file_key), nonce);
 
     const std::string file_uuid = post_upload_file(encrypted_bytes);
 
