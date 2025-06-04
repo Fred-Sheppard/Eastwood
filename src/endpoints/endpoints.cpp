@@ -491,75 +491,15 @@ std::vector<std::string> get_devices() {
     return response["data"];
 }
 
-std::vector<unsigned char> get_encrypted_file(std::string uuid) {
-    try {
-        json response = get("/downloadFile/" + uuid);
+DownloadedFile get_download_file(const std::string &uuid) {
+    json response = get("/downloadFile/" + uuid);
 
-        // Debug: Print the raw response to see what we're actually getting
-        std::cout << "Raw JSON response: " << response.dump() << std::endl;
-        std::cout << "Response keys: ";
-        for (auto &[key, value]: response.items()) {
-            std::cout << key << " ";
-        }
-        std::cout << std::endl;
+    const auto encrypted_file_str = response["data"]["encrypted_bytes"].get<std::string>();
+    const auto encrypted_file_key_str = response["data"]["encrypted_file_key"].get<std::string>();
 
-        // Check if the response contains data.encrypted_bytes field
-        if (!response.contains("data") || !response["data"].contains("encrypted_bytes") || !response["data"][
-                "encrypted_bytes"].is_string()) {
-            std::cout << "No encrypted_bytes hex string in response data for UUID: " << uuid << std::endl;
-            return std::vector<unsigned char>();
-        }
-
-        // Parse the encrypted_bytes hex string
-        std::string hex_data = response["data"]["encrypted_bytes"].get<std::string>();
-        std::cout << "Hex data length: " << hex_data.length() << std::endl;
-        std::cout << "First 100 chars of hex: " << hex_data.substr(0, 100) << std::endl;
-
-        size_t binary_size = hex_data.length() / 2;
-
-        if (binary_size == 0) {
-            std::cout << "Empty encrypted_bytes hex string for UUID: " << uuid << std::endl;
-            return std::vector<unsigned char>();
-        }
-
-        std::cout << "Binary size will be: " << binary_size << " bytes" << std::endl;
-
-        std::vector<unsigned char> file_data(binary_size);
-        size_t bin_len;
-        const char *hex_end;
-
-        // Use libsodium's hex2bin function for more reliable hex parsing
-        if (sodium_hex2bin(file_data.data(), file_data.size(),
-                           hex_data.c_str(), hex_data.length(),
-                           nullptr, &bin_len, &hex_end) != 0) {
-            std::cout << "Failed to convert hex to binary using sodium_hex2bin for UUID: " << uuid << std::endl;
-            std::cout << "Hex string length: " << hex_data.length() << std::endl;
-            std::cout << "Expected binary size: " << binary_size << std::endl;
-            return std::vector<unsigned char>();
-        }
-
-        // Resize vector to actual parsed length (might be smaller if hex had whitespace)
-        file_data.resize(bin_len);
-
-        std::cout << "Successfully converted hex to binary using sodium" << std::endl;
-        std::cout << "Downloaded file data, size: " << file_data.size() << " bytes" << std::endl;
-        std::cout << "First 20 bytes: ";
-        for (size_t i = 0; i < std::min((size_t) 20, file_data.size()); i++) {
-            printf("%02x ", file_data[i]);
-        }
-        std::cout << std::endl;
-
-        return file_data;
-    } catch (const std::exception &e) {
-        std::cout << "Failed to download file " << uuid << ": " << e.what() << std::endl;
-        return std::vector<unsigned char>();
-    }
-}
-
-// file uuid : ciphertext
-std::map<std::string, std::tuple<std::string, std::vector<unsigned char>> > get_encrypted_file_metadata(std::vector<std::tuple<std::string, std::string>> uuids) {
-    json body = {
-        {"file_ids", json::array()}
+    return {
+        hex2bin(encrypted_file_str),
+        hex2bin(encrypted_file_key_str)
     };
 
     std::map<std::string, std::string> usernames;
