@@ -479,7 +479,7 @@ std::string post_upload_file(
 ) {
     const json body = {
         {"encrypted_file", bin2hex(encrypted_file_data.data(), encrypted_file_data.size())},
-        {"encrypted_metadata", bin2hex(encrypted_metadata.data(), encrypted_file_data.size())}
+        {"encrypted_metadata", bin2hex(encrypted_metadata.data(), encrypted_metadata.size())}
     };
 
     const json response = post("/uploadFile", body);
