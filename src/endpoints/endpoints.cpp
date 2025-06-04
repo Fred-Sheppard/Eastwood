@@ -474,12 +474,14 @@ void post_new_keybundles(
 }
 
 std::string post_upload_file(
-    const std::vector<unsigned char>& encrypted_file_data,
-    const std::vector<unsigned char>& encrypted_metadata
+    const std::vector<unsigned char> &encrypted_file_data,
+    const std::vector<unsigned char> &encrypted_metadata,
+    const std::vector<unsigned char> &encrypted_file_key
 ) {
     const json body = {
         {"encrypted_file", bin2hex(encrypted_file_data.data(), encrypted_file_data.size())},
-        {"encrypted_metadata", bin2hex(encrypted_metadata.data(), encrypted_metadata.size())}
+        {"encrypted_metadata", bin2hex(encrypted_metadata.data(), encrypted_metadata.size())},
+        {"encrypted_file_key", bin2hex(encrypted_file_key.data(), encrypted_file_key.size())}
     };
 
     const json response = post("/uploadFile", body);
@@ -501,71 +503,32 @@ DownloadedFile get_download_file(const std::string &uuid) {
         hex2bin(encrypted_file_str),
         hex2bin(encrypted_file_key_str)
     };
+}
 
-    std::map<std::string, std::string> usernames;
+// uuid -> metadata
+std::vector<GetMetadata> get_encrypted_file_metadata(const std::vector<std::string> &uuids) {
+    const json body {
+        {"file_ids", uuids}
+    };
+    const auto response = post("/getFilesMetadata", body);
 
-    for (auto [uuid, username]: uuids) {
-        body["file_ids"].push_back(uuid);
-        usernames[uuid] = username;
+    std::vector<GetMetadata> output{};
+
+    for (const json file : response["data"]["metadata"]) {
+        output.push_back({
+            file["file_id"],
+            file["encrypted_metadata"],
+            file["encrypted_file_key"],
+            file["owner"]
+        });
     }
 
-
-    std::cout << "DEBUG: Requesting metadata for " << uuids.size() << " UUIDs" << std::endl;
-    json response = post("/getFilesMetadata", body);
-
-    std::map<std::string, std::tuple<std::string, std::vector<unsigned char>> > files_metadata;
-
-    // Check if response contains data and metadata
-    if (!response.contains("data") || !response["data"].contains("metadata")) {
-        std::cerr << "Invalid response format for file metadata" << std::endl;
-        return files_metadata;
-    }
-
-    std::cout << "DEBUG: Server returned metadata for " << response["data"]["metadata"].size() << " files" << std::endl;
-
-    for (const auto &file_data: response["data"]["metadata"]) {
-        if (!file_data.contains("file_id") || !file_data.contains("encrypted_metadata")) {
-            std::cerr << "Missing uuid or encrypted_metadata in file data" << std::endl;
-            continue;
-        }
-
-        std::string uuid = file_data["file_id"].get<std::string>();
-        std::string hex_metadata = file_data["encrypted_metadata"].get<std::string>();
-
-        std::cout << "\n--- DEBUG: Processing metadata for UUID: " << uuid << " ---" << std::endl;
-        std::cout << "Hex metadata from server: " << hex_metadata << std::endl;
-        std::cout << "Hex metadata length: " << hex_metadata.length() << " chars" << std::endl;
-
-        size_t binary_size = hex_metadata.length() / 2;
-        if (binary_size == 0) {
-            std::cerr << "Empty encrypted metadata for file " << uuid << std::endl;
-            continue;
-        }
-
-        std::cout << "Expected binary size: " << binary_size << " bytes" << std::endl;
-        std::vector<unsigned char> binary_metadata(binary_size);
-
-        if (hex_to_bin(hex_metadata, binary_metadata.data(), binary_size)) {
-            std::cout << "Successfully converted hex to binary" << std::endl;
-            std::cout << "Binary metadata first 16 bytes: ";
-            for (size_t i = 0; i < std::min((size_t)16, binary_metadata.size()); i++) {
-                printf("%02x ", binary_metadata[i]);
-            }
-            std::cout << std::endl;
-
-            files_metadata[uuid] = std::make_tuple(usernames[uuid], std::move(binary_metadata));
-        } else {
-            std::cerr << "Failed to convert hex metadata to binary for file " << uuid << std::endl;
-        }
-    }
-
-    std::cout << "DEBUG: Returning metadata for " << files_metadata.size() << " files" << std::endl;
-    return files_metadata;
+    return output;
 }
 
 void post_delete_file(const std::string &uuid) {
     const json body = {
-      {"file_id", uuid}
+        {"file_id", uuid}
     };
     post("/deleteFile", body);
 }
