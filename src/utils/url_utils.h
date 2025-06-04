@@ -10,7 +10,6 @@
 #include <sstream>
 #include <iomanip>
 #include <cctype>
-std::map<char, std::string> conversions;
 
 inline std::string URLEncode(std::string& url) {
     std::ostringstream encoded;
