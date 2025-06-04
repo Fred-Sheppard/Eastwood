@@ -56,7 +56,7 @@ void send_file_to(const std::string &username, const std::string &file_path) {
             memcpy(sk_buffer->data(), message_encryption_key->data(), 32);
 
             // Encrypt the file key (which was the original "message" content)
-            auto encrypted_message_again = encrypt_message_with_nonce(
+            auto encrypted_message_again = encrypt_bytes(
                 QByteArray(reinterpret_cast<const char *>(file_key->data()), file_key->size()),
                 std::move(message_encryption_key),
                 message_nonce

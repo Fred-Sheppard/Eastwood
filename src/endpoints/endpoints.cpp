@@ -734,7 +734,7 @@ std::map<std::string, std::vector<unsigned char> > get_encrypted_file_metadata(s
                 printf("%02x ", binary_metadata[i]);
             }
             std::cout << std::endl;
-            
+
             files_metadata[uuid] = std::move(binary_metadata);
         } else {
             std::cerr << "Failed to convert hex metadata to binary for file " << uuid << std::endl;
