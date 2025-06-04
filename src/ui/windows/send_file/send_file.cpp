@@ -118,10 +118,7 @@ void SendFile::onSendClicked() {
             message->header.file_uuid[sizeof(message->header.file_uuid) - 1] = '\0';
 
             // Encrypt the file key using the message key
-            std::vector<unsigned char> encrypted_data = encrypt_message_given_key(file_key->data(), file_key->size(), key.data());
-            message->length = encrypted_data.size();
-            message->ciphertext = new unsigned char[message->length];
-            memcpy(message->ciphertext, encrypted_data.data(), message->length);
+            message->ciphertext = encrypt_message_given_key(file_key->data(), file_key->size(), key.data());
 
             messages.push_back(std::make_tuple(device_id, message));
         }

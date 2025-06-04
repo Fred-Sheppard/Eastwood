@@ -303,7 +303,7 @@ void Received::initializeData()
             try {
                 auto key = RatchetSessionManager::instance().get_key_for_device(username, msg.header);
 
-                auto decrypted_message = decrypt_message_given_key(msg.ciphertext, msg.length, key.data());
+                auto decrypted_message = decrypt_message_given_key(msg.ciphertext.data(), msg.ciphertext.size(), key.data());
 
                 // encrypt again and save to db
                 auto message_encryption_key = SecureMemoryBuffer::create(32);
@@ -355,9 +355,6 @@ void Received::initializeData()
             } catch (const std::exception& e) {
                 std::cout << "ERROR: Failed to process message from " << username << ": " << e.what() << std::endl;
             }
-            
-            // Clean up the DeviceMessage and its components - CRITICAL for preventing memory leaks
-            delete[] msg.ciphertext;  // Clean up ciphertext array
         }
 
         std::cout << "Finished processing messages. Refreshing file list..." << std::endl;
