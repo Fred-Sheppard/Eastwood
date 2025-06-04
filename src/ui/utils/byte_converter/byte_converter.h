@@ -3,6 +3,6 @@
 
 #include <string>
 
-std::string convertBytesToHumanReadable(size_t bytes);
+std::string convertFileSizeToHumanReadable(size_t bytes);
 
 #endif

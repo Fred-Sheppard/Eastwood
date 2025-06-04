@@ -3,7 +3,7 @@
 #include <sstream>
 #include <iomanip>
 
-std::string convertBytesToHumanReadable(size_t bytes) {
+std::string convertFileSizeToHumanReadable(size_t bytes) {
     const char* units[] = {"B", "KB", "MB", "GB", "TB", "PB", "EB"};
     int unitIndex = 0;
     double size = static_cast<double>(bytes);
