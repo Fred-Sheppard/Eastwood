@@ -169,4 +169,11 @@ inline std::vector<std::tuple<std::string, int, std::string>> get_file_metadata(
     return file_metadata;
 }
 
+inline void download_file(std::string uuid) {
+    auto encrypted_file = get_encrypted_file(uuid);
+    auto key = get_decrypted_message(uuid);
+
+    auto decrypted_file = decrypt_message_given_key(encrypted_file.data(), encrypted_file.size(), key.data());
+}
+
 #endif //RECEIVEFLOW_H
