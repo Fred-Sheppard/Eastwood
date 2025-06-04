@@ -233,51 +233,59 @@ unsigned char *generate_unique_id_pair(std::string *input_one, std::string *inpu
 }
 
 std::vector<unsigned char> encrypt_message_given_key(const unsigned char* message, const size_t message_len, const unsigned char* key) {
-    unsigned char nonce[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
-    randombytes_buf(nonce, sizeof nonce);
+    unsigned char nonce[crypto_aead_xchacha20poly1305_IETF_NPUBBYTES];
+    randombytes_buf(nonce, sizeof(nonce));
 
-    std::vector<unsigned char> ciphertext(message_len + crypto_aead_chacha20poly1305_IETF_ABYTES);
+    std::vector<unsigned char> ciphertext(message_len + crypto_aead_xchacha20poly1305_IETF_ABYTES);
     unsigned long long ciphertext_len;
 
-    crypto_aead_chacha20poly1305_ietf_encrypt(
-        ciphertext.data(), &ciphertext_len,
-        message, message_len,
-        nullptr, 0, nullptr, nonce, key);
+    if (crypto_aead_xchacha20poly1305_ietf_encrypt(
+            ciphertext.data(), nullptr,
+            reinterpret_cast<const unsigned char *>(message),
+            sizeof(message),
+            nullptr, 0, // No associated data
+            nullptr, // Always null for this algorithm
+            nonce, key
+        ) != 0) {
+        throw std::runtime_error("Failed to encrypt file");
+        }
 
-    std::vector<unsigned char> result(sizeof(nonce) + ciphertext_len);
+    std::vector<unsigned char> result(sizeof(nonce) + ciphertext.size());
     std::copy_n(nonce, sizeof(nonce), result.begin());
-    std::copy_n(ciphertext.data(), ciphertext_len, result.begin() + sizeof(nonce));
+    std::copy_n(ciphertext.data(), ciphertext.size(), result.begin() + sizeof(nonce));
 
     return result;
 }
 
 // Takes in binary key and encrypted data directly
 std::vector<unsigned char> decrypt_message_given_key(const unsigned char* encrypted_data, size_t encrypted_len, const unsigned char* key) {
-    if (encrypted_len < crypto_aead_chacha20poly1305_IETF_NPUBBYTES) {
+    if (encrypted_len < crypto_aead_xchacha20poly1305_IETF_NPUBBYTES) {
         throw std::runtime_error("encrypted message (incl nonce) is too short");
     }
 
-    unsigned char nonce[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
+    unsigned char nonce[crypto_aead_xchacha20poly1305_IETF_NPUBBYTES];
     std::copy_n(encrypted_data, sizeof(nonce), nonce);
 
     const unsigned char* ciphertext = encrypted_data + sizeof(nonce);
     size_t ciphertext_len = encrypted_len - sizeof(nonce);
     
-    if (ciphertext_len < crypto_aead_chacha20poly1305_IETF_ABYTES) {
+    if (ciphertext_len < crypto_aead_xchacha20poly1305_IETF_ABYTES) {
         throw std::runtime_error("ciphertext message is too short");
     }
 
     std::vector<unsigned char> plaintext(ciphertext_len - crypto_aead_chacha20poly1305_IETF_ABYTES);
     unsigned long long plaintext_len;
 
-    if (crypto_aead_chacha20poly1305_ietf_decrypt(
-            plaintext.data(), &plaintext_len,
-            nullptr,
-            ciphertext, ciphertext_len,
-            nullptr, 0,
-            nonce, key) != 0) {
-        throw std::runtime_error("decryption failed");;
-    }
+    if (crypto_aead_xchacha20poly1305_ietf_decrypt(
+            plaintext.data(), nullptr,
+            nullptr, // Secret nonce is always null for this algorithm
+            reinterpret_cast<const unsigned char *>(ciphertext),
+            sizeof(encrypted_data),
+            nullptr, 0, // No associated data
+            nonce, key
+        ) != 0) {
+        throw std::runtime_error("Failed to decrypt file");
+        }
 
     plaintext.resize(plaintext_len);
     return plaintext;
