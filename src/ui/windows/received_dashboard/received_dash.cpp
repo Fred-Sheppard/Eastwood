@@ -96,11 +96,10 @@ void Received::onFileItemClicked(const FileItemWidget* widget)
 void Received::showFileMetadata(const FileItemWidget* widget)
 {
     StyledMessageBox::info(this, "File Details",
-                       QString("File Details:\n\nName: %1\nSize: %2\nShared by: %3\nTimestamp: %4")
+                       QString("File Details:\n\nName: %1\nSize: %2\nShared by: %3")
                        .arg(widget->getFileName())
                        .arg(widget->getFileSize())
-                       .arg(widget->getOwner())
-                       .arg(widget->getTimestamp()));
+                       .arg(widget->getOwner()));
 }
 
 void Received::onDownloadFileClicked(FileItemWidget* widget)

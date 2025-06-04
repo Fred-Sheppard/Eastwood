@@ -31,8 +31,12 @@ private:
     void setupConnections();
     void setupFileList() const;
     void refreshFileList();
-    void addFileItem(const QString& fileName, const QString& fileSize, 
-                    const QString& timestamp, const QString& owner);
+    void addFileItem(const QString& fileName,
+                         const QString& fileSize,
+                         const QString& timestamp,
+                         const QString& owner,
+                         std::string uuid,
+                         std::string mime_type);
     void showFileMetadata(const FileItemWidget* widget);
     void sendFileToUser(const QString& username, const QString& fileId);
 };

@@ -8,6 +8,9 @@
 #include <QTimer>
 #include <QCheckBox>
 
+#include "src/communication/ReceiveFlow.h"
+#include "src/sql/queries.h"
+
 // Sent implementation
 Sent::Sent(QWidget *parent, QWidget* receivedWindow)
     : QWidget(parent)
@@ -39,12 +42,14 @@ void Sent::setupFileList() const {
 }
 
 void Sent::addFileItem(const QString& fileName,
-                     const QString& fileSize,
-                     const QString& timestamp,
-                     const QString& owner)
+                         const QString& fileSize,
+                         const QString& timestamp,
+                         const QString& owner,
+                         std::string uuid,
+                         std::string mime_type)
 {
     auto* item = new QListWidgetItem(ui->fileList);
-    auto* widget = new FileItemWidget(fileName, fileSize, timestamp, owner, " ", " ",
+    auto* widget = new FileItemWidget(fileName, fileSize, timestamp, owner, uuid, mime_type,
                                     FileItemWidget::Mode::Sent, this);
 
     connect(widget, &FileItemWidget::revokeAccessClicked, this, &Sent::onRevokeAccessClicked);
@@ -61,11 +66,12 @@ void Sent::refreshFileList()
 {
     ui->fileList->clear();
 
-    // TODO: Fetch actual files from server
-    // Example data for demonstration
-    addFileItem("Important Document.pdf", "2.5 MB", "2024-03-15 14:30", "John Doe");
-    addFileItem("Project Presentation.pptx", "5.8 MB", "2024-03-14 09:15", "Alice Smith");
-    addFileItem("Budget Report.xlsx", "1.2 MB", "2024-03-13 16:45", "Bob Johnson");
+    auto metadata = get_file_metadata(true);
+
+    for (const auto& [file_name, file_size, mime_type, uuid, username] : metadata) {
+        std::string file_size_str = std::to_string(file_size);
+        addFileItem(QString::fromStdString(file_name), QString::fromStdString(file_size_str), "sadfa", QString::fromStdString(username), uuid, mime_type);
+    }
 }
 
 void Sent::onFileItemClicked(const FileItemWidget* widget)
@@ -199,11 +205,12 @@ void Sent::onRevokeAccessClicked(const FileItemWidget* widget)
     scrollLayout->setSpacing(2);
     scrollLayout->setContentsMargins(0, 0, 0, 0);
 
-    // TODO: Replace with actual users who have access
-    QStringList users = {"Alice Smith (alice@example.com)", 
-                        "Bob Johnson (bob@example.com)", 
-                        "Carol Williams (carol@example.com)",
-                        "David Brown (david@example.com)"};
+    QStringList users = {};
+    std::vector<std::string> usernames;
+
+    for (auto username : usernames) {
+        users.emplace_back(QString::fromStdString(username));
+    }
 
     QList<QCheckBox*> checkboxes;
     for (const QString& user : users) {
@@ -266,7 +273,7 @@ void Sent::onDeleteFileClicked(const FileItemWidget* widget)
     if (StyledMessageBox::question(this, "Delete File",
                                  QString("Are you sure you want to delete file: %1?")
                                  .arg(widget->getFileName()))) {
-        // TODO: Implement file deletion
+        delete_file(widget->getUuid());
         StyledMessageBox::info(this, "File Deleted",
                              QString("File deleted: %1").arg(widget->getFileName()));
     }
@@ -290,7 +297,7 @@ void Sent::sendFileToUser(const QString& username, const QString& fileId)
 
 void Sent::onDownloadFileClicked(FileItemWidget* widget)
 {
-    StyledMessageBox::info(this, "Not Implemented", "Download functionality is not yet implemented.");
+    download_file(widget->getUuid(), widget->getMimeType(), widget->getFileName().toStdString());
 }
 
 void Sent::onSendFileButtonClicked()

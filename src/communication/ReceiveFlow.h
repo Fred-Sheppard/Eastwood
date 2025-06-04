@@ -78,8 +78,13 @@ inline void update_messages() {
 }
 
 // vector of file name, file size, mime type, uuid, username
-inline std::vector<std::tuple<std::string, int, std::string, std::string, std::string>> get_file_metadata() {
-    auto uuids = get_all_received_file_uuids();
+inline std::vector<std::tuple<std::string, int, std::string, std::string, std::string>> get_file_metadata(bool isSending = false) {
+    std::vector<std::tuple<std::string, std::string>> uuids = get_all_received_file_uuids();
+    if (isSending) {
+        uuids = get_all_sent_file_uuids();
+    } else {
+        uuids = get_all_received_file_uuids();
+    }
     auto encrypted_metadata = get_encrypted_file_metadata(uuids);
 
     std::vector<std::tuple<std::string, int, std::string, std::string, std::string>> file_metadata;
@@ -289,6 +294,18 @@ inline void download_file(const std::string& file_uuid, std::string mime_type, s
         std::cerr << "Error downloading file: " << e.what() << std::endl;
         QMessageBox::critical(parent, "Download Error", 
                             QString("An error occurred while downloading the file:\n%1").arg(e.what()));
+    }
+}
+
+inline void delete_file(std::string uuid) {
+    try {
+        post_delete_file(uuid);
+        delete_file_from_database(uuid);
+
+        std::cout << "Successfully deleted file " << uuid << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Failed to delete file " << uuid << ": " << e.what() << std::endl;
+        throw;
     }
 }
 
