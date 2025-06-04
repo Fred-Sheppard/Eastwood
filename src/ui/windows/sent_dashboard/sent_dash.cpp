@@ -266,10 +266,16 @@ void Sent::onRevokeAccessClicked(const FileItemWidget* widget)
             return;
         }
 
-        // TODO: Implement actual revoke access functionality
         QString message = QString("Access will be removed for the unchecked users");
         StyledMessageBox::info(this, "Access Removed", message);
         revokeDialog->accept();
+
+        // call to fred
+        try {
+
+        } catch (...) {
+            StyledMessageBox::warning(this, "Failed. Try again: ", message);
+        }
     });
 
     connect(cancelButton, &QPushButton::clicked, revokeDialog, &QDialog::reject);
