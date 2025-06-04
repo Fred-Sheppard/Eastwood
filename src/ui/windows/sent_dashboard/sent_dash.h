@@ -6,6 +6,7 @@
 #include <QListWidgetItem>
 #include "src/ui/utils/file_item_widget/file_item_widget.h"
 #include "src/ui/utils/navbar/navbar.h"
+#include <QTimer>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class Sent; }
@@ -24,10 +25,14 @@ private slots:
     void onDeleteFileClicked(const FileItemWidget* widget);
     void onDownloadFileClicked(FileItemWidget* widget);
     void onSendFileButtonClicked();
+    void onRefreshButtonClicked();
+    void handleRefreshSpinner();
 
 private:
     Ui::Sent *ui;
     QWidget* m_receivedWindow;
+    QTimer* m_refreshSpinnerTimer;
+    int m_spinnerAngle;
     void setupConnections();
     void setupFileList() const;
     void refreshFileList();

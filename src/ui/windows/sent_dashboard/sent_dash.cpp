@@ -7,18 +7,27 @@
 #include <QScrollArea>
 #include <QTimer>
 #include <QCheckBox>
+#include <QPainter>
+#include <QPen>
+#include <QColor>
+#include <QIcon>
+#include <QPixmap>
+#include <iostream>
 
 // Sent implementation
 Sent::Sent(QWidget *parent, QWidget* receivedWindow)
     : QWidget(parent)
     , ui(new Ui::Sent)
     , m_receivedWindow(receivedWindow)
+    , m_spinnerAngle(0)
 {
     ui->setupUi(this);
     setupConnections();
     setupFileList();
     refreshFileList();
 
+    m_refreshSpinnerTimer = new QTimer(this);
+    connect(m_refreshSpinnerTimer, &QTimer::timeout, this, &Sent::handleRefreshSpinner);
 }
 
 Sent::~Sent()
@@ -30,6 +39,7 @@ void Sent::setupConnections()
 {
     // Connect the send button
     connect(ui->sendButton, &QPushButton::clicked, this, &Sent::onSendFileButtonClicked);
+    connect(ui->refreshButton, &QPushButton::clicked, this, &Sent::onRefreshButtonClicked);
 }
 
 void Sent::setupFileList() const {
@@ -296,4 +306,34 @@ void Sent::onDownloadFileClicked(FileItemWidget* widget)
 void Sent::onSendFileButtonClicked()
 {
     WindowManager::instance().showSendFile();
+}
+
+void Sent::onRefreshButtonClicked()
+{
+    m_spinnerAngle = 0;
+    m_refreshSpinnerTimer->start(50);
+
+    std::cout << "Refresh functionality to be implemented" << std::endl;
+
+    //1 second
+    QTimer::singleShot(1000, [this]() {
+        m_refreshSpinnerTimer->stop();
+        ui->refreshButton->setIcon(QIcon());
+    });
+}
+
+void Sent::handleRefreshSpinner()
+{
+    m_spinnerAngle = (m_spinnerAngle + 30) % 360;
+    QPixmap pixmap(16, 16);
+    pixmap.fill(Qt::transparent);
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.translate(8, 8);
+    painter.rotate(m_spinnerAngle);
+    painter.setPen(QPen(QColor("#6c5ce7"), 2));
+    painter.drawLine(0, -6, 0, 6);
+    painter.drawLine(-6, 0, 6, 0);
+    ui->refreshButton->setIcon(QIcon(pixmap));
+    ui->refreshButton->setIconSize(QSize(16, 16));
 }
