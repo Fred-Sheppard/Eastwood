@@ -71,12 +71,9 @@ void send_file_to(const std::string &username, const std::string &file_path) {
             // Extract file_uuid from header
             std::string file_uuid(msg->header.file_uuid);
 
-            // Get current username and save the message
-            std::string current_username = SessionTokenManager::instance().getUsername();
-
             // Save using current user as sender (since this is a sent message)
-            save_message_and_key(current_username, device_id, file_uuid, encrypted_message_again, message_nonce,
-                                 encrypted_key, key_nonce);
+            save_message_and_key(username, device_id, file_uuid, encrypted_message_again, message_nonce,
+                                 encrypted_key, key_nonce, true);
         }
 
         // Clean up DeviceMessage objects after posting
