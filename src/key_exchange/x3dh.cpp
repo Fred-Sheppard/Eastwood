@@ -64,8 +64,6 @@ std::array<unsigned char, 32> x3dh_initiator(
     std::array<unsigned char, 32> shared_secret;
     crypto_generichash(shared_secret.data(), KEY_LEN, ikm, sizeof(ikm), nullptr, 0);
 
-    qDebug() << "Shared secret" << bin2hex(shared_secret, KEY_LEN);
-
     return shared_secret;
 }
 

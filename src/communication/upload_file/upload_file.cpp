@@ -28,13 +28,9 @@ std::string upload_file(const std::string &file_path, const std::unique_ptr<Secu
         {"mime_type", mimeType.name().toStdString()},
     };
     const QByteArray metadataBytes = QByteArray::fromStdString(metadata.dump());
-    unsigned char nonce_metadata[CHA_CHA_NONCE_LEN];
-    randombytes_buf(nonce_metadata, CHA_CHA_NONCE_LEN);
     const auto encrypted_metadata = encrypt_message_given_key(
         reinterpret_cast<const unsigned char *>(metadataBytes.data()), metadataBytes.size(), file_key->data());
 
-    unsigned char nonce_file[CHA_CHA_NONCE_LEN];
-    randombytes_buf(nonce_file, CHA_CHA_NONCE_LEN);
     const auto encrypted_file_data = encrypt_message_given_key(reinterpret_cast<const unsigned char *>(buff.data()),
                                                                buff.size(), file_key->data());
 

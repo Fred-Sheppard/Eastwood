@@ -479,7 +479,7 @@ std::string post_upload_file(
 ) {
     const json body = {
         {"encrypted_file", bin2hex(encrypted_file_data.data(), encrypted_file_data.size())},
-        {"encrypted_metadata", bin2hex(encrypted_metadata.data(), encrypted_file_data.size())}
+        {"encrypted_metadata", bin2hex(encrypted_metadata.data(), encrypted_metadata.size())}
     };
 
     const json response = post("/uploadFile", body);
@@ -566,6 +566,7 @@ std::map<std::string, std::vector<unsigned char> > get_encrypted_file_metadata(s
         body["file_ids"].push_back(uuid);
     }
 
+    std::cout << "DEBUG: Requesting metadata for " << uuids.size() << " UUIDs" << std::endl;
     json response = post("/getFilesMetadata", body);
 
     std::map<std::string, std::vector<unsigned char> > files_metadata;
@@ -576,6 +577,8 @@ std::map<std::string, std::vector<unsigned char> > get_encrypted_file_metadata(s
         return files_metadata;
     }
 
+    std::cout << "DEBUG: Server returned metadata for " << response["data"]["metadata"].size() << " files" << std::endl;
+
     for (const auto &file_data: response["data"]["metadata"]) {
         if (!file_data.contains("file_id") || !file_data.contains("encrypted_metadata")) {
             std::cerr << "Missing uuid or encrypted_metadata in file data" << std::endl;
@@ -585,28 +588,33 @@ std::map<std::string, std::vector<unsigned char> > get_encrypted_file_metadata(s
         std::string uuid = file_data["file_id"].get<std::string>();
         std::string hex_metadata = file_data["encrypted_metadata"].get<std::string>();
 
+        std::cout << "\n--- DEBUG: Processing metadata for UUID: " << uuid << " ---" << std::endl;
+        std::cout << "Hex metadata from server: " << hex_metadata << std::endl;
+        std::cout << "Hex metadata length: " << hex_metadata.length() << " chars" << std::endl;
+
         size_t binary_size = hex_metadata.length() / 2;
         if (binary_size == 0) {
             std::cerr << "Empty encrypted metadata for file " << uuid << std::endl;
             continue;
         }
 
+        std::cout << "Expected binary size: " << binary_size << " bytes" << std::endl;
         std::vector<unsigned char> binary_metadata(binary_size);
 
         if (hex_to_bin(hex_metadata, binary_metadata.data(), binary_size)) {
+            std::cout << "Successfully converted hex to binary" << std::endl;
+            std::cout << "Binary metadata first 16 bytes: ";
+            for (size_t i = 0; i < std::min((size_t)16, binary_metadata.size()); i++) {
+                printf("%02x ", binary_metadata[i]);
+            }
+            std::cout << std::endl;
+
             files_metadata[uuid] = std::move(binary_metadata);
         } else {
             std::cerr << "Failed to convert hex metadata to binary for file " << uuid << std::endl;
         }
     }
 
+    std::cout << "DEBUG: Returning metadata for " << files_metadata.size() << " files" << std::endl;
     return files_metadata;
-}
-
-
-void post_delete_file(const std::string &uuid) {
-    const json body = {
-      {"file_id", uuid}
-    };
-    post("/deleteFile", body);
 }

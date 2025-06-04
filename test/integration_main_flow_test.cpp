@@ -126,17 +126,12 @@ int main() {
     temp_file << "This is a test file content";
     temp_file.close();
 
-    qDebug() << "Uploading file";
-    const auto file_key = SecureMemoryBuffer::create(SYM_KEY_LEN);
-    randombytes_buf(file_key->data(), SYM_KEY_LEN);
-    const std::string uuid = upload_file(temp_file_path, file_key);
-
+    // Send the file to username_1
     qDebug() << "Sending file to second user";
     send_file_to(username, temp_file_path);
-    std::remove(temp_file_path.c_str());
 
-    qDebug() << "Deleting file";
-    post_delete_file(uuid);
+    // Clean up the temporary file
+    std::remove(temp_file_path.c_str());
 
     std::cout << "Integration main flow test completed successfully." << std::endl;
 }
