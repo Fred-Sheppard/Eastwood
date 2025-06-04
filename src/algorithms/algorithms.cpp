@@ -240,9 +240,9 @@ std::vector<unsigned char> encrypt_message_given_key(const unsigned char* messag
     unsigned long long ciphertext_len;
 
     if (crypto_aead_xchacha20poly1305_ietf_encrypt(
-            ciphertext.data(), nullptr,
+            ciphertext.data(), &ciphertext_len,
             reinterpret_cast<const unsigned char *>(message),
-            sizeof(message),
+            message_len,
             nullptr, 0, // No associated data
             nullptr, // Always null for this algorithm
             nonce, key
@@ -250,9 +250,9 @@ std::vector<unsigned char> encrypt_message_given_key(const unsigned char* messag
         throw std::runtime_error("Failed to encrypt file");
         }
 
-    std::vector<unsigned char> result(sizeof(nonce) + ciphertext.size());
+    std::vector<unsigned char> result(sizeof(nonce) + ciphertext_len);
     std::copy_n(nonce, sizeof(nonce), result.begin());
-    std::copy_n(ciphertext.data(), ciphertext.size(), result.begin() + sizeof(nonce));
+    std::copy_n(ciphertext.data(), ciphertext_len, result.begin() + sizeof(nonce));
 
     return result;
 }
@@ -277,10 +277,10 @@ std::vector<unsigned char> decrypt_message_given_key(const unsigned char* encryp
     unsigned long long plaintext_len;
 
     if (crypto_aead_xchacha20poly1305_ietf_decrypt(
-            plaintext.data(), nullptr,
+            plaintext.data(), &plaintext_len,
             nullptr, // Secret nonce is always null for this algorithm
             reinterpret_cast<const unsigned char *>(ciphertext),
-            sizeof(encrypted_data),
+            ciphertext_len,
             nullptr, 0, // No associated data
             nonce, key
         ) != 0) {
