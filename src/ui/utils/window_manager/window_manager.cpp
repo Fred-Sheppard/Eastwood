@@ -10,31 +10,31 @@
 #include "src/endpoints/endpoints.h"
 #include "src/sql/queries.h"
 
-WindowManager& WindowManager::instance()
-{
+WindowManager &WindowManager::instance() {
     static WindowManager instance;
     return instance;
 }
 
-WindowManager::WindowManager()
-{
+WindowManager::WindowManager() {
 }
 
-WindowManager::~WindowManager()
-{
+WindowManager::~WindowManager() {
     cleanup();
 }
 
-void WindowManager::cleanup()
-{
-    // First, disconnect all signals to prevent callbacks during cleanup
-    QObject::disconnect(m_received, nullptr, this, nullptr);
-    QObject::disconnect(m_sent, nullptr, this, nullptr);
-    QObject::disconnect(m_sendFile, nullptr, this, nullptr);
-    QObject::disconnect(m_settings, nullptr, this, nullptr);
-    QObject::disconnect(m_login, nullptr, this, nullptr);
-    QObject::disconnect(m_register, nullptr, this, nullptr);
-    QObject::disconnect(m_deviceRegister, nullptr, this, nullptr);
+void WindowManager::cleanup() {
+    auto disconnectIfValid = [this](const QObject *obj) {
+        if (obj)
+            disconnect(obj, nullptr, this, nullptr);
+    };
+
+    disconnectIfValid(m_received);
+    disconnectIfValid(m_sent);
+    disconnectIfValid(m_sendFile);
+    disconnectIfValid(m_settings);
+    disconnectIfValid(m_login);
+    disconnectIfValid(m_register);
+    disconnectIfValid(m_deviceRegister);
 
     // Close and cleanup all windows
     deleteWindow(m_received);
@@ -50,10 +50,9 @@ void WindowManager::cleanup()
 }
 
 template<typename T, typename... Args>
-void WindowManager::showWindow(QPointer<T>& windowPtr, const QString& buttonName, Args&&... args)
-{
+void WindowManager::showWindow(QPointer<T> &windowPtr, const QString &buttonName, Args &&... args) {
     // Close all existing windows
-    for (const QPointer<QWidget>& window : m_windows) {
+    for (const QPointer<QWidget> &window: m_windows) {
         if (!window.isNull()) {
             window->close();
         }
@@ -64,10 +63,10 @@ void WindowManager::showWindow(QPointer<T>& windowPtr, const QString& buttonName
     if (windowPtr.isNull()) {
         auto uniqueWindow = std::make_unique<T>(std::forward<Args>(args)...);
         uniqueWindow->setAttribute(Qt::WA_DeleteOnClose);
-        
+
         windowPtr = uniqueWindow.get();
         m_windows.append(QPointer<QWidget>(windowPtr.data()));
-        
+
         QObject::connect(windowPtr, &T::destroyed, this, [this, ptr = windowPtr.data()]() {
             m_windows.removeOne(QPointer<QWidget>(ptr));
         });
@@ -75,44 +74,38 @@ void WindowManager::showWindow(QPointer<T>& windowPtr, const QString& buttonName
         // Release ownership to Qt's parent-child system
         uniqueWindow.release();
     }
-    
+
     windowPtr->show();
     emit windowShown(buttonName);
 }
 
-void WindowManager::showReceived()
-{
+void WindowManager::showReceived() {
     showWindow(m_received, "receivedButton");
 }
 
-void WindowManager::showSent()
-{
+void WindowManager::showSent() {
     showWindow(m_sent, "sentButton");
 }
 
-void WindowManager::showSendFile()
-{
+void WindowManager::showSendFile() {
     showWindow(m_sendFile, "sendFileButton");
 }
 
-void WindowManager::showSettings()
-{
+void WindowManager::showSettings() {
     showWindow(m_settings, "settingsButton");
 }
 
-void WindowManager::showLogin()
-{
+void WindowManager::showLogin() {
     showWindow(m_login, "loginButton");
 }
 
-void WindowManager::showRegister()
-{
+void WindowManager::showRegister() {
     showWindow(m_register, "registerButton");
 }
 
-void WindowManager::showDeviceRegister(const std::string& auth_code, const QImage& qr_code, 
-                                     unsigned char* pk_dev, std::unique_ptr<SecureMemoryBuffer> sk_dev,
-                                     const std::string& username)
-{
-    showWindow(m_deviceRegister, "deviceRegisterButton", auth_code, qr_code, nullptr, pk_dev, std::move(sk_dev), username);
+void WindowManager::showDeviceRegister(const std::string &auth_code, const QImage &qr_code,
+                                       unsigned char *pk_dev, std::unique_ptr<SecureMemoryBuffer> sk_dev,
+                                       const std::string &username) {
+    showWindow(m_deviceRegister, "deviceRegisterButton", auth_code, qr_code, nullptr, pk_dev, std::move(sk_dev),
+               username);
 }
