@@ -2,15 +2,11 @@
 #include "ui_sent_dash.h"
 #include "src/ui/utils/messagebox.h"
 #include "src/ui/utils/window_manager/window_manager.h"
-#include "src/ui/utils/navbar/navbar.h"
 #include <QVBoxLayout>
 #include <QDialog>
 #include <QScrollArea>
 #include <QTimer>
 #include <QCheckBox>
-
-#include "src/keys/session_token_manager.h"
-#include "src/keys/kek_manager.h"
 
 // Sent implementation
 Sent::Sent(QWidget *parent, QWidget* receivedWindow)

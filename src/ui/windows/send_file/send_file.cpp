@@ -9,17 +9,12 @@
 #include <QCheckBox>
 
 #include "src/endpoints/endpoints.h"
-#include "src/auth/logout.h"
 #include "src/files/upload_file.h"
 #include "src/keys/session_token_manager.h"
 #include "src/key_exchange/utils.h"
 #include "src/key_exchange/XChaCha20-Poly1305.h"
 #include "src/sessions/RatchetSessionManager.h"
 #include "src/sql/queries.h"
-#include "src/keys/session_token_manager.h"
-#include "src/keys/kek_manager.h"
-#include "src/database/database.h"
-#include "src/keys/session_token_manager.h"
 
 SendFile::SendFile(QWidget *parent)
     : QWidget(parent)
@@ -146,7 +141,6 @@ void SendFile::onSentButtonClicked() const {
     WindowManager::instance().showSent();
 }
 
-// navbar button
 void SendFile::onSendFileButtonClicked() const {
     ui->usernameInput->clear();
     ui->filePathInput->clear();

@@ -22,6 +22,7 @@ private slots:
     void onFileItemClicked(const FileItemWidget* widget);
     void onDownloadFileClicked(FileItemWidget* widget);
     void refreshFileList();
+    void onReceivedButtonClicked();
 
 private:
     Ui::Received *ui;

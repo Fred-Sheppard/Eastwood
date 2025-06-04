@@ -8,7 +8,6 @@
 #include "../../windows/device_register/device_register.h"
 
 #include "src/endpoints/endpoints.h"
-#include "src/sql/queries.h"
 
 WindowManager &WindowManager::instance() {
     static WindowManager instance;
@@ -51,17 +50,18 @@ void WindowManager::cleanup() {
 
 template<typename T, typename... Args>
 void WindowManager::showWindow(QPointer<T> &windowPtr, const QString &buttonName, Args &&... args) {
-    // Remove null pointers from the list before processing
-    m_windows.erase(std::remove_if(m_windows.begin(), m_windows.end(),
-                                   [](const QPointer<QWidget> &ptr) { return ptr.isNull(); }),
-                    m_windows.end());
-    // Close all existing windows
+    // If window exists and is visible, just return
+    if (!windowPtr.isNull() && windowPtr->isVisible()) {
+        return;
+    }
+
+    // Hide all other windows first
     for (const QPointer<QWidget> &window: m_windows) {
-        if (!window.isNull()) {
-            window->close();
+        if (!window.isNull() && window != windowPtr) {
+            window->hide();
         }
     }
-    m_windows.clear();
+
     // Create new window if needed
     if (windowPtr.isNull()) {
         auto uniqueWindow = std::make_unique<T>(std::forward<Args>(args)...);
@@ -75,6 +75,7 @@ void WindowManager::showWindow(QPointer<T> &windowPtr, const QString &buttonName
         // No need for connection - QPointer auto-nullifies
         uniqueWindow.release();
     }
+
     windowPtr->show();
     emit windowShown(buttonName);
 }

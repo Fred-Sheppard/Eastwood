@@ -6,6 +6,8 @@
 #include "src/keys/session_token_manager.h"
 #include "src/keys/kek_manager.h"
 #include "src/database/database.h"
+#include "src/ui/windows/received_dashboard/received_dash.h"
+#include <iostream>
 
 NavBar::NavBar(QWidget *parent) : QWidget(parent), ui(new Ui::NavBar) {
     ui->setupUi(this);
@@ -96,22 +98,18 @@ void NavBar::updateButtonStyle(QPushButton* button, bool isActive) {
 
 void NavBar::onReceivedButtonClicked() {
     WindowManager::instance().showReceived();
-    setActiveButton("receivedButton");
 }
 
 void NavBar::onSentButtonClicked() {
     WindowManager::instance().showSent();
-    setActiveButton("sentButton");
 }
 
 void NavBar::onSendFileButtonClicked() {
     WindowManager::instance().showSendFile();
-    setActiveButton("sendFileButton");
 }
 
 void NavBar::onSettingsButtonClicked() {
     WindowManager::instance().showSettings();
-    setActiveButton("settingsButton");
 }
 
 void NavBar::onLogoutButtonClicked() {

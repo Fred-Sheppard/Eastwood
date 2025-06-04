@@ -4,9 +4,9 @@
 #include "src/ui/utils/window_manager/window_manager.h"
 #include "src/ui/utils/navbar/navbar.h"
 #include "src/ui/windows/sent_dashboard/sent_dash.h"
-#include <QFileDialog>
 #include <QTimer>
 #include <QCheckBox>
+#include <iostream>
 
 Received::Received(QWidget *parent, QWidget* sendFileWindow)
     : QWidget(parent)
@@ -26,6 +26,7 @@ Received::~Received()
 
 void Received::setupConnections()
 {
+    connect(ui->navBar, &NavBar::receivedClicked, this, &Received::onReceivedButtonClicked);
     connect(ui->sendButton, &QPushButton::clicked, this, &Received::onSendButtonClicked);
 }
 
@@ -83,12 +84,14 @@ void Received::showFileMetadata(const FileItemWidget* widget)
                        .arg(widget->getTimestamp()));
 }
 
-void Received::sendFileToUser(const QString& username, const QString& fileId)
-{
-    // TODO: Implement file sharing logic
-}
-
 void Received::onDownloadFileClicked(FileItemWidget* widget)
 {
     StyledMessageBox::info(this, "Not Implemented", "Download functionality is not yet implemented.");
 }
+
+void Received::onReceivedButtonClicked()
+{
+    std::cout << "Received button clicked" << std::endl;
+    refreshFileList();
+}
+
