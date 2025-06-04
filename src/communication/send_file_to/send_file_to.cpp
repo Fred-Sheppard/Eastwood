@@ -19,7 +19,6 @@
 void send_file_to(const std::string &username, const std::string &file_path) {
     const auto file_key = SecureMemoryBuffer::create(SYM_KEY_LEN);
     randombytes_buf(file_key->data(), SYM_KEY_LEN);
-    qDebug() << "File key" << bin2hex(file_key->data(), file_key->size());
 
     const std::string uuid = upload_file(file_path, file_key);
     std::map<std::array<unsigned char, 32>, std::tuple<std::array<unsigned char, 32>, MessageHeader> > keys_to_send_key
