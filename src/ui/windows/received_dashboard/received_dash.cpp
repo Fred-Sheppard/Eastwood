@@ -8,6 +8,8 @@
 #include <QCheckBox>
 #include <iostream>
 
+#include "src/communication/ReceiveFlow.h"
+
 Received::Received(QWidget *parent, QWidget* sendFileWindow)
     : QWidget(parent)
     , ui(new Ui::Received)
@@ -57,11 +59,15 @@ void Received::refreshFileList()
 {
     ui->fileList->clear();
 
-    // TODO: Fetch actual files from server
-    // Example data for demonstration
-    addFileItem("Important Document.pdf", "2.5 MB", "2024-03-15 14:30", "John Doe");
-    addFileItem("Project Presentation.pptx", "5.8 MB", "2024-03-14 09:15", "Alice Smith");
-    addFileItem("Budget Report.xlsx", "1.2 MB", "2024-03-13 16:45", "Bob Johnson");
+    // update_handshakes();
+    // update_messages();
+
+    // auto metadata = get_file_metadata();
+    //
+    // for (const auto& [file_name, file_size, mime_type] : metadata) {
+    //     std::string file_size_str = std::to_string(file_size);
+    //     addFileItem(QString::fromStdString(file_name), QString::fromStdString(file_size_str), "sadfa", "asdfadf");
+    // }
 }
 
 void Received::onSendButtonClicked()

@@ -21,7 +21,6 @@ public:
                           const QString& fileSize, 
                           const QString& timestamp,
                           const QString& owner,
-                          const QString& uuid,
                           Mode mode = Mode::Received,
                           QWidget* parent = nullptr);
 
@@ -30,7 +29,6 @@ public:
     QString getFileSize() const { return fileSize; }
     QString getTimestamp() const { return timestamp; }
     QString getOwner() const { return owner; }
-    QString getUuid() const { return uuid; }
 
     // Override sizeHint to provide a safe default size
     QSize sizeHint() const override { return QSize(400, 80); }

@@ -635,6 +635,37 @@ inline std::vector<std::tuple<std::string, std::string, std::array<unsigned char
     return result;
 }
 
+inline std::vector<std::string> get_all_received_file_uuids() {
+    const auto &db = Database::get();
+    sqlite3_stmt *stmt;
+
+    // Get current user's username to exclude their messages
+    std::string current_username = SessionTokenManager::instance().getUsername();
+
+    // Get all messages except those from the current user
+    db.prepare_or_throw(
+        "SELECT file_uuid FROM received_messages WHERE username != ?;", &stmt
+    );
+    sqlite3_bind_text(stmt, 1, current_username.c_str(), static_cast<int>(current_username.length()), SQLITE_TRANSIENT);
+
+    auto rows = db.query(stmt);
+    std::set<std::string> seen_file_uuids; // Track unique file UUIDs
+    std::vector<std::string> file_uuids;
+
+    for (const auto& row : rows) {
+        std::string file_uuid = row["file_uuid"].toString().toStdString();
+
+        // Skip if we've already seen this file_uuid
+        if (seen_file_uuids.find(file_uuid) != seen_file_uuids.end()) {
+            continue;
+        }
+        seen_file_uuids.insert(file_uuid);
+        file_uuids.emplace_back(file_uuid);
+    }
+
+    return file_uuids;
+}
+
 // Function to get all ratchets from database
 inline std::vector<std::tuple<std::string, std::array<unsigned char, 32>, std::vector<unsigned char>>> get_all_decrypted_ratchets() {
     const auto &db = Database::get();
