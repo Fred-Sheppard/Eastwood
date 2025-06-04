@@ -14,10 +14,8 @@
 using json = nlohmann::json;
 
 bool post_check_user_exists(const std::string &username, const unsigned char *pk_device) {
-bool post_check_user_exists(const std::string &username, const unsigned char *pk_device) {
     const json body = {
         {"username", username},
-        {"device_public_key", bin2hex(pk_device, 32)}
         {"device_public_key", bin2hex(pk_device, 32)}
     };
 
@@ -30,7 +28,6 @@ bool post_check_user_exists(const std::string &username, const unsigned char *pk
     return response["data"].get<bool>();
 }
 
-bool get_user_exists(const std::string &username) {
 bool get_user_exists(const std::string &username) {
     json response = get_unauth("/isUserRegistered/" + username);
     std::cout << "Response from server: " << response.dump(4) << std::endl;
@@ -113,13 +110,6 @@ std::vector<std::tuple<std::string, DeviceMessage> > get_messages() {
     } catch (const std::exception &e) {
         return std::vector<std::tuple<std::string, DeviceMessage> >();
     }
-std::vector<std::tuple<std::string, DeviceMessage> > get_messages() {
-    json response;
-    try {
-        response = get("/incomingMessages");
-    } catch (const std::exception &e) {
-        return std::vector<std::tuple<std::string, DeviceMessage> >();
-    }
 
     std::cout << "Raw response: " << response.dump() << std::endl;
     std::cout << "Response keys: ";
@@ -129,7 +119,6 @@ std::vector<std::tuple<std::string, DeviceMessage> > get_messages() {
     std::cout << std::endl;
 
     std::vector<std::tuple<std::string, DeviceMessage> > messages;
-    std::vector<std::tuple<std::string, DeviceMessage> > messages;
 
     // Check if data array exists
     if (!response.contains("data") || !response["data"].is_array()) {
@@ -138,10 +127,6 @@ std::vector<std::tuple<std::string, DeviceMessage> > get_messages() {
     }
 
     for (const auto &message: response["data"]) {
-        const auto username = message["username"].get<std::string>();
-        const auto dev_key_str = message["initiator_device_public_key"].get<std::string>();
-        const auto dh_pub_str = message["dh_public"].get<std::string>();
-        const auto ciphertext_str = message["ciphertext"].get<std::string>();
         const auto username = message["username"].get<std::string>();
         const auto dev_key_str = message["initiator_device_public_key"].get<std::string>();
         const auto dh_pub_str = message["dh_public"].get<std::string>();
@@ -156,27 +141,13 @@ std::vector<std::tuple<std::string, DeviceMessage> > get_messages() {
             file_id = message["file_id"].get<std::string>();
         }
 
-        // Extract file_id if present
-        std::string file_id;
-        if (message.contains("file_id") && !message["file_id"].is_null()) {
-            file_id = message["file_id"].get<std::string>();
-        }
-
         // Validate hex string lengths before allocation
-        if (dev_key_str.length() != 64 || dh_pub_str.length() != 64) {
-            // 32 bytes = 64 hex chars
         if (dev_key_str.length() != 64 || dh_pub_str.length() != 64) {
             // 32 bytes = 64 hex chars
             std::cerr << "Invalid key hex string lengths" << std::endl;
             continue;
         }
 
-        const auto ciphertext = hex2bin(ciphertext_str);
-        const auto initator_dev_key = hex2bin(dev_key_str);
-        const auto new_dh_public = hex2bin(dh_pub_str);
-
-        auto msg = DeviceMessage();
-        auto header = MessageHeader();
         const auto ciphertext = hex2bin(ciphertext_str);
         const auto initator_dev_key = hex2bin(dev_key_str);
         const auto new_dh_public = hex2bin(dh_pub_str);
@@ -198,34 +169,17 @@ std::vector<std::tuple<std::string, DeviceMessage> > get_messages() {
 
         msg.header = header;
         msg.ciphertext = ciphertext;
-        memcpy(header.dh_public.data(), new_dh_public.data(), 32);
-        header.message_index = message_index;
-        header.prev_chain_length = prev_chain_length;
-        memcpy(header.device_id.data(), initator_dev_key.data(), 32);
-
-        // Set file_uuid if available
-        if (!file_id.empty()) {
-            strncpy(header.file_uuid, file_id.c_str(), sizeof(header.file_uuid) - 1);
-            header.file_uuid[sizeof(header.file_uuid) - 1] = '\0';
-        }
-
-        msg.header = header;
-        msg.ciphertext = ciphertext;
-
-        messages.emplace_back(username, msg);
         messages.emplace_back(username, msg);
     }
+
     return messages;
 }
 
 void post_ratchet_message(std::vector<std::tuple<std::array<unsigned char, 32>, DeviceMessage *> > messages,
                           std::string username) {
-void post_ratchet_message(std::vector<std::tuple<std::array<unsigned char, 32>, DeviceMessage *> > messages,
-                          std::string username) {
     json data = json::object();
     data["messages"] = json::array();
 
-    for (auto [recipient_dev_pub, msg]: messages) {
     for (auto [recipient_dev_pub, msg]: messages) {
         const auto dev_pub = new unsigned char[crypto_box_PUBLICKEYBYTES];
         QByteArray dev_pub_byte = get_public_key("device");
@@ -257,11 +211,8 @@ void post_ratchet_message(std::vector<std::tuple<std::array<unsigned char, 32>, 
 
 std::vector<KeyBundle *> get_keybundles(const std::string &username,
                                         std::vector<std::array<unsigned char, 32> > existing_device_ids) {
-std::vector<KeyBundle *> get_keybundles(const std::string &username,
-                                        std::vector<std::array<unsigned char, 32> > existing_device_ids) {
     json array_of_device_ids = json::array();
 
-    for (auto device_id: existing_device_ids) {
     for (auto device_id: existing_device_ids) {
         array_of_device_ids.push_back(bin2hex(device_id.data(), device_id.size()));
     }
@@ -276,17 +227,9 @@ std::vector<KeyBundle *> get_keybundles(const std::string &username,
     } catch (const std::exception &e) {
         return std::vector<KeyBundle *>();
     }
-    json response;
-    try {
-        response = post("/keybundle/" + username, body);
-    } catch (const std::exception &e) {
-        return std::vector<KeyBundle *>();
-    }
 
     // Get my identity public key
     std::string my_identity_public_hex = response["data"]["identity_public_key"];
-    std::array<unsigned char, 32> my_identity_public{};
-    if (!hex_to_bin(my_identity_public_hex, my_identity_public.data(), crypto_sign_PUBLICKEYBYTES)) {
     std::array<unsigned char, 32> my_identity_public{};
     if (!hex_to_bin(my_identity_public_hex, my_identity_public.data(), crypto_sign_PUBLICKEYBYTES)) {
         throw std::runtime_error("Failed to decode my identity public key");
@@ -313,19 +256,7 @@ std::vector<KeyBundle *> get_keybundles(const std::string &username,
         std::array<unsigned char, 64> their_signed_signature{};
         std::array<unsigned char, 32> their_onetime_public{};
         bool has_onetime = false;
-        // Create arrays for binary data
-        std::array<unsigned char, 32> their_device_public{};
-        std::array<unsigned char, 32> their_identity_public{};
-        std::array<unsigned char, 32> their_signed_public{};
-        std::array<unsigned char, 64> their_signed_signature{};
-        std::array<unsigned char, 32> their_onetime_public{};
-        bool has_onetime = false;
 
-        bool device_ok = hex_to_bin(their_device_public_hex, their_device_public.data(), crypto_sign_PUBLICKEYBYTES);
-        bool identity_ok = hex_to_bin(their_identity_public_hex, their_identity_public.data(),
-                                      crypto_sign_PUBLICKEYBYTES);
-        bool signed_ok = hex_to_bin(their_signed_public_hex, their_signed_public.data(), crypto_sign_PUBLICKEYBYTES);
-        bool signature_ok = hex_to_bin(their_signed_signature_hex, their_signed_signature.data(), crypto_sign_BYTES);
         bool device_ok = hex_to_bin(their_device_public_hex, their_device_public.data(), crypto_sign_PUBLICKEYBYTES);
         bool identity_ok = hex_to_bin(their_identity_public_hex, their_identity_public.data(),
                                       crypto_sign_PUBLICKEYBYTES);
@@ -337,11 +268,7 @@ std::vector<KeyBundle *> get_keybundles(const std::string &username,
             std::string their_onetime_public_hex = bundle["one_time_key"];
             bool onetime_ok = hex_to_bin(their_onetime_public_hex, their_onetime_public.data(),
                                          crypto_sign_PUBLICKEYBYTES);
-            bool onetime_ok = hex_to_bin(their_onetime_public_hex, their_onetime_public.data(),
-                                         crypto_sign_PUBLICKEYBYTES);
             std::cout << "One-time key conversion: " << (onetime_ok ? "success" : "failed") << std::endl;
-            if (onetime_ok) {
-                has_onetime = true;
             if (onetime_ok) {
                 has_onetime = true;
             }
@@ -352,13 +279,7 @@ std::vector<KeyBundle *> get_keybundles(const std::string &username,
         }
 
         std::array<unsigned char, 32> pk_eph{};
-        std::array<unsigned char, 32> pk_eph{};
         auto sk_buffer_eph = SecureMemoryBuffer::create(ENC_SECRET_KEY_LEN);
-        crypto_box_keypair(pk_eph.data(), sk_buffer_eph->data());
-
-        // Convert QByteArray to std::array for my device public key
-        std::array<unsigned char, 32> my_device_public{};
-        memcpy(my_device_public.data(), pk_device.constData(), 32);
         crypto_box_keypair(pk_eph.data(), sk_buffer_eph->data());
 
         // Convert QByteArray to std::array for my device public key
@@ -368,12 +289,10 @@ std::vector<KeyBundle *> get_keybundles(const std::string &username,
         // Create a new KeyBundle
         auto *key_bundle = new SendingKeyBundle(
             my_device_public,
-            my_device_public,
             pk_eph,
             std::shared_ptr<SecureMemoryBuffer>(sk_buffer_eph.release()),
             their_device_public,
             their_signed_public,
-            has_onetime ? their_onetime_public : std::array<unsigned char, 32>{},
             has_onetime ? their_onetime_public : std::array<unsigned char, 32>{},
             their_signed_signature
         );
@@ -382,8 +301,6 @@ std::vector<KeyBundle *> get_keybundles(const std::string &username,
     }
 
     // Convert their identity public key to binary
-    std::array<unsigned char, 32> their_identity_public{};
-    if (!hex_to_bin(their_identity_public_hex, their_identity_public.data(), crypto_sign_PUBLICKEYBYTES)) {
     std::array<unsigned char, 32> their_identity_public{};
     if (!hex_to_bin(their_identity_public_hex, their_identity_public.data(), crypto_sign_PUBLICKEYBYTES)) {
         throw std::runtime_error("Failed to decode their identity public key");
@@ -414,11 +331,6 @@ void post_handshake_device(
             bin2hex(reinterpret_cast<const unsigned char *>(my_device_key_public.constData()),
                     crypto_box_PUBLICKEYBYTES)
         },
-        {
-            "initiator_device_public_key",
-            bin2hex(reinterpret_cast<const unsigned char *>(my_device_key_public.constData()),
-                    crypto_box_PUBLICKEYBYTES)
-        },
     };
 
     // Only add one-time prekey if it exists
@@ -430,13 +342,6 @@ void post_handshake_device(
 }
 
 std::vector<std::tuple<std::string, KeyBundle *> > get_handshake_backlog() {
-    json response;
-    try {
-        response = get("/incomingHandshakes");
-    } catch (const std::exception &e) {
-        return std::vector<std::tuple<std::string, KeyBundle *> >();
-    }
-
     json response;
     try {
         response = get("/incomingHandshakes");
@@ -459,17 +364,7 @@ std::vector<std::tuple<std::string, KeyBundle *> > get_handshake_backlog() {
         return bundles;
     }
 
-    // Check if data array exists
-    if (!response.contains("data") || !response["data"].is_array()) {
-        std::cout << "No handshakes in response" << std::endl;
-        return bundles;
-    }
-
     for (const auto &handshake: response["data"]) {
-        std::array<unsigned char, 32> initator_dev_key{};
-        std::array<unsigned char, 32> initiator_eph_pub{};
-        std::array<unsigned char, 32> recip_onetime_pub{};
-        bool has_onetime = false;
         std::array<unsigned char, 32> initator_dev_key{};
         std::array<unsigned char, 32> initiator_eph_pub{};
         std::array<unsigned char, 32> recip_onetime_pub{};
@@ -481,8 +376,6 @@ std::vector<std::tuple<std::string, KeyBundle *> > get_handshake_backlog() {
 
         bool success = hex_to_bin(dev_key_str, initator_dev_key.data(), crypto_box_PUBLICKEYBYTES) &&
                        hex_to_bin(eph_pub_str, initiator_eph_pub.data(), crypto_box_PUBLICKEYBYTES);
-        bool success = hex_to_bin(dev_key_str, initator_dev_key.data(), crypto_box_PUBLICKEYBYTES) &&
-                       hex_to_bin(eph_pub_str, initiator_eph_pub.data(), crypto_box_PUBLICKEYBYTES);
         if (!success) {
             throw std::runtime_error("Failed to decode handshake backlog data");
         }
@@ -491,10 +384,8 @@ std::vector<std::tuple<std::string, KeyBundle *> > get_handshake_backlog() {
         if (handshake.contains("recipient_onetime_public_prekey")) {
             std::string onetime_pub_str = handshake["recipient_onetime_public_prekey"].get<std::string>();
             if (!hex_to_bin(onetime_pub_str, recip_onetime_pub.data(), crypto_box_PUBLICKEYBYTES)) {
-            if (!hex_to_bin(onetime_pub_str, recip_onetime_pub.data(), crypto_box_PUBLICKEYBYTES)) {
                 throw std::runtime_error("Failed to decode one-time prekey data");
             }
-            has_onetime = true;
             has_onetime = true;
         }
 
@@ -502,14 +393,9 @@ std::vector<std::tuple<std::string, KeyBundle *> > get_handshake_backlog() {
         std::array<unsigned char, 32> my_device_public{};
         memcpy(my_device_public.data(), device_key.constData(), 32);
 
-        std::array<unsigned char, 32> my_device_public{};
-        memcpy(my_device_public.data(), device_key.constData(), 32);
-
         auto new_bundle = new ReceivingKeyBundle(
             initator_dev_key,
             initiator_eph_pub,
-            my_device_public,
-            has_onetime ? recip_onetime_pub : std::array<unsigned char, 32>{}
             my_device_public,
             has_onetime ? recip_onetime_pub : std::array<unsigned char, 32>{}
         );
@@ -540,17 +426,14 @@ void post_new_keybundles(
     if (signed_prekeypair != nullptr) {
         auto [pk_signed, sk_signed] = std::move(*signed_prekeypair);
 
-
         std::cout << "DEBUG: pk_signed pointer = " << (pk_signed ? "NOT NULL" : "NULL") << std::endl;
         if (pk_signed) {
             std::cout << "DEBUG: pk_signed value = " << bin2hex(pk_signed, 32) << std::endl;
         }
 
-
         // Only sign if pk_signed is not nullptr
         if (pk_signed != nullptr) {
             std::cout << "DEBUG: Adding signed prekey to JSON body" << std::endl;
-
 
             //sign the public key with device key
             unsigned char signature[crypto_sign_BYTES];
@@ -563,7 +446,6 @@ void post_new_keybundles(
             body["signedpre_key"] = signed_prekey_pub_hex;
             body["signedpk_signature"] = signature_hex;
 
-
             std::cout << "DEBUG: signed_prekey_pub_hex = " << signed_prekey_pub_hex << std::endl;
         } else {
             std::cout << "DEBUG: pk_signed is NULL, not adding to body" << std::endl;
@@ -575,7 +457,6 @@ void post_new_keybundles(
     for (const auto &[pk, sk, nonce]: otks) {
         body["one_time_keys"].push_back(bin2hex(pk, crypto_box_PUBLICKEYBYTES));
     }
-
 
     std::cout << "DEBUG: Final JSON body = " << body.dump() << std::endl;
     post("/updateKeybundle", body);
