@@ -51,6 +51,11 @@ void WindowManager::cleanup() {
 
 template<typename T, typename... Args>
 void WindowManager::showWindow(QPointer<T> &windowPtr, const QString &buttonName, Args &&... args) {
+    // Remove null pointers from the list before processing
+    m_windows.erase(std::remove_if(m_windows.begin(), m_windows.end(),
+                                   [](const QPointer<QWidget> &ptr) { return ptr.isNull(); }),
+                    m_windows.end());
+
     // Close all existing windows
     for (const QPointer<QWidget> &window: m_windows) {
         if (!window.isNull()) {
@@ -63,15 +68,9 @@ void WindowManager::showWindow(QPointer<T> &windowPtr, const QString &buttonName
     if (windowPtr.isNull()) {
         auto uniqueWindow = std::make_unique<T>(std::forward<Args>(args)...);
         uniqueWindow->setAttribute(Qt::WA_DeleteOnClose);
-
         windowPtr = uniqueWindow.get();
-        m_windows.append(QPointer<QWidget>(windowPtr.data()));
+        m_windows.append(windowPtr);
 
-        QObject::connect(windowPtr, &T::destroyed, this, [this, ptr = windowPtr.data()]() {
-            m_windows.removeOne(QPointer<QWidget>(ptr));
-        });
-
-        // Release ownership to Qt's parent-child system
         uniqueWindow.release();
     }
 
