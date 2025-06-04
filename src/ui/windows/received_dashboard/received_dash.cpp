@@ -59,15 +59,15 @@ void Received::refreshFileList()
 {
     ui->fileList->clear();
 
-    // update_handshakes();
-    // update_messages();
+    update_handshakes();
+    update_messages();
 
-    // auto metadata = get_file_metadata();
-    //
-    // for (const auto& [file_name, file_size, mime_type] : metadata) {
-    //     std::string file_size_str = std::to_string(file_size);
-    //     addFileItem(QString::fromStdString(file_name), QString::fromStdString(file_size_str), "sadfa", "asdfadf");
-    // }
+    auto metadata = get_file_metadata();
+
+    for (const auto& [file_name, file_size, mime_type] : metadata) {
+        std::string file_size_str = std::to_string(file_size);
+        addFileItem(QString::fromStdString(file_name), QString::fromStdString(file_size_str), "sadfa", "asdfadf");
+    }
 }
 
 void Received::onSendButtonClicked()
