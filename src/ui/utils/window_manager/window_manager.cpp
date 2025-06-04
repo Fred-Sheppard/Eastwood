@@ -68,10 +68,10 @@ void WindowManager::showWindow(QPointer<T>& windowPtr, const QString& buttonName
         windowPtr = uniqueWindow.get();
         m_windows.append(QPointer<QWidget>(windowPtr.data()));
         
-        QObject::connect(windowPtr, &T::destroyed, this, [this, windowPtr]() {
-            m_windows.removeOne(QPointer<QWidget>(windowPtr.data()));
+        QObject::connect(windowPtr, &T::destroyed, this, [this, ptr = windowPtr.data()]() {
+            m_windows.removeOne(QPointer<QWidget>(ptr));
         });
-        
+
         // Release ownership to Qt's parent-child system
         uniqueWindow.release();
     }
