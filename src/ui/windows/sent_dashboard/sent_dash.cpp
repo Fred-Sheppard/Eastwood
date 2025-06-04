@@ -217,7 +217,7 @@ void Sent::onRevokeAccessClicked(const FileItemWidget* widget)
     scrollLayout->setContentsMargins(0, 0, 0, 0);
 
     QStringList users = {};
-    std::vector<std::string> usernames;
+    std::vector<std::string> usernames = get_file_recipients(widget->getUuid());
 
     for (auto username : usernames) {
         users.emplace_back(QString::fromStdString(username));

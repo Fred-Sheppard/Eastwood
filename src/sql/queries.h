@@ -888,11 +888,16 @@ inline std::vector<std::string> get_file_recipients(const std::string& file_uuid
     
     std::cout << "DEBUG: Getting recipients for file UUID: " << file_uuid << std::endl;
     
-    // Get all unique usernames who have received this file
+    // Get current user's username to exclude them
+    std::string current_username = SessionTokenManager::instance().getUsername();
+    std::cout << "DEBUG: Current user: " << current_username << std::endl;
+    
+    // Get all unique usernames who have received this file, excluding current user
     db.prepare_or_throw(
-        "SELECT DISTINCT username FROM received_messages WHERE file_uuid = ?;", &stmt
+        "SELECT DISTINCT username FROM received_messages WHERE file_uuid = ? AND username != ?;", &stmt
     );
     sqlite3_bind_text(stmt, 1, file_uuid.c_str(), static_cast<int>(file_uuid.length()), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, current_username.c_str(), static_cast<int>(current_username.length()), SQLITE_TRANSIENT);
     
     auto rows = db.query(stmt);
     std::vector<std::string> recipients;
@@ -903,7 +908,7 @@ inline std::vector<std::string> get_file_recipients(const std::string& file_uuid
         std::cout << "DEBUG: Found recipient: " << username << std::endl;
     }
     
-    std::cout << "DEBUG: Total recipients for file " << file_uuid << ": " << recipients.size() << std::endl;
+    std::cout << "DEBUG: Total recipients for file " << file_uuid << " (excluding current user): " << recipients.size() << std::endl;
     return recipients;
 }
 
