@@ -233,6 +233,7 @@ unsigned char *generate_unique_id_pair(std::string *input_one, std::string *inpu
 }
 
 std::vector<unsigned char> encrypt_message_given_key(const unsigned char* message, const size_t message_len, const unsigned char* key) {
+
     unsigned char nonce[crypto_aead_xchacha20poly1305_IETF_NPUBBYTES];
     randombytes_buf(nonce, sizeof(nonce));
 
@@ -241,14 +242,13 @@ std::vector<unsigned char> encrypt_message_given_key(const unsigned char* messag
 
     if (crypto_aead_xchacha20poly1305_ietf_encrypt(
             ciphertext.data(), &ciphertext_len,
-            reinterpret_cast<const unsigned char *>(message),
-            message_len,
+            message, message_len,
             nullptr, 0, // No associated data
             nullptr, // Always null for this algorithm
             nonce, key
         ) != 0) {
-        throw std::runtime_error("Failed to encrypt file");
-        }
+        throw std::runtime_error("Failed to encrypt message");
+    }
 
     std::vector<unsigned char> result(sizeof(nonce) + ciphertext_len);
     std::copy_n(nonce, sizeof(nonce), result.begin());
@@ -257,7 +257,6 @@ std::vector<unsigned char> encrypt_message_given_key(const unsigned char* messag
     return result;
 }
 
-// Takes in binary key and encrypted data directly
 std::vector<unsigned char> decrypt_message_given_key(const unsigned char* encrypted_data, size_t encrypted_len, const unsigned char* key) {
     if (encrypted_len < crypto_aead_xchacha20poly1305_IETF_NPUBBYTES) {
         throw std::runtime_error("encrypted message (incl nonce) is too short");
@@ -279,13 +278,12 @@ std::vector<unsigned char> decrypt_message_given_key(const unsigned char* encryp
     if (crypto_aead_xchacha20poly1305_ietf_decrypt(
             plaintext.data(), &plaintext_len,
             nullptr, // Secret nonce is always null for this algorithm
-            reinterpret_cast<const unsigned char *>(ciphertext),
-            ciphertext_len,
+            ciphertext, ciphertext_len,
             nullptr, 0, // No associated data
             nonce, key
         ) != 0) {
-        throw std::runtime_error("Failed to decrypt file");
-        }
+        throw std::runtime_error("Failed to decrypt message: authentication failed or corrupted data");
+    }
 
     plaintext.resize(plaintext_len);
     return plaintext;
