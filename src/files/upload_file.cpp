@@ -33,13 +33,6 @@ std::tuple<std::string, std::unique_ptr<SecureMemoryBuffer>> upload_file(const s
     unsigned char nonce[CHA_CHA_NONCE_LEN];
     randombytes_buf(nonce, CHA_CHA_NONCE_LEN);
 
-    // qDebug() << "Raw buffer" << bin2hex(reinterpret_cast<const unsigned char *>(buff.data()), buff.size());
-    // const auto encrypted_file_data = encrypt_bytes(buff, std::move(file_key), nonce);
-    //
-    // const std::vector nonce_vec(nonce, nonce + CHA_CHA_NONCE_LEN);
-    // const auto decrypted = decrypt_bytes(buff, std::move(file_key), nonce_vec);
-    // qDebug() << "Decrypted file" << bin2hex(decrypted.data(), decrypted.size());
-
     qDebug() << "Raw buffer" << bin2hex(reinterpret_cast<const unsigned char *>(buff.data()), buff.size());
     const auto encrypted_file_data = encrypt_message_given_key(reinterpret_cast<const unsigned char *>(buff.data()), buff.size(), file_key->data());
     qDebug() << "Encrypted file" << bin2hex(encrypted_file_data.data(), encrypted_file_data.size());

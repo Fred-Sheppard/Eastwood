@@ -7,7 +7,6 @@
 #include "auth/login/login.h"
 #include "auth/register_device/register_device.h"
 #include "auth/register_user/register_user.h"
-#include "client_api_interactions/MakeAuthReq.h"
 #include "database/database.h"
 #include "endpoints/endpoints.h"
 #include "sql/queries.h"
@@ -49,8 +48,6 @@ int main() {
     qDebug() << "Logging in";
     login_user(username, password, false);
 
-    upload_file("/Users/fred/Code/Cpp/Nightwood/Eastwood/.gitignore");
-    return 0;
     const auto new_password = std::make_unique<const std::string>("even_stronger_password");
     qDebug() << "Trying to rotate password without current master key";
     const auto fake_password = SecureMemoryBuffer::create(MASTER_KEY_LEN);
