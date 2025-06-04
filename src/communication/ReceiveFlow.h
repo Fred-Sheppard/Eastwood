@@ -224,14 +224,17 @@ inline QString getFileFilterFromMimeType(const std::string &mime_type) {
 inline void download_file(const std::string &file_uuid, const std::string &mime_type, const std::string &file_name,
                           QWidget *parent = nullptr) {
     try {
-        const auto file_key = get_decrypted_message(file_uuid);
+        const auto f_kek = get_decrypted_message(file_uuid);
 
-        if (file_key.empty()) {
+        if (f_kek.empty()) {
             QMessageBox::critical(parent, "Download Error", "File key not found in database. Cannot decrypt file.");
             return;
         }
 
         auto [encrypted_file_data, encrypted_file_key] = get_download_file(file_uuid);
+
+        const auto file_key = decrypt_message_given_key(encrypted_file_key.data(), encrypted_file_key.size(),
+                                                        f_kek.data());
 
         if (encrypted_file_data.empty()) {
             QMessageBox::critical(parent, "Download Error", "Failed to download file from server or file is empty.");
@@ -240,8 +243,8 @@ inline void download_file(const std::string &file_uuid, const std::string &mime_
 
 
         const auto decrypted_data = decrypt_message_given_key(
-            encrypted_file_key.data(),
-            encrypted_file_key.size(),
+            encrypted_file_data.data(),
+            encrypted_file_data.size(),
             file_key.data());
 
         if (decrypted_data.empty()) {
