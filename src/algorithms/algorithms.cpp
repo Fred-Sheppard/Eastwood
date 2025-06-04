@@ -232,8 +232,62 @@ unsigned char *generate_unique_id_pair(std::string *input_one, std::string *inpu
     return result; // Caller is responsible for deleting this
 }
 
+std::vector<unsigned char> encrypt_message_given_key(const unsigned char* message, const size_t MESSAGE_LEN, const unsigned char* key) {
+    // uses crypto_aead_chacha20poly1305_IETF_NPUBBYTES is 24 bytes - nonce
+    unsigned char nonce[CHA_CHA_NONCE_LEN];
+    randombytes_buf(nonce, sizeof nonce);
 
-std::vector<unsigned char> encrypt_bytes(
+    // uses crypto_aead_chacha20poly1305_IETF_ABYTES is 16 bytes - auth tag for mac
+    std::vector<unsigned char> ciphertext(MESSAGE_LEN + ENC_OVERHEAD);
+    unsigned long long ciphertext_len;
+
+    crypto_aead_chacha20poly1305_ietf_encrypt(
+        ciphertext.data(), &ciphertext_len,
+        message, MESSAGE_LEN,
+        nullptr, 0, nullptr, nonce, key);
+
+    // Copies the nonce to the start of the result vector - needed for decryption
+    std::vector<unsigned char> result(sizeof(nonce) + ciphertext_len);
+
+    std::copy_n(nonce, sizeof(nonce), result.begin());
+    std::copy_n(ciphertext.data(), ciphertext_len, result.begin() + sizeof(nonce));
+
+    return result;
+}
+
+std::vector<unsigned char> decrypt_message_given_key(const unsigned char* encrypted_data, size_t ENCRYPTED_LEN, const unsigned char* key) {
+    if (ENCRYPTED_LEN < CHA_CHA_NONCE_LEN) {
+        return {};
+    }
+
+    unsigned char nonce[CHA_CHA_NONCE_LEN];
+    std::copy_n(encrypted_data, sizeof(nonce), nonce);
+
+    const unsigned char* ciphertext = encrypted_data + sizeof(nonce);
+    size_t ciphertext_len = ENCRYPTED_LEN - sizeof(nonce);
+
+    if (ciphertext_len < ENC_OVERHEAD) {
+        return {};
+    }
+
+    std::vector<unsigned char> plaintext(ciphertext_len - ENC_OVERHEAD);
+    unsigned long long plaintext_len;
+
+    if (crypto_aead_chacha20poly1305_ietf_decrypt(
+            plaintext.data(), &plaintext_len,
+            nullptr,
+            ciphertext, ciphertext_len,
+            nullptr, 0,
+            nonce, key) != 0) {
+        return {};
+            }
+
+    plaintext.resize(plaintext_len);
+    return plaintext;
+}
+
+
+std::vector<unsigned char> encrypt_message_with_nonce(
     const QByteArray &data,
     const std::unique_ptr<SecureMemoryBuffer> &key,
     const unsigned char nonce[CHA_CHA_NONCE_LEN]
@@ -255,7 +309,7 @@ std::vector<unsigned char> encrypt_bytes(
     return encrypted_bytes;
 }
 
-std::vector<unsigned char> decrypt_bytes(
+std::vector<unsigned char> decrypt_message_with_nonce(
     const QByteArray &encrypted_bytes,
     const std::unique_ptr<SecureMemoryBuffer> &key,
     const std::vector<unsigned char> &nonce
