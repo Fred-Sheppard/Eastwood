@@ -55,7 +55,6 @@ void WindowManager::showWindow(QPointer<T> &windowPtr, const QString &buttonName
     m_windows.erase(std::remove_if(m_windows.begin(), m_windows.end(),
                                    [](const QPointer<QWidget> &ptr) { return ptr.isNull(); }),
                     m_windows.end());
-
     // Close all existing windows
     for (const QPointer<QWidget> &window: m_windows) {
         if (!window.isNull()) {
@@ -63,17 +62,19 @@ void WindowManager::showWindow(QPointer<T> &windowPtr, const QString &buttonName
         }
     }
     m_windows.clear();
-
     // Create new window if needed
     if (windowPtr.isNull()) {
         auto uniqueWindow = std::make_unique<T>(std::forward<Args>(args)...);
         uniqueWindow->setAttribute(Qt::WA_DeleteOnClose);
         windowPtr = uniqueWindow.get();
-        m_windows.append(windowPtr);
 
+        // Cast to QWidget pointer before appending
+        QPointer<QWidget> widgetPtr = qobject_cast<QWidget*>(windowPtr.data());
+        m_windows.append(widgetPtr);
+
+        // No need for connection - QPointer auto-nullifies
         uniqueWindow.release();
     }
-
     windowPtr->show();
     emit windowShown(buttonName);
 }
