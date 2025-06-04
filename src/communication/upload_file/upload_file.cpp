@@ -28,8 +28,6 @@ std::string upload_file(
     const auto file_key = SecureMemoryBuffer::create(SYM_KEY_LEN);
     randombytes_buf(file_key->data(), file_key->size());
 
-    qDebug() << "FILE KEY" << bin2hex(file_key->data(), file_key->size());
-
     const json metadata = {
         {"name", fileInfo.fileName().toStdString()},
         {"size", fileInfo.size()},
