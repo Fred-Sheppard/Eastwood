@@ -94,13 +94,18 @@ inline std::vector<FileData> get_file_metadata() {
     for (const auto [uuid, _]: uuid_to_username) {
         uuids.push_back(uuid);
     }
-    const auto get_metadatas = get_encrypted_file_metadata(uuids);
+    const auto metadatas = get_encrypted_file_metadata(uuids);
 
     std::vector<FileData> file_metadata;
-    for (const auto &get_metadata: get_metadatas) {
+    for (const auto &[
+             uuid,
+             encrypted_metadata,
+             encrypted_file_key,
+             owner
+         ]: metadatas) {
         // Check if this UUID exists in our database
         try {
-            auto key = get_decrypted_message(get_metadata.uuid);
+            auto key = get_decrypted_message(uuid);
         } catch (const std::exception &e) {
             std::cout << "✗ UUID NOT found in database: " << e.what() << std::endl;
             std::cout << "This means we have metadata from server but no corresponding message in DB!" << std::endl;
@@ -110,40 +115,40 @@ inline std::vector<FileData> get_file_metadata() {
         try {
             // For received files, the file key is stored as message content
             std::cout << "Attempting to get decrypted message (file key)..." << std::endl;
-            auto key = get_decrypted_message(get_metadata.uuid);
+            auto key = get_decrypted_message(uuid);
 
             if (key.empty()) {
-                std::cerr << "ERROR: Empty decrypted key for UUID " << get_metadata.uuid << std::endl;
+                std::cerr << "ERROR: Empty decrypted key for UUID " << uuid << std::endl;
                 continue;
             }
 
             auto decrypted_key = decrypt_message_given_key(
-                get_metadata.encrypted_file_key.data(),
-                get_metadata.encrypted_file_key.size(),
+                encrypted_file_key.data(),
+                encrypted_file_key.size(),
                 key.data()
             );
             auto decrypted_metadata = decrypt_message_given_key(
-                get_metadata.encrypted_metadata.data(),
-                get_metadata.encrypted_metadata.size(),
+                encrypted_metadata.data(),
+                encrypted_metadata.size(),
                 decrypted_key.data()
             );
 
             if (decrypted_metadata.empty()) {
-                std::cerr << "ERROR: Empty decrypted metadata for UUID " << get_metadata.uuid << std::endl;
+                std::cerr << "ERROR: Empty decrypted metadata for UUID " << uuid << std::endl;
                 continue;
             }
 
             // Convert to string and check if it's valid
             std::string metadata_str(decrypted_metadata.begin(), decrypted_metadata.end());
             if (metadata_str.empty()) {
-                std::cerr << "ERROR: Empty metadata string for UUID " << get_metadata.uuid << std::endl;
+                std::cerr << "ERROR: Empty metadata string for UUID " << uuid << std::endl;
                 continue;
             }
 
             auto metadata = json::parse(metadata_str);
 
             if (!metadata.contains("name") || !metadata.contains("size") || !metadata.contains("mime_type")) {
-                std::cerr << "ERROR: Missing required fields in metadata for UUID " << get_metadata.uuid << std::endl;
+                std::cerr << "ERROR: Missing required fields in metadata for UUID " << uuid << std::endl;
                 continue;
             }
 
@@ -151,11 +156,11 @@ inline std::vector<FileData> get_file_metadata() {
                 metadata["name"],
                 metadata["size"],
                 metadata["mime_type"],
-                get_metadata.uuid,
-                get_metadata.owner
+                uuid,
+                owner
             });
         } catch (const std::exception &e) {
-            std::cerr << "ERROR processing metadata for UUID " << get_metadata.uuid << ": " << e.what() << std::endl;
+            std::cerr << "ERROR processing metadata for UUID " << uuid << ": " << e.what() << std::endl;
             continue;
         }
     }

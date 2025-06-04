@@ -505,14 +505,13 @@ DownloadedFile get_download_file(const std::string &uuid) {
     };
 }
 
-// uuid -> metadata
-std::vector<GetMetadata> get_encrypted_file_metadata(const std::vector<std::string> &uuids) {
+std::vector<EncryptedMetadata> get_encrypted_file_metadata(const std::vector<std::string> &uuids) {
     const json body {
         {"file_ids", uuids}
     };
     const auto response = post("/getFilesMetadata", body);
 
-    std::vector<GetMetadata> output{};
+    std::vector<EncryptedMetadata> output{};
 
     for (const json file : response["data"]["metadata"]) {
         output.push_back({

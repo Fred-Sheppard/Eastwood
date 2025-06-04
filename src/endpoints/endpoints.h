@@ -92,14 +92,14 @@ struct DownloadedFile {
 
 DownloadedFile get_download_file(const std::string &uuid);
 
-struct GetMetadata {
+struct EncryptedMetadata {
     std::string uuid;
     std::vector<unsigned char> encrypted_metadata;
     std::vector<unsigned char> encrypted_file_key;
     std::string owner;
 };
 
-std::vector<GetMetadata> get_encrypted_file_metadata(const std::vector<std::string> &uuids);
+std::vector<EncryptedMetadata> get_encrypted_file_metadata(const std::vector<std::string> &uuids);
 
 std::map<std::string, std::tuple<std::string, std::vector<unsigned char>> > get_encrypted_file_metadata(std::vector<std::tuple<std::string,std::string>> uuids);
 
