@@ -52,7 +52,7 @@ inline void update_messages() {
 
         // re encrypt with new key
         std::unique_ptr<SecureMemoryBuffer> new_db_message_key = SecureMemoryBuffer::create(32);
-        crypto_stream_xchacha20_keygen(new_db_message_key->data());
+        crypto_aead_xchacha20poly1305_ietf_keygen(new_db_message_key->data());
 
         std::array<unsigned char, CHA_CHA_NONCE_LEN> nonce_for_msg{};
         randombytes_buf(nonce_for_msg.data(), CHA_CHA_NONCE_LEN);
