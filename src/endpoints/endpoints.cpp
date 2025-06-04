@@ -604,7 +604,7 @@ std::map<std::string, std::vector<unsigned char> > get_encrypted_file_metadata(s
 }
 
 
-void delete_file(const std::string &uuid) {
+void post_delete_file(const std::string &uuid) {
     const json body = {
       {"file_id", uuid}
     };
