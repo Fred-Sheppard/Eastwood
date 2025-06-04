@@ -9,37 +9,32 @@
 #include <sodium.h>
 
 // Convert binary data to a hexadecimal string
-inline std::string bin2hex(const unsigned char *data, size_t len) {
-    // Calculate the max hex length (2 chars per byte + null terminator)
-    size_t hex_maxlen = len * 2 + 1;
-    std::string hex(hex_maxlen, '\0');
-    sodium_bin2hex(&hex[0], hex_maxlen, data, len);
-    // Remove the null terminator
-    hex.resize(hex_maxlen - 1);
-    return hex;
+inline std::string bin2hex(const unsigned char* data, size_t len) {
+    std::stringstream ss;
+    ss << std::hex << std::setfill('0');
+    for (size_t i = 0; i < len; i++) {
+        ss << std::setw(2) << static_cast<int>(data[i]);
+    }
+    return ss.str();
 }
 
-inline std::vector<unsigned char> hex2bin(const unsigned char *hex, const size_t len) {
-    if (len % 2 != 0) {
-        throw std::runtime_error("Hex string length must be even");
+inline std::vector<unsigned char> hex2bin(const std::string &hex) {
+    const size_t bin_len = hex.length() / 2;
+    std::vector<unsigned char> bin(bin_len);
+    
+    size_t actual_len;
+    if (sodium_hex2bin(bin.data(), bin_len,
+                      hex.c_str(), hex.length(),
+                      nullptr, &actual_len, nullptr) != 0) {
+        throw std::runtime_error("Failed to convert hex to binary");
     }
-
-    // Calculate the max binary length (hex string length / 2)
-    const size_t bin_maxlen = len / 2;
-    std::vector<unsigned char> bin(bin_maxlen, '\0');
-    size_t bin_len;
-
-    if (sodium_hex2bin(
-            &bin[0], bin_maxlen,
-            reinterpret_cast<const char *>(hex), len,
-            nullptr, &bin_len, nullptr) != 0) {
-        throw std::runtime_error("Unable to convert hex to binary: invalid hex string");
-    }
-    bin.resize(bin_len);
+    
+    // Resize to actual length
+    bin.resize(actual_len);
     return bin;
 }
 
-inline std::string bin2base64(const unsigned char *data, size_t len) {
+inline std::string bin2base64(const unsigned char* data, size_t len) {
     // Calculate the max base64 length
     size_t b64_maxlen = sodium_base64_ENCODED_LEN(len, sodium_base64_VARIANT_ORIGINAL);
     std::string b64(b64_maxlen, '\0');
@@ -54,7 +49,7 @@ inline std::string bin2base64(const unsigned char *data, size_t len) {
 }
 
 // Convert base64 string to binary data
-inline std::vector<unsigned char> base642bin(const std::string &base64_str) {
+inline std::vector<unsigned char> base642bin(const std::string& base64_str) {
     static const unsigned char base64_lookup[] = {
         62, 255, 62, 255, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 255,
         255, 255, 255, 255, 255, 255, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
@@ -62,26 +57,23 @@ inline std::vector<unsigned char> base642bin(const std::string &base64_str) {
         255, 255, 255, 255, 63, 255, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
         36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51
     };
-
+    
     std::vector<unsigned char> ret;
     ret.reserve(((base64_str.size() + 3) / 4) * 3);
-
+    
     for (size_t i = 0; i < base64_str.size(); i += 4) {
         unsigned char sextet_a = base64_str[i] <= 'z' ? base64_lookup[base64_str[i] - 43] : 255;
-        unsigned char sextet_b = i + 1 < base64_str.size() && base64_str[i + 1] <= 'z'
-                                     ? base64_lookup[base64_str[i + 1] - 43]
-                                     : 255;
-        unsigned char sextet_c = i + 2 < base64_str.size() && base64_str[i + 2] <= 'z'
-                                     ? base64_lookup[base64_str[i + 2] - 43]
-                                     : 255;
-        unsigned char sextet_d = i + 3 < base64_str.size() && base64_str[i + 3] <= 'z'
-                                     ? base64_lookup[base64_str[i + 3] - 43]
-                                     : 255;
-
+        unsigned char sextet_b = i + 1 < base64_str.size() && base64_str[i + 1] <= 'z' ? 
+            base64_lookup[base64_str[i + 1] - 43] : 255;
+        unsigned char sextet_c = i + 2 < base64_str.size() && base64_str[i + 2] <= 'z' ? 
+            base64_lookup[base64_str[i + 2] - 43] : 255;
+        unsigned char sextet_d = i + 3 < base64_str.size() && base64_str[i + 3] <= 'z' ? 
+            base64_lookup[base64_str[i + 3] - 43] : 255;
+        
         if (sextet_a == 255 || sextet_b == 255) break;
-
+        
         unsigned char triple = (sextet_a << 18) + (sextet_b << 12);
-
+        
         if (sextet_c != 255) {
             triple += sextet_c << 6;
             if (sextet_d != 255) {
@@ -97,25 +89,25 @@ inline std::vector<unsigned char> base642bin(const std::string &base64_str) {
             ret.push_back((triple >> 16) & 0xFF);
         }
     }
-
+    
     return ret;
 }
 
-inline unsigned char *concat_ordered(const unsigned char *a, size_t a_len,
-                                     const unsigned char *b, size_t b_len,
-                                     size_t &out_len) {
+inline unsigned char* concat_ordered(const unsigned char* a, size_t a_len,
+                                     const unsigned char* b, size_t b_len,
+                                     size_t& out_len) {
     // Compare a and b lexicographically
     int cmp = memcmp(a, b, std::min(a_len, b_len));
-    if (cmp == 0) cmp = a_len - b_len; // if equal up to min length, use size to decide
+    if (cmp == 0) cmp = a_len - b_len;  // if equal up to min length, use size to decide
 
-    const unsigned char *first = cmp <= 0 ? a : b;
+    const unsigned char* first = cmp <= 0 ? a : b;
     size_t first_len = cmp <= 0 ? a_len : b_len;
 
-    const unsigned char *second = cmp <= 0 ? b : a;
+    const unsigned char* second = cmp <= 0 ? b : a;
     size_t second_len = cmp <= 0 ? b_len : a_len;
 
     out_len = first_len + second_len;
-    unsigned char *result = new unsigned char[out_len];
+    unsigned char* result = new unsigned char[out_len];
 
     memcpy(result, first, first_len);
     memcpy(result + first_len, second, second_len);
@@ -123,4 +115,4 @@ inline unsigned char *concat_ordered(const unsigned char *a, size_t a_len,
     return result;
 }
 
-#endif // EASTWOOD_CRYPTO_UTILS_H
+#endif // EASTWOOD_CRYPTO_UTILS_H 
