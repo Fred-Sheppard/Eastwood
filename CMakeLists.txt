@@ -119,6 +119,7 @@ set(FRONTEND_SOURCES
         src/ui/utils/qr_code_generation/QRCodeGenerator.cpp
         src/ui/utils/qr_code_generation/QRCodeGenerator.h
         src/ui/utils/camera_functionality/camera_functionality.cpp
+        src/communication/ReceiveFlow.h
 )
 
 # Define database sources
@@ -151,12 +152,16 @@ set(AUTH_SOURCES
         src/auth/register_device/register_device.cpp
         src/auth/login/login.cpp
         src/sessions/KeyBundle.h
-        src/files/upload_file.cpp
         src/auth/salt.cpp
         src/key_exchange/MessageStructs.h
         src/auth/set_up_client.cpp
         src/auth/rotate_master_key/rotate_master_key.cpp
         src/sessions/RatchetSessionManager.cpp
+)
+
+set(COMMUNICATION_SOURCES
+        src/communication/upload_file/upload_file.cpp
+        src/communication/send_file_to/send_file_to.cpp
 )
 
 # Create main executable
@@ -166,6 +171,7 @@ add_executable(Eastwood
         ${DATABASE_SOURCES}
         ${CRYPTO_SOURCES}
         ${AUTH_SOURCES}
+        ${COMMUNICATION_SOURCES}
         ${qrcodegen_SOURCE_DIR}/cpp/qrcodegen.cpp
 )
 
@@ -254,6 +260,7 @@ add_executable(IntegrationTests
         ${DATABASE_SOURCES}
         ${CRYPTO_SOURCES}
         ${AUTH_SOURCES}
+        ${COMMUNICATION_SOURCES}
 )
 
 target_include_directories(IntegrationTests PRIVATE
