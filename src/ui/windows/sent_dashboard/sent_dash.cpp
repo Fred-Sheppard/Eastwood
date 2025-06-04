@@ -14,6 +14,7 @@
 #include <QPixmap>
 
 #include "src/communication/ReceiveFlow.h"
+#include "src/communication/revoke_file/revoke_file.h"
 #include "src/sql/queries.h"
 
 // Sent implementation
@@ -272,6 +273,7 @@ void Sent::onRevokeAccessClicked(const FileItemWidget* widget)
 
         // call to fred
         try {
+            refresh_access(selectedUsers, widget->getUuid());
 
         } catch (...) {
             StyledMessageBox::warning(this, "Failed. Try again: ", message);
