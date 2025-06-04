@@ -5,6 +5,7 @@
 #include <QListWidget>
 #include <QListWidgetItem>
 #include "src/ui/utils/file_item_widget/file_item_widget.h"
+#include "src/ui/utils/navbar/navbar.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class Sent; }
@@ -18,27 +19,22 @@ public:
     ~Sent() override;
 
 private slots:
-    void onFileItemClicked(FileItemWidget* widget);
-    void onRevokeAccessClicked(FileItemWidget* widget);
-    void onDeleteFileClicked(FileItemWidget* widget);
+    void onFileItemClicked(const FileItemWidget* widget);
+    void onRevokeAccessClicked(const FileItemWidget* widget);
+    void onDeleteFileClicked(const FileItemWidget* widget);
     void onDownloadFileClicked(FileItemWidget* widget);
-    void onWindowShown(const QString& windowName);
-    void onReceivedButtonClicked();
     void onSendFileButtonClicked();
-    void onSettingsButtonClicked();
-    void onLogoutButtonClicked();
 
 private:
     Ui::Sent *ui;
     QWidget* m_receivedWindow;
     void setupConnections();
-    void setupFileList();
+    void setupFileList() const;
     void refreshFileList();
     void addFileItem(const QString& fileName, const QString& fileSize, 
-                    const QString& timestamp, const QString& owner, const QString& uuid);
-    void showFileMetadata(FileItemWidget* widget);
+                    const QString& timestamp, const QString& owner);
+    void showFileMetadata(const FileItemWidget* widget);
     void sendFileToUser(const QString& username, const QString& fileId);
-    void navigateTo(QWidget* newWindow);
 };
 
 #endif // SENT_DASH_H

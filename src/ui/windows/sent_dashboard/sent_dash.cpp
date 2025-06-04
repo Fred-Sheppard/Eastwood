@@ -2,23 +2,11 @@
 #include "ui_sent_dash.h"
 #include "src/ui/utils/messagebox.h"
 #include "src/ui/utils/window_manager/window_manager.h"
-#include "src/ui/utils/navbar/navbar.h"
 #include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QFileInfo>
-#include <QFileDialog>
-#include <QLineEdit>
 #include <QDialog>
 #include <QScrollArea>
 #include <QTimer>
 #include <QCheckBox>
-
-#include "src/auth/logout.h"
-#include "src/keys/session_token_manager.h"
-#include "src/keys/kek_manager.h"
-#include "src/key_exchange/utils.h"
-#include "src/sql/queries.h"
-#include "src/utils/ConversionUtils.h"
 
 // Sent implementation
 Sent::Sent(QWidget *parent, QWidget* receivedWindow)
@@ -31,9 +19,6 @@ Sent::Sent(QWidget *parent, QWidget* receivedWindow)
     setupFileList();
     refreshFileList();
 
-    // Connect WindowManager signal to handle navbar highlighting
-    connect(&WindowManager::instance(), &WindowManager::windowShown,
-            this, &Sent::onWindowShown);
 }
 
 Sent::~Sent()
@@ -43,21 +28,11 @@ Sent::~Sent()
 
 void Sent::setupConnections()
 {
-    // Connect NavBar signals
-    NavBar* navbar = findChild<NavBar*>();
-    if (navbar) {
-        connect(navbar, &NavBar::sendFileClicked, this, &Sent::onSendFileButtonClicked);
-        connect(navbar, &NavBar::settingsClicked, this, &Sent::onSettingsButtonClicked);
-        connect(navbar, &NavBar::receivedClicked, this, &Sent::onReceivedButtonClicked);
-        connect(navbar, &NavBar::logoutClicked, this, &Sent::onLogoutButtonClicked);
-    }
-    
     // Connect the send button
     connect(ui->sendButton, &QPushButton::clicked, this, &Sent::onSendFileButtonClicked);
 }
 
-void Sent::setupFileList()
-{
+void Sent::setupFileList() const {
     ui->fileList->setSpacing(2);
     ui->fileList->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     ui->fileList->setSelectionMode(QAbstractItemView::NoSelection);
@@ -66,11 +41,10 @@ void Sent::setupFileList()
 void Sent::addFileItem(const QString& fileName,
                      const QString& fileSize,
                      const QString& timestamp,
-                     const QString& owner,
-                     const QString& uuid)
+                     const QString& owner)
 {
     auto* item = new QListWidgetItem(ui->fileList);
-    auto* widget = new FileItemWidget(fileName, fileSize, timestamp, owner, uuid,
+    auto* widget = new FileItemWidget(fileName, fileSize, timestamp, owner, 
                                     FileItemWidget::Mode::Sent, this);
 
     connect(widget, &FileItemWidget::revokeAccessClicked, this, &Sent::onRevokeAccessClicked);
@@ -87,24 +61,19 @@ void Sent::refreshFileList()
 {
     ui->fileList->clear();
 
-    auto sent_messages = get_all_decrypted_sent_messages();
-    for (auto [username, file_uuid, device_id, decrypted_message] : sent_messages) {
-        addFileItem(
-            QString::fromStdString(file_uuid),
-            QString("%1 bytes").arg(decrypted_message.size()),
-            "2024-03-15 14:30",
-            bin2hex(device_id.data(), 32).data(),
-            QString::fromStdString(file_uuid)
-        );
-    }
+    // TODO: Fetch actual files from server
+    // Example data for demonstration
+    addFileItem("Important Document.pdf", "2.5 MB", "2024-03-15 14:30", "John Doe");
+    addFileItem("Project Presentation.pptx", "5.8 MB", "2024-03-14 09:15", "Alice Smith");
+    addFileItem("Budget Report.xlsx", "1.2 MB", "2024-03-13 16:45", "Bob Johnson");
 }
 
-void Sent::onFileItemClicked(FileItemWidget* widget)
+void Sent::onFileItemClicked(const FileItemWidget* widget)
 {
     showFileMetadata(widget);
 }
 
-void Sent::onRevokeAccessClicked(FileItemWidget* widget)
+void Sent::onRevokeAccessClicked(const FileItemWidget* widget)
 {
     // Create revoke access dialog
     QDialog* revokeDialog = new QDialog(this);
@@ -292,7 +261,7 @@ void Sent::onRevokeAccessClicked(FileItemWidget* widget)
     delete revokeDialog;
 }
 
-void Sent::onDeleteFileClicked(FileItemWidget* widget)
+void Sent::onDeleteFileClicked(const FileItemWidget* widget)
 {
     if (StyledMessageBox::question(this, "Delete File",
                                  QString("Are you sure you want to delete file: %1?")
@@ -303,7 +272,7 @@ void Sent::onDeleteFileClicked(FileItemWidget* widget)
     }
 }
 
-void Sent::showFileMetadata(FileItemWidget* widget)
+void Sent::showFileMetadata(const FileItemWidget* widget)
 {
     StyledMessageBox::info(this, "File Details",
                        QString("File Details:\n\nName: %1\nSize: %2\nShared to: %3\nTimestamp: %4")
@@ -318,46 +287,13 @@ void Sent::sendFileToUser(const QString& username, const QString& fileId)
     // TODO: Implement file sharing logic
 }
 
-void Sent::onWindowShown(const QString& windowName)
-{
-    // Find the navbar and update its active button
-    NavBar* navbar = findChild<NavBar*>();
-    if (navbar) {
-        navbar->setActiveButton(windowName);
-    }
-}
-
-void Sent::navigateTo(QWidget* newWindow)
-{
-    newWindow->setParent(this->parentWidget());  // Set the same parent
-    newWindow->show();
-    this->setAttribute(Qt::WA_DeleteOnClose);  // Mark for deletion when closed
-    close();  // This will trigger deletion due to WA_DeleteOnClose
-}
-
-void Sent::onReceivedButtonClicked()
-{
-    WindowManager::instance().showReceived();
-}
-
-// navbar button
-void Sent::onSendFileButtonClicked()
-{
-    WindowManager::instance().showSendFile();
-}
-
-void Sent::onSettingsButtonClicked()
-{
-    WindowManager::instance().showSettings();
-}
 
 void Sent::onDownloadFileClicked(FileItemWidget* widget)
 {
     StyledMessageBox::info(this, "Not Implemented", "Download functionality is not yet implemented.");
 }
 
-void Sent::onLogoutButtonClicked() {
-    logout();
-    // Show login window
-    WindowManager::instance().showLogin();
+void Sent::onSendFileButtonClicked()
+{
+    WindowManager::instance().showSendFile();
 }

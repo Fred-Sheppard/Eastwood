@@ -5,14 +5,11 @@
 #include "../../utils/navbar/navbar.h"
 #include "src/key_exchange/utils.h"
 #include "src/auth/register_device/register_device.h"
-#include "src/utils/ConversionUtils.h"
 #include <QVBoxLayout>
 #include <QFileDialog>
 #include <QLineEdit>
-#include <QDialog>
 #include <QTimer>
 #include <QCheckBox>
-#include <QImage>
 #include <QImageReader>
 #include <QPixmap>
 #include <QLabel>
@@ -23,8 +20,6 @@
 #include "src/auth/logout.h"
 #include "src/endpoints/endpoints.h"
 #include "src/keys/session_token_manager.h"
-#include "src/keys/kek_manager.h"
-#include "src/database/database.h"
 
 Settings::Settings(QWidget *parent)
     : QWidget(parent)
@@ -35,10 +30,6 @@ Settings::Settings(QWidget *parent)
 {
     ui->setupUi(this);
     setupConnections();
-
-    // Connect WindowManager signal to handle navbar highlighting
-    connect(&WindowManager::instance(), &WindowManager::windowShown,
-            this, &Settings::onWindowShown);
 
     // Setup refresh spinner timer
     connect(m_refreshSpinnerTimer, &QTimer::timeout, this, &Settings::handleRefreshSpinner);
@@ -66,8 +57,7 @@ void Settings::setupConnections()
     connect(ui->refreshDevicesButton, &QPushButton::clicked, this, &Settings::onRefreshDevicesClicked);
 
     // Connect NavBar signals
-    NavBar* navbar = findChild<NavBar*>();
-    if (navbar) {
+    if (NavBar* navbar = findChild<NavBar*>()) {
         connect(navbar, &NavBar::receivedClicked, this, &Settings::onReceivedButtonClicked);
         connect(navbar, &NavBar::sentClicked, this, &Settings::onSentButtonClicked);
         connect(navbar, &NavBar::sendFileClicked, this, &Settings::onSendFileButtonClicked);
@@ -80,8 +70,7 @@ void Settings::setupConnections()
     updateDeviceList();
 }
 
-void Settings::validatePassphrase()
-{
+void Settings::validatePassphrase() const {
     QString newPassphrase = ui->newPassphrase->text();
     QString confirmPassphrase = ui->confirmPassphrase->text();
 
@@ -108,48 +97,34 @@ void Settings::navigateTo(QWidget* newWindow)
     close();  // This will trigger deletion due to WA_DeleteOnClose
 }
 
-void Settings::onReceivedButtonClicked()
-{
+void Settings::onReceivedButtonClicked() const {
     ui->currentPassphrase->clear();
     ui->newPassphrase->clear();
     ui->confirmPassphrase->clear();
     WindowManager::instance().showReceived();
 }
 
-void Settings::onSentButtonClicked()
-{
+void Settings::onSentButtonClicked() const {
     ui->currentPassphrase->clear();
     ui->newPassphrase->clear();
     ui->confirmPassphrase->clear();
     WindowManager::instance().showSent();
 }
 
-void Settings::onSendFileButtonClicked()
-{
+void Settings::onSendFileButtonClicked() const {
     ui->currentPassphrase->clear();
     ui->newPassphrase->clear();
     ui->confirmPassphrase->clear();
     WindowManager::instance().showSendFile();
 }
 
-void Settings::onSettingsButtonClicked()
-{
+void Settings::onSettingsButtonClicked() const {
     ui->currentPassphrase->clear();
     ui->newPassphrase->clear();
     ui->confirmPassphrase->clear();
 }
 
-void Settings::onWindowShown(const QString& windowName) const
-{
-    // Find the navbar and update its active button
-    NavBar* navbar = findChild<NavBar*>();
-    if (navbar) {
-        navbar->setActiveButton(windowName);
-    }
-}
-
-void Settings::onPassphraseCancelClicked()
-{
+void Settings::onPassphraseCancelClicked() const {
     // Clear all passphrase fields
     ui->currentPassphrase->clear();
     ui->newPassphrase->clear();
@@ -165,8 +140,7 @@ void Settings::onPassphraseSaveClicked()
     StyledMessageBox::info(this, "Not Implemented", "Passphrase change functionality is not yet implemented.");
 }
 
-void Settings::onAuthCancelClicked()
-{
+void Settings::onAuthCancelClicked() const {
     // Clear auth code input
     ui->authCodeInput->clear();
 
@@ -232,13 +206,12 @@ bool Settings::handleDeviceConnection(const QString& publicKey)
     return false;
 }
 
-void Settings::onScanQRButtonClicked()
+void Settings::onScanQRButtonClicked() const
 {
     m_cameraFunctionality->showScanDialog();
 }
 
-void Settings::createDeviceBox(const std::string& deviceName)
-{
+void Settings::createDeviceBox(const std::string& deviceName) const {
     QWidget* deviceBox = new QWidget();
     deviceBox->setStyleSheet(R"(
         QWidget {

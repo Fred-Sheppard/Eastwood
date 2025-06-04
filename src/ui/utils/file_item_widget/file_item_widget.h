@@ -59,9 +59,17 @@ private:
     QString uuid;
     Mode mode;
 
+    QWidget* createFileIconContainer();
+    QLayout* createInfoLayout();
+    QLayout* createButtonLayout();
+    QPushButton* createDownloadButton();
+    QPushButton* createRevokeButton();
+    QPushButton* createDeleteButton();
+
     void setupUI();
     void setupConnections();
-    QString getFileTypeAbbreviation(const QString& fileName);
+
+    static QString getFileTypeAbbreviation(const QString& fileName);
 };
 
 #endif // FILE_ITEM_WIDGET_H

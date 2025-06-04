@@ -1,7 +1,6 @@
 #ifndef WINDOW_MANAGER_H
 #define WINDOW_MANAGER_H
 
-#include <QObject>
 #include <QString>
 #include <QList>
 #include <QWidget>
@@ -20,9 +19,11 @@ class DeviceRegister;
 class WindowManager : public QObject
 {
     Q_OBJECT
+
 public:
     static WindowManager& instance();
 
+    // Window management methods
     void showReceived();
     void showSent();
     void showSendFile();
@@ -39,16 +40,16 @@ signals:
 
 protected:
     WindowManager();
-    virtual ~WindowManager();
+    ~WindowManager() override;
 
 private:
-    // Delete copy constructor and assignment operator
+    // Prevent copying
     WindowManager(const WindowManager&) = delete;
     WindowManager& operator=(const WindowManager&) = delete;
 
-    // Template function to handle different window types
+    // Template helper methods
     template<typename T>
-    void deleteWindow(QPointer<T>& window) {
+    static void deleteWindow(QPointer<T>& window) {
         if (!window.isNull()) {
             window->hide();
             window->deleteLater();
@@ -56,6 +57,10 @@ private:
         }
     }
 
+    template<typename T, typename... Args>
+    void showWindow(QPointer<T>& windowPtr, const QString& buttonName, Args&&... args);
+
+    // Window pointers
     QPointer<Received> m_received;
     QPointer<Sent> m_sent;
     QPointer<SendFile> m_sendFile;

@@ -1,5 +1,4 @@
 #include "file_item_widget.h"
-#include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QFileInfo>
 #include <QStyle>
@@ -9,26 +8,14 @@ FileItemWidget::FileItemWidget(const QString& fileName,
                              const QString& fileSize,
                              const QString& timestamp,
                              const QString& owner,
-                             const QString& uuid,
                              Mode mode,
                              QWidget* parent)
     : QWidget(parent)
     , fileName(fileName)
     , fileSize(fileSize)
-    , uuid(uuid)
     , timestamp(timestamp)
     , owner(owner)
     , mode(mode)
-    , fileNameLabel(nullptr)
-    , detailsLabel(nullptr)
-    , fileTypeLabel(nullptr)
-    , fileIconContainer(nullptr)
-    , revokeButton(nullptr)
-    , deleteButton(nullptr)
-    , downloadButton(nullptr)
-    , mainLayout(nullptr)
-    , infoLayout(nullptr)
-    , buttonLayout(nullptr)
 {
     setupUI();
     setupConnections();
@@ -36,19 +23,27 @@ FileItemWidget::FileItemWidget(const QString& fileName,
 
 void FileItemWidget::setupUI()
 {
-    mainLayout = new QHBoxLayout(this);
+    auto* mainLayout = new QHBoxLayout(this);
     mainLayout->setSpacing(16);
     mainLayout->setContentsMargins(20, 16, 20, 16);
 
-    // File icon with file type indicator
-    fileIconContainer = new QWidget(this);
+    mainLayout->addWidget(createFileIconContainer());
+    mainLayout->addLayout(createInfoLayout(), 1);
+    mainLayout->addLayout(createButtonLayout());
+
+    setCursor(Qt::PointingHandCursor);
+}
+
+QWidget* FileItemWidget::createFileIconContainer()
+{
+    auto* fileIconContainer = new QWidget(this);
     fileIconContainer->setFixedSize(42, 42);
     fileIconContainer->setStyleSheet(R"(
         background-color: #f5f6fa;
         border-radius: 8px;
     )");
     
-    fileTypeLabel = new QLabel(getFileTypeAbbreviation(fileName), fileIconContainer);
+    auto* fileTypeLabel = new QLabel(getFileTypeAbbreviation(fileName), fileIconContainer);
     fileTypeLabel->setAlignment(Qt::AlignCenter);
     fileTypeLabel->setStyleSheet(R"(
         font-size: 12px;
@@ -57,39 +52,75 @@ void FileItemWidget::setupUI()
     )");
     fileTypeLabel->setFixedSize(42, 42);
     
-    // File info section
-    infoLayout = new QVBoxLayout();
+    return fileIconContainer;
+}
+
+QLayout* FileItemWidget::createInfoLayout()
+{
+    auto* infoLayout = new QVBoxLayout();
     infoLayout->setSpacing(4);
 
-    fileNameLabel = new QLabel(fileName.isNull() ? "Unknown File" : fileName, this);
+    fileNameLabel = new QLabel(fileName, this);
     fileNameLabel->setStyleSheet("font-size: 15px; font-weight: 500; color: #2d3436;");
 
-    // Safely construct the details string with null checks and simpler separator
-    QString safeFileSize = fileSize.isNull() || fileSize.isEmpty() ? "Unknown size" : fileSize;
-    QString safeTimestamp = timestamp.isNull() || timestamp.isEmpty() ? "Unknown time" : timestamp;
-    QString safeOwner = owner.isNull() || owner.isEmpty() ? "Unknown owner" : owner;
-    
-    QString detailsText = QString("%1 | %2 | Shared by %3")
-                         .arg(safeFileSize)
-                         .arg(safeTimestamp)
-                         .arg(safeOwner);
-
-    detailsLabel = new QLabel(detailsText, this);
+    detailsLabel = new QLabel(QString("%1 • %2 • Shared by %3")
+                            .arg(fileSize)
+                            .arg(timestamp)
+                            .arg(owner), this);
     detailsLabel->setStyleSheet("font-size: 13px; color: #636e72;");
 
     infoLayout->addWidget(fileNameLabel);
     infoLayout->addWidget(detailsLabel);
 
-    // Action buttons
-    buttonLayout = new QHBoxLayout();
+    return infoLayout;
+}
+
+QLayout* FileItemWidget::createButtonLayout()
+{
+    auto* buttonLayout = new QHBoxLayout();
     buttonLayout->setSpacing(8);
     buttonLayout->addStretch();
 
-    // Add download button - remove the problematic icon for now
-    downloadButton = new QPushButton("Download", this);
-    downloadButton->setFixedSize(80, 30);
+    buttonLayout->addWidget(createDownloadButton());
+
+    if (mode == Mode::Sent) {
+        buttonLayout->addWidget(createRevokeButton());
+        buttonLayout->addWidget(createDeleteButton());
+    }
+
+    buttonLayout->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    return buttonLayout;
+}
+
+QPushButton* FileItemWidget::createDownloadButton()
+{
+    downloadButton = new QPushButton(this);
+    downloadButton->setFixedSize(30, 30);
     downloadButton->setCursor(Qt::PointingHandCursor);
+    downloadButton->setIcon(QIcon(":icons/logos/download.svg"));
+    downloadButton->setIconSize(QSize(16, 16));
     downloadButton->setStyleSheet(R"(
+        QPushButton {
+            background-color: #6c5ce7;
+            border: none;
+            border-radius: 4px;
+        }
+        QPushButton:hover {
+            background-color: #5049c9;
+        }
+        QPushButton:pressed {
+            background-color: #4040b0;
+        }
+    )");
+    return downloadButton;
+}
+
+QPushButton* FileItemWidget::createRevokeButton()
+{
+    revokeButton = new QPushButton("Revoke", this);
+    revokeButton->setFixedSize(75, 30);
+    revokeButton->setCursor(Qt::PointingHandCursor);
+    revokeButton->setStyleSheet(R"(
         QPushButton {
             background-color: #6c5ce7;
             color: white;
@@ -105,63 +136,31 @@ void FileItemWidget::setupUI()
             background-color: #4040b0;
         }
     )");
-    buttonLayout->addWidget(downloadButton);
+    return revokeButton;
+}
 
-    // Only create and show revoke button in Sent mode
-    if (mode == Mode::Sent) {
-        revokeButton = new QPushButton("Revoke", this);
-        revokeButton->setFixedSize(75, 30);
-        revokeButton->setCursor(Qt::PointingHandCursor);
-        revokeButton->setStyleSheet(R"(
-            QPushButton {
-                background-color: #6c5ce7;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                font-size: 12px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #5049c9;
-            }
-            QPushButton:pressed {
-                background-color: #4040b0;
-            }
-        )");
-        buttonLayout->addWidget(revokeButton);
-    }
-
-    // Only create and show delete button in Sent mode
-    if (mode == Mode::Sent) {
-        deleteButton = new QPushButton("Delete", this);
-        deleteButton->setFixedSize(75, 30);
-        deleteButton->setCursor(Qt::PointingHandCursor);
-        deleteButton->setStyleSheet(R"(
-            QPushButton {
-                background-color: #e74c3c;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                font-size: 12px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #c0392b;
-            }
-            QPushButton:pressed {
-                background-color: #a93226;
-            }
-        )");
-        buttonLayout->addWidget(deleteButton);
-    }
-
-    buttonLayout->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-
-    mainLayout->addWidget(fileIconContainer);
-    mainLayout->addLayout(infoLayout, 1);
-    mainLayout->addLayout(buttonLayout);
-
-    setCursor(Qt::PointingHandCursor);
+QPushButton* FileItemWidget::createDeleteButton()
+{
+    deleteButton = new QPushButton("Delete", this);
+    deleteButton->setFixedSize(75, 30);
+    deleteButton->setCursor(Qt::PointingHandCursor);
+    deleteButton->setStyleSheet(R"(
+        QPushButton {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        QPushButton:hover {
+            background-color: #c0392b;
+        }
+        QPushButton:pressed {
+            background-color: #a93226;
+        }
+    )");
+    return deleteButton;
 }
 
 void FileItemWidget::setupConnections()

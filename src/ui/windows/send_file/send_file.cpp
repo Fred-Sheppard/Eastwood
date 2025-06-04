@@ -2,39 +2,25 @@
 #include "ui_send_file.h"
 #include "../../utils/messagebox.h"
 #include "../../utils/window_manager/window_manager.h"
-#include "../../utils/messagebox.h"
 #include "../../utils/navbar/navbar.h"
-#include <QVBoxLayout>
-#include <QHBoxLayout>
 #include <QFileInfo>
 #include <QFileDialog>
 #include <QLineEdit>
-#include <QDialog>
-#include <QScrollArea>
-#include <QTimer>
 #include <QCheckBox>
 
 #include "src/endpoints/endpoints.h"
-#include "src/auth/logout.h"
 #include "src/files/upload_file.h"
 #include "src/keys/session_token_manager.h"
 #include "src/key_exchange/utils.h"
 #include "src/key_exchange/XChaCha20-Poly1305.h"
 #include "src/sessions/RatchetSessionManager.h"
 #include "src/sql/queries.h"
-#include "src/keys/session_token_manager.h"
-#include "src/keys/kek_manager.h"
-#include "src/database/database.h"
 
 SendFile::SendFile(QWidget *parent)
     : QWidget(parent)
       , ui(new Ui::SendFile) {
     ui->setupUi(this);
     setupConnections();
-
-    // Connect WindowManager signal to handle navbar highlighting
-    connect(&WindowManager::instance(), &WindowManager::windowShown,
-            this, &SendFile::onWindowShown);
 }
 
 SendFile::~SendFile() {
@@ -46,12 +32,10 @@ void SendFile::setupConnections() {
     connect(ui->sendButton, &QPushButton::clicked, this, &SendFile::onSendClicked);
 
     // Connect NavBar signals
-    NavBar *navbar = findChild<NavBar *>();
-    if (navbar) {
+    if (NavBar *navbar = findChild<NavBar *>()) {
         connect(navbar, &NavBar::receivedClicked, this, &SendFile::onReceivedButtonClicked);
         connect(navbar, &NavBar::sentClicked, this, &SendFile::onSentButtonClicked);
         connect(navbar, &NavBar::settingsClicked, this, &SendFile::onSettingsButtonClicked);
-        connect(navbar, &NavBar::logoutClicked, this, &SendFile::onLogoutButtonClicked);
         connect(navbar, &NavBar::sendFileClicked, this, &SendFile::onSendFileButtonClicked);
     }
 }
@@ -183,45 +167,29 @@ void SendFile::navigateTo(QWidget *newWindow) {
     close(); // This will trigger deletion due to WA_DeleteOnClose
 }
 
-void SendFile::onReceivedButtonClicked() {
+void SendFile::onReceivedButtonClicked() const {
     ui->usernameInput->clear();
     ui->filePathInput->clear();
     ui->fileDetailsLabel->clear();
     WindowManager::instance().showReceived();
 }
 
-void SendFile::onSentButtonClicked() {
+void SendFile::onSentButtonClicked() const {
     ui->usernameInput->clear();
     ui->filePathInput->clear();
     ui->fileDetailsLabel->clear();
     WindowManager::instance().showSent();
 }
 
-// navbar button
-void SendFile::onSendFileButtonClicked() {
+void SendFile::onSendFileButtonClicked() const {
     ui->usernameInput->clear();
     ui->filePathInput->clear();
     ui->fileDetailsLabel->clear();
 }
 
-void SendFile::onSettingsButtonClicked() {
+void SendFile::onSettingsButtonClicked() const {
     ui->filePathInput->clear();
     ui->fileDetailsLabel->clear();
     ui->usernameInput->clear();
     WindowManager::instance().showSettings();
-}
-
-void SendFile::onWindowShown(const QString &windowName) {
-    // Find the navbar and update its active button
-    NavBar *navbar = findChild<NavBar *>();
-    if (navbar) {
-        navbar->setActiveButton(windowName);
-    }
-}
-
-void SendFile::onLogoutButtonClicked() {
-    logout();
-
-    // Show login window
-    WindowManager::instance().showLogin();
 }
