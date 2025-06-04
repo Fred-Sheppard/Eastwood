@@ -273,7 +273,7 @@ std::vector<unsigned char> decrypt_message_given_key(const unsigned char* encryp
         throw std::runtime_error("ciphertext message is too short");
     }
 
-    std::vector<unsigned char> plaintext(ciphertext_len - crypto_aead_chacha20poly1305_IETF_ABYTES);
+    std::vector<unsigned char> plaintext(ciphertext_len - crypto_aead_xchacha20poly1305_IETF_ABYTES);
     unsigned long long plaintext_len;
 
     if (crypto_aead_xchacha20poly1305_ietf_decrypt(
