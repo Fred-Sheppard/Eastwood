@@ -13,7 +13,7 @@
 #include "src/files/upload_file.h"
 #include "src/keys/session_token_manager.h"
 #include "src/key_exchange/utils.h"
-#include "src/key_exchange/XChaCha20-Poly1305.h"
+#include "src/algorithms/algorithms.h"
 #include "src/sessions/RatchetSessionManager.h"
 #include "src/sql/queries.h"
 #include "src/keys/session_token_manager.h"

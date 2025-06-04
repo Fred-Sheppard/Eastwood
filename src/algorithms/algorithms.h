@@ -83,4 +83,17 @@ std::vector<unsigned char> decrypt_bytes(
     const std::vector<unsigned char> &nonce
 );
 
+std::vector<unsigned char> decrypt_message_given_key(
+    const unsigned char* encrypted_data,
+    size_t ENCRYPTED_LEN,
+    const unsigned char* key
+    );
+
+std::vector<unsigned char> encrypt_message_given_key(
+    const unsigned char* message,
+    const size_t MESSAGE_LEN,
+    const unsigned char* key
+    );
+
+
 #endif //ALGORITHMS_H

@@ -4,7 +4,6 @@
 
 #include "NewRatchet.h"
 #include <sstream>
-#include "XChaCha20-Poly1305.h"
 #include "src/keys/kek_manager.h"
 #include "src/sql/queries.h"
 #include "src/key_exchange/utils.h"
