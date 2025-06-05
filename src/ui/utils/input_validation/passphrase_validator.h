@@ -8,7 +8,7 @@
 
 namespace PassphraseValidator {
     constexpr int MAX_PASSPHRASE_LENGTH = 64;
-    constexpr int MIN_PASSPHRASE_LENGTH = 8;
+    constexpr int MIN_PASSPHRASE_LENGTH = 15;
     bool validate(const QString& passphrase, const QString& confirmPassphrase, QString& errorMessage);
 }
 
