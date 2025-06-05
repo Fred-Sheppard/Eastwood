@@ -12,6 +12,7 @@
 #include "src/communication/send_file_to/send_file_to.h"
 #include "src/ui/utils/byte_converter/byte_converter.h"
 #include "src/algorithms/constants.h"
+#include "src/ui/utils/input_validation/name_validator.h"
 
 
 SendFile::SendFile(QWidget *parent)
@@ -85,8 +86,16 @@ void SendFile::onBrowseClicked() {
 // purple send button in send_file.ui
 void SendFile::onSendClicked() {
     const QString filePath = ui->filePathInput->text();
+    const QString username = ui->usernameInput->text();
+    QString errorMessage;
+
     if (filePath.isEmpty()) {
         StyledMessageBox::warning(this, "No File Selected", "Please select a file to send.");
+        return;
+    }
+
+    if (!NameValidator::validateUsername(username, errorMessage)) {
+        StyledMessageBox::warning(this, "Invalid Username", errorMessage);
         return;
     }
 
