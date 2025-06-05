@@ -96,9 +96,8 @@ inline std::vector<unsigned char> base642bin(const std::string& base64_str) {
     return ret;
 }
 
-inline unsigned char* concat_ordered(const unsigned char* a, size_t a_len,
-                                     const unsigned char* b, size_t b_len,
-                                     size_t& out_len) {
+inline std::vector<unsigned char> concat_ordered(const unsigned char* a, size_t a_len,
+                                                  const unsigned char* b, size_t b_len) {
     // Compare a and b lexicographically
     int cmp = memcmp(a, b, std::min(a_len, b_len));
     if (cmp == 0) cmp = a_len - b_len;  // if equal up to min length, use size to decide
@@ -117,9 +116,8 @@ inline unsigned char* concat_ordered(const unsigned char* a, size_t a_len,
     memcpy(temp_concat + first_len, second, second_len);
 
     // Hash the concatenated result
-    out_len = crypto_hash_sha256_BYTES;
-    unsigned char* result = new unsigned char[out_len];
-    crypto_hash_sha256(result, temp_concat, concat_len);
+    std::vector<unsigned char> result(crypto_hash_sha256_BYTES);
+    crypto_hash_sha256(result.data(), temp_concat, concat_len);
     
     // Clean up temporary buffer
     delete[] temp_concat;

@@ -150,9 +150,8 @@ void SendFile::onShowAuthCodeClicked()
 
     auto my_device_pub = get_public_key("device");
 
-    size_t out;
-    auto code = concat_ordered(reinterpret_cast<const unsigned char *>(my_device_pub.data()),my_device_pub.size(), their_device_ids[0].data(), their_device_ids[0].size(), out);
-    auto base_code = bin2base64(code, out);
+    auto code = concat_ordered(reinterpret_cast<const unsigned char *>(my_device_pub.data()),my_device_pub.size(), their_device_ids[0].data(), their_device_ids[0].size());
+    auto base_code = bin2base64(code.data(), code.size());
 
     QString authCode = QString::fromStdString(base_code); // TODO UPDATE THIS
     StyledMessageBox::displayCode(this, "Authentication Code", 

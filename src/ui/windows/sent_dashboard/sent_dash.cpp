@@ -375,9 +375,8 @@ void Sent::onShowAuthCodeButtonClicked()
         auto my_device_pub = get_public_key("device");
         their_device_ids = RatchetSessionManager::instance().get_device_ids_of_existing_handshakes(username.toStdString()); // update with  new
 
-        size_t out;
-        auto code = concat_ordered(reinterpret_cast<const unsigned char *>(my_device_pub.data()),my_device_pub.size(), their_device_ids[0].data(), their_device_ids[0].size(), out);
-        auto base_code = bin2base64(code, out);
+        auto code = concat_ordered(reinterpret_cast<const unsigned char *>(my_device_pub.data()),my_device_pub.size(), their_device_ids[0].data(), their_device_ids[0].size());
+        auto base_code = bin2base64(code.data(), code.size());
 
         QString authCode = QString::fromStdString(base_code);
         StyledMessageBox::displayCode(this, "Authentication Code", 
