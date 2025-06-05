@@ -20,7 +20,6 @@
 #include "src/auth/logout.h"
 #include "src/endpoints/endpoints.h"
 #include "src/keys/session_token_manager.h"
-#include "src/keys/kek_manager.h"
 
 Settings::Settings(QWidget *parent)
     : QWidget(parent)

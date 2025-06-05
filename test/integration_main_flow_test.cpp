@@ -2,14 +2,9 @@
 #include "src/keys/secure_memory_buffer.h"
 #include "src/auth/login/login.h"
 #include "src/auth/register_user/register_user.h"
-#include "src/auth/set_up_client.h"
 #include "src/sql/queries.h"
 #include "src/database/database.h"
 #include "src/endpoints/endpoints.h"
-#include "src/utils/ConversionUtils.h"
-#include <QString>
-#include <QByteArray>
-#include <QImage>
 #include <sodium.h>
 #include <memory>
 #include <stdexcept>
@@ -20,9 +15,6 @@
 #include <fstream>
 #include <random>
 #include "auth/register_device/register_device.h"
-#include "database/database.h"
-#include "endpoints/endpoints.h"
-#include "sql/queries.h"
 #include "communication/send_file_to/send_file_to.h"
 #include "communication/upload_file/upload_file.h"
 #include "src/auth/rotate_master_key/rotate_master_key.h"
