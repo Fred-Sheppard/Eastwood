@@ -143,7 +143,9 @@ void Settings::onPassphraseSaveClicked() {
     const auto old_password = ui->currentPassphrase->text().toStdString();
     const auto new_password = ui->newPassphrase->text().toStdString();
     try {
-        rotate_master_password(Database::get().get_username(), old_password, new_password);
+        auto old_password_buffer = std::make_unique<SecureMemoryBuffer>(old_password);
+        auto new_password_buffer = std::make_unique<SecureMemoryBuffer>(new_password);
+        rotate_master_password(Database::get().get_username(), std::move(old_password_buffer), std::move(new_password_buffer));
     } catch (std::runtime_error &e) {
         StyledMessageBox::error(
             this, "Invalid password", "Invalid password");
