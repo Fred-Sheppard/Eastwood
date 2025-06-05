@@ -2,6 +2,7 @@
 #include "ui_sent_dash.h"
 #include "src/ui/utils/messagebox.h"
 #include "src/ui/utils/window_manager/window_manager.h"
+#include "src/ui/utils/byte_converter/byte_converter.h"
 #include <QVBoxLayout>
 #include <QDialog>
 #include <QScrollArea>
@@ -14,6 +15,7 @@
 #include <QPixmap>
 
 #include "src/communication/ReceiveFlow.h"
+#include "src/communication/revoke_file/revoke_file.h"
 #include "src/sql/queries.h"
 
 // Sent implementation
@@ -80,8 +82,12 @@ void Sent::refreshFileList()
     ui->noFilesLabel->setVisible(metadata.empty());
 
     for (const auto& [file_name, file_size, mime_type, uuid, username] : metadata) {
-        std::string file_size_str = std::to_string(file_size);
-        addFileItem(QString::fromStdString(file_name), QString::fromStdString(file_size_str), "sadfa", QString::fromStdString(username), uuid, mime_type);
+        addFileItem(QString::fromStdString(file_name), 
+                   QString::fromStdString(convertFileSizeToHumanReadable(file_size)), 
+                   "", 
+                   QString::fromStdString(username), 
+                   uuid, 
+                   mime_type);
     }
 }
 
@@ -253,24 +259,30 @@ void Sent::onRevokeAccessClicked(const FileItemWidget* widget)
 
     // Connect buttons
     connect(acceptButton, &QPushButton::clicked, [=]() {
-        QStringList selectedUsers;
+        std::vector<std::string> selectedUsers;
         for (auto* checkbox : checkboxes) {
             if (!checkbox->isChecked()) {
-                selectedUsers.append(checkbox->text());
+                selectedUsers.emplace_back(checkbox->text().toStdString());
             }
         }
 
-        if (selectedUsers.isEmpty()) {
+        if (selectedUsers.empty()) {
             StyledMessageBox::warning(this, "No Changes Made", 
                                     "Please uncheck at least one user to remove their access.");
             return;
         }
 
-        // TODO: Implement actual revoke access functionality
-        QString message = QString("Access will be removed for:\n\n%1")
-                         .arg(selectedUsers.join("\n"));
+        QString message = QString("Access will be removed for the unchecked users");
         StyledMessageBox::info(this, "Access Removed", message);
         revokeDialog->accept();
+
+        // call to fred
+        try {
+            refresh_access(selectedUsers, widget->getUuid());
+
+        } catch (...) {
+            StyledMessageBox::warning(this, "Failed. Try again: ", message);
+        }
     });
 
     connect(cancelButton, &QPushButton::clicked, revokeDialog, &QDialog::reject);
@@ -287,6 +299,7 @@ void Sent::onDeleteFileClicked(const FileItemWidget* widget)
         delete_file(widget->getUuid());
         StyledMessageBox::info(this, "File Deleted",
                              QString("File deleted: %1").arg(widget->getFileName()));
+        refreshFileList();
     }
 }
 
