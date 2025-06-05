@@ -14,6 +14,7 @@
 #include "src/endpoints/endpoints.h"
 #include "src/ui/utils/messagebox.h"
 #include "src/auth/set_up_client.h"
+#include "src/auth/passphrase_validator.h"
 
 void continuously_ping(const std::array<unsigned char, 32> &pk_device, QObject* deviceRegister, const std::string& username) {
     const auto start_time = std::chrono::steady_clock::now();
@@ -112,6 +113,7 @@ void DeviceRegister::onCopyButtonClicked() {
 void DeviceRegister::onUserRegistered() {
     QString errorMessage;
     QString passphrase;
+    QString confirmPassphrase;
 
     // Keep showing the dialog until a valid passphrase is entered or user cancels
     do {
@@ -121,12 +123,19 @@ void DeviceRegister::onUserRegistered() {
             StyledMessageBox::error(this, "Error", errorMessage);
             return;
         }
+        
+        confirmPassphrase = StyledMessageBox::getPassphraseWithVerification(this, "Please confirm your passphrase");
 
-        if (passphrase.length() >= 20 && passphrase.length() <= 64) {
+        if (confirmPassphrase.isEmpty()) {
+            StyledMessageBox::error(this, "Error", "Passphrase confirmation is required");
+            return;
+        }
+
+        if (PassphraseValidator::validate(passphrase, confirmPassphrase, errorMessage)) {
             break;
         }
 
-        StyledMessageBox::error(this, "Invalid Passphrase", "Passphrase must be between 20 and 64 characters");
+        StyledMessageBox::error(this, "Invalid Passphrase", errorMessage);
     } while (true);
 
     try {
