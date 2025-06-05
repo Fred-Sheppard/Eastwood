@@ -5,31 +5,31 @@
 #include <QDir>
 
 namespace PassphraseValidator {
-    static QSet<QString> commonPasswords;
-
-    static bool initializeCommonPasswords() {
-        if (!commonPasswords.isEmpty()) {
-            return true;
-        }
-
-        QFile file("src/ui/utils/commons_pass_8_or_more.csv");
-        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            return false;
-        }
-
-        QTextStream in(&file);
-        in.readLine(); // Skip header
-        
-        while (!in.atEnd()) {
-            QString line = in.readLine();
-            QStringList parts = line.split(',');
-            if (!parts.isEmpty()) {
-                commonPasswords.insert(parts[0]);
-            }
-        }
-
-        return true;
-    }
+    // static QSet<QString> commonPasswords;
+    //
+    // static bool initializeCommonPasswords() {
+    //     if (!commonPasswords.isEmpty()) {
+    //         return true;
+    //     }
+    //
+    //     QFile file("src/ui/utils/commons_pass_8_or_more.csv");
+    //     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    //         return false;
+    //     }
+    //
+    //     QTextStream in(&file);
+    //     in.readLine(); // Skip header
+    //
+    //     while (!in.atEnd()) {
+    //         QString line = in.readLine();
+    //         QStringList parts = line.split(',');
+    //         if (!parts.isEmpty()) {
+    //             commonPasswords.insert(parts[0]);
+    //         }
+    //     }
+    //
+    //     return true;
+    // }
 
     bool validate(const QString& passphrase, const QString& confirmPassphrase, QString& errorMessage) {
         if (passphrase.isEmpty()) {
@@ -79,11 +79,11 @@ namespace PassphraseValidator {
             }
         }
 
-        // Check against common passwords
-        if (initializeCommonPasswords() && commonPasswords.contains(passphrase)) {
-            errorMessage = "This passphrase is too common and not allowed";
-            return false;
-        }
+        // // Check against common passwords
+        // if (initializeCommonPasswords() && commonPasswords.contains(passphrase)) {
+        //     errorMessage = "This passphrase is too common and not allowed";
+        //     return false;
+        // }
 
         return true;
     }
