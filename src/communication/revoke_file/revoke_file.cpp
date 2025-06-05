@@ -21,7 +21,6 @@ void refresh_access(const std::vector<std::string> &allowed_usernames, const std
 
     post_update_file_key(file_uuid, encrypted_file_key);
     for (const auto username: allowed_usernames) {
-        // TODO smart pointer might break
         allow_access_to_file(username, file_uuid, new_fkek);
     }
 }

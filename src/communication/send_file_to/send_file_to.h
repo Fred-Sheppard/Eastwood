@@ -2,7 +2,6 @@
 #define SEND_FILE_TO_H
 #include <string>
 #include <memory>
-
 #include "src/keys/secure_memory_buffer.h"
 
 void allow_access_to_file(
