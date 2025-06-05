@@ -116,14 +116,7 @@ void Register::onRegisterButtonClicked() {
         try {
             register_user(username.toStdString(), std::make_unique<std::string>(passphrase.toStdString()));
             register_first_device();
-            login_user(username.toStdString(), std::make_unique<std::string>(passphrase.toStdString()), false);
-
-            auto signed_prekey = generate_signed_prekey();
-            post_new_keybundles(
-                get_decrypted_keypair("device"),
-                &signed_prekey,
-                generate_onetime_keys(50)
-                );
+            login_user(username.toStdString(), std::make_unique<std::string>(passphrase.toStdString()));
             emit registrationSuccess();
 
         } catch (const webwood::HttpError &e) {

@@ -8,7 +8,8 @@
 #include "src/sessions/RatchetSessionManager.h"
 #include "src/sql/queries.h"
 
-void login_user(const std::string &username, const std::unique_ptr<const std::string> &master_password, bool post_new_keys) {
+void login_user(const std::string &username, const std::unique_ptr<const std::string> &master_password,
+                bool post_new_keys) {
     unsigned char salt[crypto_pwhash_SALTBYTES];
     get_salt_from_file(username, salt);
     const auto master_key = derive_master_key(std::move(master_password), salt);
@@ -30,10 +31,13 @@ void login_user(const std::string &username, const std::unique_ptr<const std::st
     RatchetSessionManager::instance().load_ratchets_from_db();
 
     if (post_new_keys) {
-        post_new_keybundles(
-            get_decrypted_keypair("device"),
-            nullptr,
-            generate_onetime_keys(100)
-        );
+        std::tuple<unsigned char *, std::unique_ptr<SecureMemoryBuffer> > prekey;
+
+        const QDateTime lastUpdated = get_signed_prekey_last_updated();
+        if (!lastUpdated.isValid() || lastUpdated < QDateTime::currentDateTime().addDays(-14)) {
+            prekey = generate_signed_prekey();
+        }
+
+        post_new_keybundles(get_decrypted_keypair("device"), &prekey, generate_onetime_keys(100));
     }
 }
