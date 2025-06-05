@@ -168,6 +168,7 @@ set(AUTH_SOURCES
 set(COMMUNICATION_SOURCES
         src/communication/upload_file/upload_file.cpp
         src/communication/send_file_to/send_file_to.cpp
+        src/communication/revoke_file/revoke_file.cpp
 )
 
 # Create main executable
