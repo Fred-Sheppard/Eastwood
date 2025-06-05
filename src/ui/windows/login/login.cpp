@@ -164,6 +164,7 @@ void Login::onLoginButtonClicked()
     try {
         auto securePassphrase = SecureMemoryBuffer::create(passphrase.length());
         memcpy(securePassphrase->data(), passphrase.toUtf8().constData(), passphrase.length());
+        cache.clear();
         
         // Clear the password from the UI widget directly
         ui->passphraseEdit->clear();
