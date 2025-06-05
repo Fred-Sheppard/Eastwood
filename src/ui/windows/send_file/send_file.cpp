@@ -7,7 +7,10 @@
 #include <QFileDialog>
 #include <QLineEdit>
 #include <QCheckBox>
+
+#include "src/algorithms/constants.h"
 #include "src/communication/send_file_to/send_file_to.h"
+#include "src/ui/utils/byte_converter/byte_converter.h"
 
 
 SendFile::SendFile(QWidget *parent)
@@ -43,19 +46,14 @@ void SendFile::onBrowseClicked() {
         QFileInfo fileInfo(filePath);
         QString fileName = fileInfo.fileName();
         qint64 size = fileInfo.size();
-        QString sizeStr;
 
-        // Convert size to human-readable format
-        if (size < 1024) {
-            sizeStr = QString("%1 B").arg(size);
-        } else if (size < 1024 * 1024) {
-            sizeStr = QString("%1 KB").arg(size / 1024.0, 0, 'f', 1);
-        } else if (size < 1024 * 1024 * 1024) {
-            sizeStr = QString("%1 MB").arg(size / (1024.0 * 1024.0), 0, 'f', 1);
-        } else {
-            sizeStr = QString("%1 GB").arg(size / (1024.0 * 1024.0 * 1024.0), 0, 'f', 1);
+        if (size > MAX_FILE_SIZE_BYTES) {
+            StyledMessageBox::error(this, "File Sent", QString("File cannot be larger than %1 KB").arg(MAX_FILE_SIZE_BYTES / 1000));
+            return;
         }
 
+        // Convert size to human-readable format
+        const auto sizeStr = convertFileSizeToHumanReadable(size);
         // Format the details text
         QString details = QString("File Details:\n\n"
                     "Name: %1\n"
