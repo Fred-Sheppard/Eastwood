@@ -142,6 +142,7 @@ void SendFile::onSettingsButtonClicked() const {
 void SendFile::onShowAuthCodeClicked()
 {
     // fetch keybundles;
+    update_handshakes();
     auto their_device_ids = RatchetSessionManager::instance().get_device_ids_of_existing_handshakes(ui->usernameInput->text().toStdString());
     auto bundles = get_keybundles(ui->usernameInput->text().toStdString(), their_device_ids);
     RatchetSessionManager::instance().create_ratchets_if_needed(ui->usernameInput->text().toStdString(), bundles);

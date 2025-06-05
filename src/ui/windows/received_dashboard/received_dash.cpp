@@ -159,6 +159,8 @@ void Received::onShowAuthCodeButtonClicked()
 
     if (!username.isEmpty()) {
         if (NameValidator::validateUsername(username, errorMessage)) {
+            update_handshakes();
+
               auto their_device_ids = RatchetSessionManager::instance().get_device_ids_of_existing_handshakes(username.toStdString());
               auto bundles = get_keybundles(username.toStdString(), their_device_ids);
               RatchetSessionManager::instance().create_ratchets_if_needed(username.toStdString(), bundles);
