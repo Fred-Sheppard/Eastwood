@@ -60,7 +60,9 @@ void Register::onRegisterButtonClicked() {
     // passphrase requirements as per NIST SP 800-63B guidelines
     constexpr int MAX_PASSPHRASE_LENGTH = 64;
     constexpr int MIN_PASSPHRASE_LENGTH = 20;
+    constexpr int MIN_USERNAME_LENGTH = 8;
     constexpr int MAX_INPUT_LENGTH = 64;
+
 
     QString fullName = ui->fullNameEdit->text().left(MAX_INPUT_LENGTH);
     QString username = ui->usernameEdit->text().left(MAX_INPUT_LENGTH);
@@ -77,8 +79,8 @@ void Register::onRegisterButtonClicked() {
         return;
     }
 
-    if (username.length() < 3) {
-        StyledMessageBox::warning(this, "Error", "Username must be at least 3 characters long");
+    if (username.length() < MIN_USERNAME_LENGTH) {
+        StyledMessageBox::warning(this, "Error", "Username must be at least 8 characters long");
         return;
     }
 
