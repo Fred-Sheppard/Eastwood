@@ -30,7 +30,7 @@ namespace PassphraseValidator {
         // (all printable ASCII allowed)
         for (const QChar& c : passphrase) {
             if (c.unicode() < 32 || c.unicode() > 126) {
-                errorMessage = "Passphrase can only contain printable characters";
+                errorMessage = "Passphrase can only contain ASCII characters";
                 return false;
             }
         }
