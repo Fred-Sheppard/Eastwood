@@ -53,7 +53,7 @@ void SendFile::onBrowseClicked() {
         }
 
         // Convert size to human-readable format
-        const auto sizeStr = convertFileSizeToHumanReadable(size);
+        const QString sizeStr = QString::fromStdString(convertFileSizeToHumanReadable(size));
         // Format the details text
         QString details = QString("File Details:\n\n"
                     "Name: %1\n"
