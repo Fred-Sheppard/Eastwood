@@ -143,7 +143,6 @@ void Settings::onPassphraseSaveClicked() {
     validatePassphrase();
     const auto old_password = ui->currentPassphrase->text().toStdString();
     const auto new_password = ui->newPassphrase->text().toStdString();
-    qDebug() << "New password:" << new_password;
     try {
         rotate_master_password(Database::get().get_username(), old_password, new_password);
     } catch (std::runtime_error &e) {
