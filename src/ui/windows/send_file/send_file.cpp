@@ -7,6 +7,8 @@
 #include <QFileDialog>
 #include <QLineEdit>
 #include <QCheckBox>
+
+#include "src/communication/ReceiveFlow.h"
 #include "src/communication/send_file_to/send_file_to.h"
 
 
@@ -83,6 +85,7 @@ void SendFile::onSendClicked() {
     send_file_to(ui->usernameInput->text().toStdString(), ui->filePathInput->text().toStdString(), !already_fetched_bundles);
 
     StyledMessageBox::info(this, "File Sent", "File has been sent successfully!");
+    already_fetched_bundles = false;
 }
 
 void SendFile::navigateTo(QWidget *newWindow) {
@@ -121,7 +124,21 @@ void SendFile::onSettingsButtonClicked() const {
 
 void SendFile::onShowAuthCodeClicked()
 {
-    QString authCode = "1234567890"; // TODO UPDATE THIS
+    // fetch keybundles;
+    auto their_device_ids = RatchetSessionManager::instance().get_device_ids_of_existing_handshakes(ui->usernameInput->text().toStdString());
+    auto bundles = get_keybundles(ui->usernameInput->text().toStdString(), their_device_ids);
+
+    RatchetSessionManager::instance().create_ratchets_if_needed(ui->usernameInput->text().toStdString(), bundles);
+
+    already_fetched_bundles = true;
+
+    auto my_device_pub = get_public_key("device");
+
+    size_t out = 32;
+    auto code = concat_ordered(reinterpret_cast<const unsigned char *>(my_device_pub.data()),my_device_pub.size(), their_device_ids[0].data(), their_device_ids[0].size(), out);
+    auto base_code = bin2base64(code, sizeof(code));
+
+    QString authCode = QString::fromStdString(base_code); // TODO UPDATE THIS
     StyledMessageBox::displayCode(this, "Authentication Code", 
         "Please verify this code with the sender's device:", authCode);
 }
