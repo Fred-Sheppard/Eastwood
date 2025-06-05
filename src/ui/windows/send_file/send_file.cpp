@@ -79,7 +79,7 @@ void SendFile::onSendClicked() {
         return;
     }
 
-    send_file_to(ui->usernameInput->text().toStdString(), ui->filePathInput->text().toStdString());
+    send_file_to(ui->usernameInput->text().toStdString(), ui->filePathInput->text().toStdString(), !already_fetched_bundles);
 
     StyledMessageBox::info(this, "File Sent", "File has been sent successfully!");
 }
