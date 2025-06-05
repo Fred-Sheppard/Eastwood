@@ -83,7 +83,7 @@ void Sent::refreshFileList()
     for (const auto& [file_name, file_size, mime_type, uuid, username] : metadata) {
         addFileItem(QString::fromStdString(file_name), 
                    QString::fromStdString(convertFileSizeToHumanReadable(file_size)), 
-                   "sadfa", 
+                   "", 
                    QString::fromStdString(username), 
                    uuid, 
                    mime_type);
