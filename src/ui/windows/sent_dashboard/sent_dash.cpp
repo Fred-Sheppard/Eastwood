@@ -219,9 +219,9 @@ void Sent::onRevokeAccessClicked(const FileItemWidget* widget)
     QStringList users = {};
     std::vector<std::string> usernames = get_file_recipients(widget->getUuid());
 
-    for (auto username : usernames) {
-        users.emplace_back(QString::fromStdString(username));
-    }
+    for (auto* ptr = usernames.data(); ptr < usernames.data() + usernames.size(); ++ptr) {
+    	users.emplace_back(QString::fromStdString(*ptr));
+	}
 
     QList<QCheckBox*> checkboxes;
     for (const QString& user : users) {
