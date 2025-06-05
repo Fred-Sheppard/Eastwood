@@ -8,9 +8,9 @@
 #include <QLineEdit>
 #include <QCheckBox>
 
-#include "src/algorithms/constants.h"
 #include "src/communication/send_file_to/send_file_to.h"
 #include "src/ui/utils/byte_converter/byte_converter.h"
+#include "src/algorithms/constants.h"
 
 
 SendFile::SendFile(QWidget *parent)
@@ -57,13 +57,12 @@ void SendFile::onBrowseClicked() {
 
         if (size > MAX_FILE_SIZE_BYTES) {  // 250KB in bytes
             StyledMessageBox::error(this, "File Too Large",
-                "The selected file is too large. Maximum file size is 250KB.");
+                ("The selected file is too large. Maximum file size is " + convertFileSizeToHumanReadable(MAX_FILE_SIZE_BYTES)).data());
             return;
         }
 
         ui->filePathInput->setText(canonicalPath);
         QString fileName = fileInfo.fileName();
-        QString sizeStr;
 
         // Convert size to human-readable format
         const QString sizeStr = QString::fromStdString(convertFileSizeToHumanReadable(size));
