@@ -61,7 +61,7 @@ void allow_access_to_file(
 
             // Encrypt the file key (which was the original "message" content)
             auto encrypted_message_again = encrypt_message_with_nonce(
-                QByteArray(reinterpret_cast<const char *>(file_key->data()), file_key->size()),
+                QByteArray(reinterpret_cast<const char *>(f_kek->data()), f_kek->size()),
                 std::move(message_encryption_key),
                 message_nonce
             );
