@@ -27,6 +27,20 @@ namespace PassphraseValidator {
             return false;
         }
 
+        // Check for repetitive characters (3 or more same characters in a row)
+        for (int i = 0; i < passphrase.length() - 2; i++) {
+            if (passphrase[i] == passphrase[i + 1] && passphrase[i] == passphrase[i + 2]) {
+                errorMessage = "Passphrase cannot contain 3 or more of the same character in a row";
+                return false;
+            }
+        }
+
+        // Check for spaces at start/end
+        if (passphrase.startsWith(' ') || passphrase.endsWith(' ')) {
+            errorMessage = "Passphrase cannot start or end with spaces";
+            return false;
+        }
+
         // (all printable ASCII allowed)
         for (const QChar& c : passphrase) {
             if (c.unicode() < 32 || c.unicode() > 126) {
