@@ -14,7 +14,7 @@
 #include "src/endpoints/endpoints.h"
 #include "src/ui/utils/messagebox.h"
 #include "src/auth/set_up_client.h"
-#include "src/auth/passphrase_validator.h"
+#include "src/ui/utils/input_validation/passphrase_validator.h"
 
 void continuously_ping(const std::array<unsigned char, 32> &pk_device, QObject* deviceRegister, const std::string& username) {
     const auto start_time = std::chrono::steady_clock::now();
@@ -117,14 +117,7 @@ void DeviceRegister::onUserRegistered() {
 
     // Keep showing the dialog until a valid passphrase is entered or user cancels
     do {
-        passphrase = StyledMessageBox::getPassphraseWithVerification(this, errorMessage);
-
-        if (passphrase.isEmpty()) {
-            StyledMessageBox::error(this, "Error", errorMessage);
-            return;
-        }
-        
-        confirmPassphrase = StyledMessageBox::getPassphraseWithVerification(this, "Please confirm your passphrase");
+        confirmPassphrase = StyledMessageBox::getPassphraseWithVerification(this, errorMessage);
 
         if (confirmPassphrase.isEmpty()) {
             StyledMessageBox::error(this, "Error", "Passphrase confirmation is required");
