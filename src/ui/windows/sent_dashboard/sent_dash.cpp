@@ -371,9 +371,9 @@ void Sent::onShowAuthCodeButtonClicked()
         // fetch keybundles;
         auto their_device_ids = RatchetSessionManager::instance().get_device_ids_of_existing_handshakes(username.toStdString());
         auto bundles = get_keybundles(username.toStdString(), their_device_ids);
-
         RatchetSessionManager::instance().create_ratchets_if_needed(username.toStdString(), bundles);
         auto my_device_pub = get_public_key("device");
+        their_device_ids = RatchetSessionManager::instance().get_device_ids_of_existing_handshakes(username.toStdString()); // update with  new
 
         size_t out;
         auto code = concat_ordered(reinterpret_cast<const unsigned char *>(my_device_pub.data()),my_device_pub.size(), their_device_ids[0].data(), their_device_ids[0].size(), out);
