@@ -27,6 +27,7 @@ SendFile::~SendFile() {
 void SendFile::setupConnections() {
     connect(ui->browseButton, &QPushButton::clicked, this, &SendFile::onBrowseClicked);
     connect(ui->sendButton, &QPushButton::clicked, this, &SendFile::onSendClicked);
+    connect(ui->showAuthCodeButton, &QPushButton::clicked, this, &SendFile::onShowAuthCodeClicked);
 
     // Connect NavBar signals
     if (NavBar *navbar = findChild<NavBar *>()) {
@@ -40,17 +41,29 @@ void SendFile::setupConnections() {
 void SendFile::onBrowseClicked() {
     QString filePath = QFileDialog::getOpenFileName(this, "Select File", "", "All Files (*.*)");
     if (!filePath.isEmpty()) {
-        ui->filePathInput->setText(filePath);
-
-        // Get file information
+        // Sanitize the file path
         QFileInfo fileInfo(filePath);
-        QString fileName = fileInfo.fileName();
-        qint64 size = fileInfo.size();
+        QString canonicalPath = fileInfo.canonicalFilePath();
 
-        if (size > MAX_FILE_SIZE_BYTES) {
-            StyledMessageBox::error(this, "File Sent", QString("File cannot be larger than %1 KB").arg(MAX_FILE_SIZE_BYTES / 1000));
+        // use canonical path to avoid path traversal attacks
+        if (canonicalPath.isEmpty() || !fileInfo.exists()) {
+            StyledMessageBox::error(this, "Invalid File",
+                "The selected file path is invalid or does not exist.");
             return;
         }
+
+        // Get file information
+        qint64 size = fileInfo.size();
+
+        if (size > MAX_FILE_SIZE_BYTES) {  // 250KB in bytes
+            StyledMessageBox::error(this, "File Too Large",
+                "The selected file is too large. Maximum file size is 250KB.");
+            return;
+        }
+
+        ui->filePathInput->setText(canonicalPath);
+        QString fileName = fileInfo.fileName();
+        QString sizeStr;
 
         // Convert size to human-readable format
         const QString sizeStr = QString::fromStdString(convertFileSizeToHumanReadable(size));
@@ -114,4 +127,11 @@ void SendFile::onSettingsButtonClicked() const {
     ui->fileDetailsLabel->clear();
     ui->usernameInput->clear();
     WindowManager::instance().showSettings();
+}
+
+void SendFile::onShowAuthCodeClicked()
+{
+    QString authCode = "1234567890"; // TODO UPDATE THIS
+    StyledMessageBox::displayCode(this, "Authentication Code",
+        "Please verify this code with the sender's device:", authCode);
 }

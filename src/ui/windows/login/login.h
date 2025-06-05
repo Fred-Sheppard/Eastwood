@@ -20,11 +20,12 @@ public:
     explicit Login(QWidget *parent = nullptr);
     ~Login() override;
 
+    void hidePassphraseStage();
+
 private slots:
     void onContinueButtonClicked();
     void onLoginButtonClicked();
-
-    static void onRegisterButtonClicked();
+    void onRegisterButtonClicked();
     void onTogglePassphraseClicked();
 
 private:
@@ -34,8 +35,7 @@ private:
     void showPassphraseStage() const;
     void showUsernameStage() const;
 
-    // New helper functions
-    bool validateUsername(const QString& username);
+    // Helper functions
     QString getAndValidatePassword();
     std::tuple<std::string, QImage, std::array<unsigned char, crypto_sign_PUBLICKEYBYTES>, std::unique_ptr<SecureMemoryBuffer>> setupDeviceRegistration();
     void initializeDatabase(const std::string& username, const QString& password, 
