@@ -2,6 +2,11 @@
 
 Eastwood is a secure file-sharing application built with Qt6, designed to provide robust encryption and secure communication between users. The application supports user registration, device authentication via QR codes, secure file uploads, and encrypted file sharing.
 
+<img width="467" alt="image" src="https://github.com/user-attachments/assets/d239f715-3806-4062-9445-b17d7bd0f351" />
+
+<img width="1011" alt="image" src="https://github.com/user-attachments/assets/8cd55636-126f-477f-bff0-23a5590aa7ed" />
+
+
 ## Features
 
 - **User Authentication**: Secure login and registration with passphrase validation.
